@@ -1,5 +1,5 @@
 ﻿using NAudio.CoreAudioApi;
-using System.Diagnostics;
+using System.Collections.Generic;
 
 class AudioController
 {
@@ -28,5 +28,32 @@ class AudioController
     public AudioDevice GetDefaultAudioDevice()
     {
         return new AudioDevice(enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia));
+    }
+	
+	public List<AudioOutput> GetAllAudioOutputs() {
+		List<AudioOutput> outputs = new List<AudioOutput>();        
+        foreach(var device in GetAudioDevices())
+        {
+            // add device
+            outputs.Add((AudioOutput)device);
+            foreach(var app in device.GetAudioApps())
+            {
+                outputs.Add((AudioOutput)app);
+            }
+        }
+        return outputs;
+	}
+
+    public AudioOutput GetOutputByName(string name)
+    {
+        List<AudioOutput> outs = GetAllAudioOutputs();
+        foreach(var outp in outs)
+        {
+            if (outp.GetName().Equals(name))
+            {
+                return outp;    
+            }
+        }
+        throw new KeyNotFoundException();
     }
 }

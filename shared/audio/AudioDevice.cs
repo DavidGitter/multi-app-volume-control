@@ -1,6 +1,7 @@
 ﻿using NAudio.CoreAudioApi;
+using System.Collections.Generic;
 
-class AudioDevice
+class AudioDevice : AudioOutput
 {
     private MMDevice mmd;
 
@@ -9,7 +10,7 @@ class AudioDevice
         this.mmd = mmd;
     }
 
-    public String GetName()
+    public override string GetName()
     {
         return mmd.FriendlyName;
     }
@@ -34,18 +35,18 @@ class AudioDevice
         return audioApps.ToArray(); 
     }
 
-    public void SetMasterVolume(float volume)
+    public override void SetVolume(float volume)
     {
         mmd.AudioEndpointVolume.MasterVolumeLevelScalar = volume;
     }
 
-    public float GetMasterVolume()
+    public override float GetVolume()
     {
         return mmd.AudioEndpointVolume.MasterVolumeLevelScalar;
     }
 
     public override string ToString()
     {
-        return "AuioDevice: " + GetName() + ", AudioApps: " + GetAudioApps().Length;
+        return "(Device)  " + GetName();
     }
 }

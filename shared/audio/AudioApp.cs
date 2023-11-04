@@ -1,7 +1,8 @@
 ﻿using NAudio.CoreAudioApi;
+using System;
 using System.Diagnostics;
 
-class AudioApp
+class AudioApp : AudioOutput
 {
     private AudioSessionControl asc;
     private AudioDevice audioDevice;
@@ -12,7 +13,7 @@ class AudioApp
         this.audioDevice = audioDevice;   
     }
 
-    public String GetName()
+    public override string GetName()
     {
         return Process.GetProcessById((int)asc.GetProcessID).ProcessName;
     }
@@ -24,20 +25,20 @@ class AudioApp
 
     public override string ToString()
     {
-        return "AudioDevice: " + GetName() + ", Related AudioDevice: " + GetIODevice();
+        return "(App)       " + GetName();
     }
 
-    public void SetVolume(float volume)
+    public override void SetVolume(float volume)
     {
         asc.SimpleAudioVolume.Volume = volume;
     }
 
-    public float GetVolume()
+    public override float GetVolume()
     {
         return asc.SimpleAudioVolume.Volume;
     }
 
-    public String GetIconPath()
+    public string GetIconPath()
     {
         return asc.IconPath;
     }
