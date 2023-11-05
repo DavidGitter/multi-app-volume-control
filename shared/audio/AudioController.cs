@@ -47,13 +47,6 @@ class AudioController
     public AudioOutput GetOutputByName(string name)
     {
         List<AudioOutput> outs = GetAllAudioOutputs();
-        foreach(var outp in outs)
-        {
-            if (outp.GetName().Equals(name))
-            {
-                return outp;    
-            }
-        }
-        throw new KeyNotFoundException();
+        return outs.Find(e => e.GetName().Equals(name));
     }
 }

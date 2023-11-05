@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-	<Compile Include="../../shared/mavc/MAVCSave.cs" />
-	<Compile Include="../../shared/audio/AudioOutput.cs" />
-	<Compile Include="../../shared/audio/AudioOutputOffline.cs" />
-  	<Compile Include="../../shared/audio/AudioController.cs" />
-	<Compile Include="../../shared/audio/AudioDevice.cs" />
-	<Compile Include="../../shared/audio/AudioApp.cs" />
+    <Compile Include="../../shared/mavc/MAVCSave.cs" />
+    <Compile Include="../../shared/audio/AudioOutput.cs" />
+    <Compile Include="../../shared/audio/AudioOutputOffline.cs" />
+    <Compile Include="../../shared/audio/AudioController.cs" />
+    <Compile Include="../../shared/audio/AudioDevice.cs" />
+    <Compile Include="../../shared/audio/AudioApp.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -64,6 +64,9 @@
     </Reference>
     <Reference Include="NAudio.WinMM, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
       <HintPath>..\packages\NAudio.WinMM.2.2.1\lib\netstandard2.0\NAudio.WinMM.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

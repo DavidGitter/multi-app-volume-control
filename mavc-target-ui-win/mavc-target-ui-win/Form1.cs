@@ -4,50 +4,102 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 using System.Windows.Forms;
+using Newtonsoft.Json;
 
 namespace mavc_target_ui_win
 {
     public partial class Form1 : Form
     {
         private AudioController audioController;
-        private string configSavePath = null;
+        private string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
+        private string configFileName = "config.json";
+        private string configFilePath;
 
-        List<AudioOutput> availableOutputs;
-
-        class AudioMappingState
-        {
-            public AudioMappingState()
-            {
-                vol1 = new List<AudioOutput>();
-                vol2 = new List<AudioOutput>();
-                vol3 = new List<AudioOutput>();
-                vol4 = new List<AudioOutput>();
-            }
-            public List<AudioOutput> vol1;
-            public List<AudioOutput> vol2;
-            public List<AudioOutput> vol3;
-            public List<AudioOutput> vol4;
-        };
-
-        AudioMappingState mappingState;
-        MAVCSave mavcSave;
+        private List<AudioOutput> availableOutputs;
+        private MAVCSave mavcSave;
 
         public Form1()
         {
             //load list of apps and devices
             InitializeComponent();
 
-            audioController = new AudioController();
+            this.Text = "MAVC";
+            this.Icon = new System.Drawing.Icon("../../icon.ico");
 
-            availableOutputs = audioController.GetAllAudioOutputs();
-            mappingState = new AudioMappingState();
-            mavcSave = new MAVCSave();  
-            updateForm();
+            mavcSave = new MAVCSave();
+            audioController = new AudioController();
+            configFilePath = Path.Combine(configSavePath, configFileName);
+
+            loadConfig(configSavePath, configFileName);
         }
 
-        private void saveBtn_Click(object sender, EventArgs e)
+        /**
+         * Initializes availavleOutput Comboboxes gui after a new load
+         * to prevent showing a available output which is already in a volumeList (a.k.a doubling)
+         * 
+         * @param availableOutputs  a array of available outputs
+         */
+        private void initAvailableOutputs(AudioOutput[] availableOutputs)
+        {
+            foreach(var output in availableOutputs)
+            {
+                if (!confHasAudioOutput(output))
+                {
+                    AddVol1.Items.Add(output);
+                    AddVol2.Items.Add(output);
+                    AddVol3.Items.Add(output);
+                    AddVol4.Items.Add(output);
+                }
+            }
+        }
+
+        /**
+         * Removes a item of the avail. outp. comboboxes
+         * 
+         * @param output    the audio output to be removed
+         */
+        private void removeAvailableOutput(AudioOutput output)
+        {
+            
+            AddVol1.Items.Remove(output);
+            AddVol2.Items.Remove(output);
+            AddVol3.Items.Remove(output);
+            AddVol4.Items.Remove(output);
+        }
+
+        /** adds a audio output to the avail. outp. comboboxes
+         * 
+         * @param output    the output to be added to the combobox
+         */
+        private void addAvailableOutput(AudioOutput output)
         {
 
+            AddVol1.Items.Add(output);
+            AddVol2.Items.Add(output);
+            AddVol3.Items.Add(output);
+            AddVol4.Items.Add(output);
+        }
+
+        /**
+         * Retrieves if the conf storage has a specified audio output
+         * 
+         * @param ao    the audio output to be checked for its existence
+         */
+        private bool confHasAudioOutput(AudioOutput ao)
+        {
+
+            return mavcSave.namesVol1.Exists(name => ao.GetName() == name) ||
+                   mavcSave.namesVol2.Exists(name => ao.GetName() == name) ||
+                   mavcSave.namesVol3.Exists(name => ao.GetName() == name) ||
+                   mavcSave.namesVol4.Exists(name => ao.GetName() == name);
+        }
+
+        /**
+         * Eventhandler of the gui "Save" button
+         */
+        private void saveBtn_Click(object sender, EventArgs e)
+        {
+            save(configSavePath, configFileName);
         }
 
         private void groupBox1_Enter(object sender, EventArgs e)
@@ -55,97 +107,50 @@ namespace mavc_target_ui_win
 
         }
 
+        /**
+        * Eventhandler of the Volume 1 Combobox  (available audio outputs)
+        */
         private void AddVol1_SelectedIndexChanged(object sender, EventArgs e)
         {
             AudioOutput selectedAO = (AudioOutput)AddVol1.SelectedItem;
-            mappingState.vol1.Add(selectedAO);
-            availableOutputs.Remove(selectedAO);
-            AddVol1.DroppedDown = true;
-            updateForm();
+            VolList1.Items.Add(selectedAO);
+            removeAvailableOutput(selectedAO);
+            //AddVol1.DroppedDown = true;
         }
 
+        /**
+       * Eventhandler of the Volume 2 Combobox  (available audio outputs)
+       */
         private void AddVol2_SelectedIndexChanged(object sender, EventArgs e)
         {
             AudioOutput selectedAO = (AudioOutput)AddVol2.SelectedItem;
-            mappingState.vol2.Add(selectedAO);
-            availableOutputs.Remove(selectedAO);
-            AddVol2.DroppedDown = true;
-            updateForm();
+            VolList2.Items.Add(selectedAO);
+            removeAvailableOutput(selectedAO);
         }
 
+        /**
+       * Eventhandler of the Volume 3 Combobox  (available audio outputs)
+       */
         private void AddVol3_SelectedIndexChanged(object sender, EventArgs e)
         {
             AudioOutput selectedAO = (AudioOutput)AddVol3.SelectedItem;
-            mappingState.vol3.Add(selectedAO);
-            availableOutputs.Remove(selectedAO);
-            AddVol3.DroppedDown = true;
-            updateForm();
+            VolList3.Items.Add(selectedAO);
+            removeAvailableOutput(selectedAO);
         }
 
+        /**
+       * Eventhandler of the Volume 4 Combobox (available audio outputs)
+       */
         private void AddVol4_SelectedIndexChanged(object sender, EventArgs e)
         {
             AudioOutput selectedAO = (AudioOutput)AddVol4.SelectedItem;
-            mappingState.vol4.Add(selectedAO);
-            availableOutputs.Remove(selectedAO);
-            AddVol4.DroppedDown = true;
-            updateForm();
+            VolList4.Items.Add(selectedAO);
+            removeAvailableOutput(selectedAO);
         }
 
-        //private void VolList1_KeyDown(object sender, KeyEventArgs e)
-        //{
-        //    if (e.KeyCode == Keys.Delete)
-        //    {
-        //        VolList1.Items.Add("YEEEEEET");
-        //    }
-        //    updateForm();
-        //}
-
-        private void updateForm()
-        {
-            AddVol1.Items.Clear();
-            foreach (var output in availableOutputs)
-            {
-                AddVol1.Items.Add(output);
-            }
-
-            AddVol2.Items.Clear();
-            foreach (var output in availableOutputs)
-            {
-                AddVol2.Items.Add(output);
-            }
-
-            AddVol3.Items.Clear();
-            foreach (var output in availableOutputs)
-            {
-                AddVol3.Items.Add(output);
-            }
-
-            AddVol4.Items.Clear();
-            foreach (var output in availableOutputs)
-            {
-                AddVol4.Items.Add(output);
-            }
-
-
-            VolList1.Items.Clear();
-            foreach (var output in mappingState.vol1)
-                VolList1.Items.Add(output);
-
-            VolList2.Items.Clear();
-            foreach (var output in mappingState.vol2)
-                VolList2.Items.Add(output);
-
-            VolList3.Items.Clear();
-            foreach (var output in mappingState.vol3)
-                VolList3.Items.Add(output);
-
-            VolList4.Items.Clear();
-            foreach (var output in mappingState.vol4)
-                VolList4.Items.Add(output);
-
-            updateMavcSave();
-        }
-
+        /**
+         * Updated the config save member with the newest listbox output selections
+         */
         private void updateMavcSave()
         {
             mavcSave.namesVol1.Clear();
@@ -153,95 +158,95 @@ namespace mavc_target_ui_win
             mavcSave.namesVol3.Clear();
             mavcSave.namesVol4.Clear();
 
-            foreach (AudioOutput ao in mappingState.vol1)
+            foreach (AudioOutput ao in VolList1.Items)
                 mavcSave.namesVol1.Add(ao.GetName());
-            foreach (AudioOutput ao in mappingState.vol2)
+            foreach (AudioOutput ao in VolList2.Items)
                 mavcSave.namesVol2.Add(ao.GetName());
-            foreach (AudioOutput ao in mappingState.vol3)
+            foreach (AudioOutput ao in VolList3.Items)
                 mavcSave.namesVol3.Add(ao.GetName());
-            foreach (AudioOutput ao in mappingState.vol4)
+            foreach (AudioOutput ao in VolList4.Items)
                 mavcSave.namesVol4.Add(ao.GetName());
         }
 
+        /**
+         * Loads the stored audio outputs form the config save memeber to the listBoxes
+         */
         private void loadFromMavcSave()
         {
-            mappingState.vol1.Clear();
-            mappingState.vol2.Clear();
-            mappingState.vol3.Clear();
-            mappingState.vol4.Clear();
 
             foreach (string name in mavcSave.namesVol1)
                 try
                 {
-                    mappingState.vol1.Add(audioController.GetOutputByName(name));
+                    VolList1.Items.Add(audioController.GetOutputByName(name));
                 }catch(KeyNotFoundException knfe)
                 {
                     // Add Log / Debug
                     Console.WriteLine("AudioOutput " + name + " of mavc save not found");
-                    mappingState.vol1.Add(new AudioOutputOffline(name));
+                    VolList1.Items.Add(new AudioOutputOffline(name));
                 }
 
             foreach (string name in mavcSave.namesVol2)
                 try
                 {
-                    mappingState.vol2.Add(audioController.GetOutputByName(name));
+                    VolList2.Items.Add(audioController.GetOutputByName(name));
                 }
                 catch (KeyNotFoundException knfe)
                 {
                     // Add Log / Debug
                     Console.WriteLine("AudioOutput " + name + " of mavc save not found");
-                    mappingState.vol2.Add(new AudioOutputOffline(name));
+                    VolList2.Items.Add(new AudioOutputOffline(name));
                 }
 
             foreach (string name in mavcSave.namesVol3)
                 try
                 {
-                    mappingState.vol3.Add(audioController.GetOutputByName(name));
+                    VolList3.Items.Add(audioController.GetOutputByName(name));
                 }
                 catch (KeyNotFoundException knfe)
                 {
                     // Add Log / Debug
                     Console.WriteLine("AudioOutput " + name + " of mavc save not found");
-                    mappingState.vol3.Add(new AudioOutputOffline(name));
+                    VolList3.Items.Add(new AudioOutputOffline(name));
                 }
 
             foreach (string name in mavcSave.namesVol4)
                 try
                 {
-                    mappingState.vol4.Add(audioController.GetOutputByName(name));
+                    VolList4.Items.Add(audioController.GetOutputByName(name));
                 }
                 catch (KeyNotFoundException knfe)
                 {
                     // Add Log / Debug
                     Console.WriteLine("AudioOutput " + name + " of mavc save not found");
-                    mappingState.vol4.Add(new AudioOutputOffline(name));
+                    VolList4.Items.Add(new AudioOutputOffline(name));
                 }
 
-            updateForm();
+            //updateForm();
         }
 
+        /**
+         * The event handler for the gui "Delete Selection" button to delete a audio output in a listbox
+         */
         private void delItemBtn_Click(object sender, EventArgs e)
         {
-            foreach(var item in VolList1.SelectedItems){
-                mappingState.vol1.Remove((AudioOutput)item);
-                availableOutputs.Add((AudioOutput)item);
+            List<AudioOutput> selectedItems = new List<AudioOutput>();
+
+            foreach(AudioOutput ao in VolList1.SelectedItems)
+                selectedItems.Add(ao);
+            foreach (AudioOutput ao in VolList2.SelectedItems)
+                selectedItems.Add(ao);
+            foreach (AudioOutput ao in VolList3.SelectedItems)
+                selectedItems.Add(ao);
+            foreach (AudioOutput ao in VolList4.SelectedItems)
+                selectedItems.Add(ao);
+
+            foreach (AudioOutput ao in selectedItems) {
+                VolList1.Items.Remove(ao);
+                VolList2.Items.Remove(ao);
+                VolList3.Items.Remove(ao);
+                VolList4.Items.Remove(ao);
+                addAvailableOutput(ao);
             }
-            foreach (var item in VolList2.SelectedItems)
-            {
-                mappingState.vol2.Remove((AudioOutput)item);
-                availableOutputs.Add((AudioOutput)item);
-            }
-            foreach (var item in VolList3.SelectedItems)
-            {
-                mappingState.vol3.Remove((AudioOutput)item);
-                availableOutputs.Add((AudioOutput)item);
-            }
-            foreach (var item in VolList4.SelectedItems)
-            {
-                mappingState.vol4.Remove((AudioOutput)item);
-                availableOutputs.Add((AudioOutput)item);
-            }
-            updateForm();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -249,6 +254,9 @@ namespace mavc_target_ui_win
 
         }
 
+        /**
+         * Discards all selected audio outputs in the list boxes
+         */
         private void discSelBtn_Click(object sender, EventArgs e)
         {
             VolList1.ClearSelected();
@@ -257,20 +265,39 @@ namespace mavc_target_ui_win
             VolList4.ClearSelected();
         }
 
+        /**
+        * Event Handler of the gui "Help" menu button
+        */
         private void helpToolStripMenuItem_Click(object sender, EventArgs e)
         {
             throw new NotImplementedException();
         }
 
-        private void save(string path)
+        /**
+         * Saves the config saves to a specified file
+         *
+         * @param path  path to the save file (the folder)
+         * @param file  the name of the file
+         */
+        private void save(string path, string file)
         {
-            using (FileStream fs = new FileStream(path, FileMode.Create))
+            updateMavcSave();
+            if (!File.Exists(Path.Combine(path, file)))
             {
-                IFormatter formatter = new BinaryFormatter();
-                formatter.Serialize(fs, mavcSave);
+                Directory.CreateDirectory(path);
+                File.Create(file);
             }
+
+            // Serialize the class to JSON
+            string json = JsonConvert.SerializeObject(mavcSave);
+
+            // Save the JSON string to a file
+            File.WriteAllText(configFilePath, json);
         }
 
+        /**
+         * The event handler of the menu bar save button
+         */
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if(configSavePath == null)
@@ -279,10 +306,13 @@ namespace mavc_target_ui_win
             }
             else
             {
-                save(configSavePath);
+                save(configSavePath, configFileName);
             }
         }
 
+        /**
+         * Saves the config saves to a choosable path in the gui with a chooser (for backuping)
+         */
         private void saveTo()
         {
             string selectedFilePath = null;
@@ -294,15 +324,21 @@ namespace mavc_target_ui_win
                 Console.WriteLine("Selected file: " + selectedFilePath);
             }
 
-            save(selectedFilePath);
+            save(selectedFilePath, configFileName);
         }
 
-        private void saveToToolStripMenuItem_Click(object sender, EventArgs e)
+        /**
+         * Event Handler that gets called by the gui "Save To" menu bar button
+         */
+        private void SaveToToolStripMenuItem_Click(object sender, EventArgs e)
         {
             saveTo();
         }
 
-        private void clearVolLists()
+        /**
+         * Event Handler that gets called by the gui "Save To" menu bar button
+         */
+        private void ClearVolLists()
         {
             VolList1.Items.Clear();
             VolList2.Items.Clear();
@@ -310,6 +346,33 @@ namespace mavc_target_ui_win
             VolList4.Items.Clear();
         }
 
+        /**
+         * Loads a config save from a file by a specified path
+         *
+         * @param configFileFolder  path to the save file (the folder)
+         * @param configFileName    the name of the file
+         */
+        private void loadConfig(string configFileFolder, string configFileName)
+        {
+            string configFilePath = Path.Combine(configFileFolder, configFileName);
+            if (File.Exists(configFilePath))
+            {
+                string json = File.ReadAllText(configFilePath);
+                mavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
+                loadFromMavcSave();
+            }
+            else
+            {
+                save(configSavePath, configFileName);
+            }
+
+            availableOutputs = audioController.GetAllAudioOutputs();
+            initAvailableOutputs(availableOutputs.ToArray());
+        }
+
+        /**
+         * Event Handler that gets called by the gui "Open" menu bar button to open a config file
+         */
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //TODO: unsafed changes discard question here!
@@ -320,7 +383,7 @@ namespace mavc_target_ui_win
                 string selectedFilePath = null;
                 OpenFileDialog openFileDialog = new OpenFileDialog();
                 openFileDialog.Title = "Open Config File";
-                openFileDialog.Filter = "MAVC Config File|*.mavc";
+                openFileDialog.Filter = "MAVC Config File|*.json";
                 openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
@@ -329,15 +392,10 @@ namespace mavc_target_ui_win
                     Console.WriteLine("Selected file: " + selectedFilePath);
                 }
 
-                clearVolLists();
+                //TODO: check if config is valid otherwise abort load
 
-                // loading new mavc config
-                using (FileStream fs = new FileStream(selectedFilePath, FileMode.Open))
-                {
-                    IFormatter formatter = new BinaryFormatter();
-                    mavcSave = (MAVCSave)formatter.Deserialize(fs);
-                }
-                loadFromMavcSave();
+                ClearVolLists();
+                loadConfig(Path.GetDirectoryName(selectedFilePath), Path.GetFileName(selectedFilePath));
             }
             else
             {
