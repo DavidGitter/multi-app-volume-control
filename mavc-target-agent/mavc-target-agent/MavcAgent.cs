@@ -67,7 +67,7 @@ class MavcAgent
                     Console.WriteLine("Set audio: " + argNum);
                     lock (mavcSaveLock)
                     {
-                        foreach (AudioOutput ao in aoListVol1Vol1)
+                        foreach (AudioOutput ao in aoListVol1)
                         {
                             ao.SetVolume(argNum / 100f);
                         }
