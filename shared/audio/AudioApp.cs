@@ -11,6 +11,8 @@ class AudioApp : AudioOutput
     private AudioSessionControl asc;
     // the parent audio deive where the sound gets outputed
     private AudioDevice audioDevice;
+    // name of the app
+    private string name;
 
     /**
      * @param asc           the audio controller
@@ -19,7 +21,8 @@ class AudioApp : AudioOutput
     public AudioApp(AudioSessionControl asc, AudioDevice audioDevice)
     {
         this.asc = asc;
-        this.audioDevice = audioDevice;   
+        this.audioDevice = audioDevice;
+        this.name = Process.GetProcessById((int)asc.GetProcessID).ProcessName;
     }
 
     /**
@@ -29,7 +32,7 @@ class AudioApp : AudioOutput
      */
     public override string GetName()
     {
-        return Process.GetProcessById((int)asc.GetProcessID).ProcessName;
+        return name;
     }
 
     /**
@@ -49,7 +52,7 @@ class AudioApp : AudioOutput
      */
     public override string ToString()
     {
-        return "(App)       " + GetName();
+        return "("+GetAudioType()+")" + "       " + GetName();
     }
 
     /**
@@ -60,6 +63,13 @@ class AudioApp : AudioOutput
     public override void SetVolume(float volume)
     {
         asc.SimpleAudioVolume.Volume = volume;
+    }
+
+    /* Type App
+     */
+    public override string GetAudioType()
+    {
+        return "App";
     }
 
     /**

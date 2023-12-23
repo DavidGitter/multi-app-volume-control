@@ -37,7 +37,14 @@ class COM
     public COM(String portName = "COM3", int baudRate = 9600)
     {
         serialPort = new SerialPort(portName, baudRate);
+
+        serialPort.DataBits = 8;
+        serialPort.StopBits = StopBits.One;
+        serialPort.Parity = Parity.None;
+        //serialPort.DtrEnable = true;
+
         serialPort.Open();
+
         //set callback proxy function
         serialPort.DataReceived += receivingCallbackProxy;
     }
@@ -91,7 +98,8 @@ class COM
     */
     private void receivingCallbackProxy(object sender, SerialDataReceivedEventArgs e)
     {
-        Console.WriteLine("Info: Received data stream");
+
+        //Console.WriteLine("Info: Received data stream");
         while (serialPort.BytesToRead > 0)
         {
             char rbyte = (char)serialPort.ReadByte();
@@ -151,5 +159,10 @@ class COM
             throw new InvalidDataException();
 
         return new Word(action, arg);
+    }
+
+    public bool IsOpen()
+    {
+        return serialPort.IsOpen;
     }
 }

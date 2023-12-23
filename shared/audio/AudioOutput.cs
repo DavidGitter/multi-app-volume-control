@@ -35,9 +35,20 @@ public abstract class AudioOutput
     /*
      * Sets the volume of the audio output when not being offline
      * 
+     * 
      * @param volume    a number betwenn 1(loud) and 0(none volume)
      */
     abstract public void SetVolume(float volume);
+
+    /*
+     * Returns the Type of the Audio
+     * e.g.:
+     * Speaker                      -> Device
+     * Spotify                      -> App
+     * Offline Application/Device   -> Offline
+     */
+    abstract public string GetAudioType();
+
 
     /*
      * Returns the current volume of the audio output when not being offline

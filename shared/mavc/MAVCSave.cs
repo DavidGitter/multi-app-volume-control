@@ -12,7 +12,11 @@ class MAVCSave
 		namesVol2 = new List<string>();
 		namesVol3 = new List<string>();
 		namesVol4 = new List<string>();
-	}
+        reverseKnob1 = false;
+        reverseKnob2 = false;
+        reverseKnob3 = false;
+        reverseKnob4 = false;
+    }
 
 	// volume 1 mappings
 	public List<string> namesVol1;
@@ -25,4 +29,19 @@ class MAVCSave
 
     // volume 4 mappings
     public List<string> namesVol4;
+
+    // reverse knob of volume 1
+    public bool reverseKnob1;
+
+    // reverse knob of volume 2
+    public bool reverseKnob2;
+
+    // reverse knob of volume 3
+    public bool reverseKnob3;
+
+    // reverse knob of volume 4
+    public bool reverseKnob4;
+
+    //reverse knob order (Knob 1 <-> Knob 4, Knob 2 <-> Knob 3)
+    public bool reverseKnobOrder;
 }

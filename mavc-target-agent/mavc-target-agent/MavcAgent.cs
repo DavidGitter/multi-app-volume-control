@@ -1,10 +1,12 @@
 ﻿using static COM;
 using Newtonsoft.Json;
-
+using System.IO.Ports;
 
 /**
  * Test enviroment of the target service/agent
  */
+
+// For console debugging -> change Project > Properties > Windows Application to Console Application
 class MavcAgent
 {
     /*static void Main(string[] args)
@@ -48,28 +50,98 @@ class MavcAgent
 
     public static void interpretWord(COM.Word word)
     {
-        char action = word.action;
+         char action = word.action;
         String arg = word.args;
+
+        if (mavcSave.reverseKnobOrder)
+        {
+            switch (action)
+            {
+                case 'A':
+                    action = 'D';
+                    break;
+                case 'B':
+                    action = 'C';
+                    break;
+                case 'C':
+                    action = 'B';
+                    break;
+                case 'D':
+                    action = 'A';
+                    break;
+            }
+        }
 
         switch (action)
         {
             case 'A':
                 {
-                    int argNum = int.Parse(arg);
-                    Console.WriteLine("Set audio -2");
-                    AudioDevice deflDev = audioContr.GetDefaultAudioDevice();
-                    deflDev.SetVolume(argNum);
+                    float argNum = int.Parse(arg);
+                    if(mavcSave.reverseKnob1 == true)
+                        argNum = argNum > 0 ? 1f - argNum / 100f : 100; // reversed knob 1
+                    else
+                        argNum = argNum > 0 ? argNum / 100f : 0;
+                    Console.WriteLine("Set Volume 1: " + argNum);
+                    lock (mavcSaveLock)
+                    {
+                        foreach (AudioOutput ao in aoListVol1)
+                        {
+                            if (ao != null)
+                                ao.SetVolume(argNum);
+                        }
+                    }
                     break;
                 }
             case 'B':
                 {
                     float argNum = int.Parse(arg);
-                    Console.WriteLine("Set audio: " + argNum);
+                    if (mavcSave.reverseKnob2 == true)
+                        argNum = argNum > 0 ? 1f - argNum / 100f : 100; // reversed knob 2
+                    else
+                        argNum = argNum > 0 ? argNum / 100f : 0;
+                    Console.WriteLine("Set Volume 2: " + argNum);
                     lock (mavcSaveLock)
                     {
-                        foreach (AudioOutput ao in aoListVol1)
+                        foreach (AudioOutput ao in aoListVol2)
                         {
-                            ao.SetVolume(argNum / 100f);
+                            if(ao != null)
+                                ao.SetVolume(argNum);
+                        }
+                    }
+                    break;
+                }
+            case 'C':
+                {
+                    float argNum = int.Parse(arg);
+                    if (mavcSave.reverseKnob3 == true)
+                        argNum = argNum > 0 ? 1f - argNum / 100f : 100; // reversed knob 3
+                    else
+                        argNum = argNum > 0 ? argNum / 100f : 0;
+                    Console.WriteLine("Set Volume 3: " + argNum);
+                    lock (mavcSaveLock)
+                    {
+                        foreach (AudioOutput ao in aoListVol3)
+                        {
+                            if (ao != null)
+                                ao.SetVolume(argNum);
+                        }
+                    }
+                    break;
+                }
+            case 'D':
+                {
+                    float argNum = int.Parse(arg);
+                    if (mavcSave.reverseKnob4 == true)
+                        argNum = argNum > 0 ? 1f - argNum / 100f : 100; // reversed knob 4
+                    else
+                        argNum = argNum > 0 ? argNum / 100f : 0;
+                    Console.WriteLine("Set Volume 4: " + argNum);
+                    lock (mavcSaveLock)
+                    {
+                        foreach (AudioOutput ao in aoListVol4)
+                        {
+                            if (ao != null)
+                                ao.SetVolume(argNum);
                         }
                     }
                     break;
@@ -129,22 +201,41 @@ class MavcAgent
 
             // update the vol mappings with the conf
             foreach (string name in mavcSave.namesVol1)
-                aoListVol1.Add(audioContr.GetOutputByName(name));
+                aoListVol1.AddRange(audioContr.GetOutputsByName(name));
 
             foreach (string name in mavcSave.namesVol2)
-                aoListVol2.Add(audioContr.GetOutputByName(name));
+                aoListVol2.AddRange(audioContr.GetOutputsByName(name));
 
             foreach (string name in mavcSave.namesVol3)
-                aoListVol3.Add(audioContr.GetOutputByName(name));
+                aoListVol3.AddRange(audioContr.GetOutputsByName(name));
 
             foreach (string name in mavcSave.namesVol4)
-                aoListVol4.Add(audioContr.GetOutputByName(name));
+                aoListVol4.AddRange(audioContr.GetOutputsByName(name));
         }
     }
 
     static void Main(string[] args)
     {
         bool foundFile = false;
+
+        var def = audioContr.GetAudioDevices();
+        foreach (var dev in def)
+        {
+            Console.WriteLine(dev.GetName());   
+            var apps = dev.GetAudioApps();
+            int count = 0;
+            foreach (var app in apps)
+            {
+                if (app.GetName().Equals("Spotify"))
+                {
+                    count++;
+                }
+            }
+            Console.WriteLine("Spotify Count: " + count);
+        }
+
+        Console.WriteLine(SerialPort.GetPortNames());
+
         while (!foundFile)
         {
             try
@@ -164,17 +255,32 @@ class MavcAgent
 
         }
 
+        COM comServer = null;
         while (true) {
             Console.WriteLine("Waiting for hardware to connect.");
             try
             {
-                COM comServer = new COM();
+                comServer = new COM("COM3", 115200);
+                Console.WriteLine("Hardware connected.");
                 comServer.OnWordStreamReceive(MavcAgent.interpretWord);
-                Console.ReadLine();
             } catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
                 Thread.Sleep(1000);
+            }
+
+            while (1 == 1)
+            {
+                try
+                {
+                    //Console.ReadLine();
+                    Thread.Sleep(10000);
+
+                } catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                    Thread.Sleep(1000);
+                }
             }
         }
     }

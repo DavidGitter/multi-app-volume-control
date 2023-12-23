@@ -88,10 +88,10 @@ namespace mavc_target_ui_win
         private bool confHasAudioOutput(AudioOutput ao)
         {
 
-            return mavcSave.namesVol1.Exists(name => ao.GetName() == name) ||
-                   mavcSave.namesVol2.Exists(name => ao.GetName() == name) ||
-                   mavcSave.namesVol3.Exists(name => ao.GetName() == name) ||
-                   mavcSave.namesVol4.Exists(name => ao.GetName() == name);
+            return mavcSave.namesVol1.Exists(name => ao.GetName().Equals(name)) ||
+                   mavcSave.namesVol2.Exists(name => ao.GetName().Equals(name)) ||
+                   mavcSave.namesVol3.Exists(name => ao.GetName().Equals(name)) ||
+                   mavcSave.namesVol4.Exists(name => ao.GetName().Equals(name));
         }
 
         /**
@@ -158,7 +158,7 @@ namespace mavc_target_ui_win
             mavcSave.namesVol3.Clear();
             mavcSave.namesVol4.Clear();
 
-            foreach (AudioOutput ao in VolList1.Items)
+            foreach (AudioOutput ao in VolList1.Items) //TODO: handle apps that are online while mapping and then offline when saving
                 mavcSave.namesVol1.Add(ao.GetName());
             foreach (AudioOutput ao in VolList2.Items)
                 mavcSave.namesVol2.Add(ao.GetName());
@@ -178,7 +178,7 @@ namespace mavc_target_ui_win
                 try
                 {
                     VolList1.Items.Add(audioController.GetOutputByName(name));
-                }catch(KeyNotFoundException knfe)
+                }catch(Exception knfe)
                 {
                     // Add Log / Debug
                     Console.WriteLine("AudioOutput " + name + " of mavc save not found");
@@ -190,7 +190,7 @@ namespace mavc_target_ui_win
                 {
                     VolList2.Items.Add(audioController.GetOutputByName(name));
                 }
-                catch (KeyNotFoundException knfe)
+                catch (Exception knfe)
                 {
                     // Add Log / Debug
                     Console.WriteLine("AudioOutput " + name + " of mavc save not found");
@@ -202,7 +202,7 @@ namespace mavc_target_ui_win
                 {
                     VolList3.Items.Add(audioController.GetOutputByName(name));
                 }
-                catch (KeyNotFoundException knfe)
+                catch (Exception knfe)
                 {
                     // Add Log / Debug
                     Console.WriteLine("AudioOutput " + name + " of mavc save not found");
@@ -214,14 +214,20 @@ namespace mavc_target_ui_win
                 {
                     VolList4.Items.Add(audioController.GetOutputByName(name));
                 }
-                catch (KeyNotFoundException knfe)
+                catch (Exception knfe)
                 {
                     // Add Log / Debug
                     Console.WriteLine("AudioOutput " + name + " of mavc save not found");
                     VolList4.Items.Add(new AudioOutputOffline(name));
                 }
 
-            //updateForm();
+
+            // update knob-reversed checkboxes
+            reverseCheckbox1.Checked = mavcSave.reverseKnob1;
+            reverseCheckbox2.Checked = mavcSave.reverseKnob2;
+            reverseCheckbox3.Checked = mavcSave.reverseKnob3;
+            reverseCheckbox4.Checked = mavcSave.reverseKnob4;
+
         }
 
         /**
@@ -402,6 +408,41 @@ namespace mavc_target_ui_win
                 // stop opening
                 Console.WriteLine("User clicked Yes.");
             }
+        }
+
+        private void VolList4_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void groupBox6_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void reverseCheckbox1_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.reverseKnob1 = reverseCheckbox1.Checked;
+        }
+
+        private void reverseCheckbox2_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.reverseKnob2 = reverseCheckbox2.Checked;
+        }
+
+        private void reverseCheckbox3_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.reverseKnob3 = reverseCheckbox3.Checked;
+        }
+
+        private void reverseCheckbox4_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.reverseKnob4 = reverseCheckbox4.Checked;
+        }
+
+        private void reverseKnobsCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.reverseKnobOrder = reverseKnobsCheckbox.Checked;
         }
     }
 }

@@ -30,18 +30,22 @@
         {
             this.SaveBtn = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.reverseCheckbox1 = new System.Windows.Forms.CheckBox();
             this.AddVol1 = new System.Windows.Forms.ComboBox();
             this.VolList1 = new System.Windows.Forms.ListBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.reverseCheckbox2 = new System.Windows.Forms.CheckBox();
             this.AddVol2 = new System.Windows.Forms.ComboBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.comboBox3 = new System.Windows.Forms.ComboBox();
             this.listBox3 = new System.Windows.Forms.ListBox();
             this.VolList2 = new System.Windows.Forms.ListBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.reverseCheckbox3 = new System.Windows.Forms.CheckBox();
             this.AddVol3 = new System.Windows.Forms.ComboBox();
             this.VolList3 = new System.Windows.Forms.ListBox();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.reverseCheckbox4 = new System.Windows.Forms.CheckBox();
             this.AddVol4 = new System.Windows.Forms.ComboBox();
             this.VolList4 = new System.Windows.Forms.ListBox();
             this.delItemBtn = new System.Windows.Forms.Button();
@@ -51,12 +55,15 @@
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveToToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.additionalBox = new System.Windows.Forms.GroupBox();
+            this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.menuStrip1.SuspendLayout();
+            this.additionalBox.SuspendLayout();
             this.SuspendLayout();
             // 
             // SaveBtn
@@ -71,6 +78,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.reverseCheckbox1);
             this.groupBox1.Controls.Add(this.AddVol1);
             this.groupBox1.Controls.Add(this.VolList1);
             this.groupBox1.Location = new System.Drawing.Point(60, 41);
@@ -80,6 +88,17 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Volume 1";
             this.groupBox1.Enter += new System.EventHandler(this.groupBox1_Enter);
+            // 
+            // reverseCheckbox1
+            // 
+            this.reverseCheckbox1.AutoSize = true;
+            this.reverseCheckbox1.Location = new System.Drawing.Point(6, 21);
+            this.reverseCheckbox1.Name = "reverseCheckbox1";
+            this.reverseCheckbox1.Size = new System.Drawing.Size(94, 17);
+            this.reverseCheckbox1.TabIndex = 0;
+            this.reverseCheckbox1.Text = "Reverse Knob";
+            this.reverseCheckbox1.UseVisualStyleBackColor = true;
+            this.reverseCheckbox1.CheckedChanged += new System.EventHandler(this.reverseCheckbox1_CheckedChanged);
             // 
             // AddVol1
             // 
@@ -102,6 +121,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.reverseCheckbox2);
             this.groupBox2.Controls.Add(this.AddVol2);
             this.groupBox2.Controls.Add(this.groupBox3);
             this.groupBox2.Controls.Add(this.VolList2);
@@ -111,6 +131,17 @@
             this.groupBox2.TabIndex = 8;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Volume 2";
+            // 
+            // reverseCheckbox2
+            // 
+            this.reverseCheckbox2.AutoSize = true;
+            this.reverseCheckbox2.Location = new System.Drawing.Point(6, 21);
+            this.reverseCheckbox2.Name = "reverseCheckbox2";
+            this.reverseCheckbox2.Size = new System.Drawing.Size(94, 17);
+            this.reverseCheckbox2.TabIndex = 2;
+            this.reverseCheckbox2.Text = "Reverse Knob";
+            this.reverseCheckbox2.UseVisualStyleBackColor = true;
+            this.reverseCheckbox2.CheckedChanged += new System.EventHandler(this.reverseCheckbox2_CheckedChanged);
             // 
             // AddVol2
             // 
@@ -160,6 +191,7 @@
             // 
             // groupBox4
             // 
+            this.groupBox4.Controls.Add(this.reverseCheckbox3);
             this.groupBox4.Controls.Add(this.AddVol3);
             this.groupBox4.Controls.Add(this.VolList3);
             this.groupBox4.Location = new System.Drawing.Point(540, 41);
@@ -168,6 +200,17 @@
             this.groupBox4.TabIndex = 8;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Volume 3";
+            // 
+            // reverseCheckbox3
+            // 
+            this.reverseCheckbox3.AutoSize = true;
+            this.reverseCheckbox3.Location = new System.Drawing.Point(6, 21);
+            this.reverseCheckbox3.Name = "reverseCheckbox3";
+            this.reverseCheckbox3.Size = new System.Drawing.Size(94, 17);
+            this.reverseCheckbox3.TabIndex = 9;
+            this.reverseCheckbox3.Text = "Reverse Knob";
+            this.reverseCheckbox3.UseVisualStyleBackColor = true;
+            this.reverseCheckbox3.CheckedChanged += new System.EventHandler(this.reverseCheckbox3_CheckedChanged);
             // 
             // AddVol3
             // 
@@ -190,6 +233,7 @@
             // 
             // groupBox5
             // 
+            this.groupBox5.Controls.Add(this.reverseCheckbox4);
             this.groupBox5.Controls.Add(this.AddVol4);
             this.groupBox5.Controls.Add(this.VolList4);
             this.groupBox5.Location = new System.Drawing.Point(780, 41);
@@ -198,6 +242,17 @@
             this.groupBox5.TabIndex = 9;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "Volume 4";
+            // 
+            // reverseCheckbox4
+            // 
+            this.reverseCheckbox4.AutoSize = true;
+            this.reverseCheckbox4.Location = new System.Drawing.Point(6, 21);
+            this.reverseCheckbox4.Name = "reverseCheckbox4";
+            this.reverseCheckbox4.Size = new System.Drawing.Size(94, 17);
+            this.reverseCheckbox4.TabIndex = 10;
+            this.reverseCheckbox4.Text = "Reverse Knob";
+            this.reverseCheckbox4.UseVisualStyleBackColor = true;
+            this.reverseCheckbox4.CheckedChanged += new System.EventHandler(this.reverseCheckbox4_CheckedChanged);
             // 
             // AddVol4
             // 
@@ -217,6 +272,7 @@
             this.VolList4.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
             this.VolList4.Size = new System.Drawing.Size(234, 537);
             this.VolList4.TabIndex = 0;
+            this.VolList4.SelectedIndexChanged += new System.EventHandler(this.VolList4_SelectedIndexChanged);
             // 
             // delItemBtn
             // 
@@ -246,7 +302,7 @@
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1077, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1328, 24);
             this.menuStrip1.TabIndex = 12;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -262,14 +318,14 @@
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveToToolStripMenuItem
             // 
             this.saveToToolStripMenuItem.Name = "saveToToolStripMenuItem";
-            this.saveToToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.saveToToolStripMenuItem.Text = "Save To...";
             this.saveToToolStripMenuItem.Click += new System.EventHandler(this.SaveToToolStripMenuItem_Click);
             // 
@@ -280,11 +336,34 @@
             this.helpToolStripMenuItem.Text = "Help";
             this.helpToolStripMenuItem.Click += new System.EventHandler(this.helpToolStripMenuItem_Click);
             // 
+            // additionalBox
+            // 
+            this.additionalBox.Controls.Add(this.reverseKnobsCheckbox);
+            this.additionalBox.Location = new System.Drawing.Point(1020, 41);
+            this.additionalBox.Name = "additionalBox";
+            this.additionalBox.Size = new System.Drawing.Size(246, 608);
+            this.additionalBox.TabIndex = 13;
+            this.additionalBox.TabStop = false;
+            this.additionalBox.Text = "Settings";
+            this.additionalBox.Enter += new System.EventHandler(this.groupBox6_Enter);
+            // 
+            // reverseKnobsCheckbox
+            // 
+            this.reverseKnobsCheckbox.AutoSize = true;
+            this.reverseKnobsCheckbox.Location = new System.Drawing.Point(6, 19);
+            this.reverseKnobsCheckbox.Name = "reverseKnobsCheckbox";
+            this.reverseKnobsCheckbox.Size = new System.Drawing.Size(123, 17);
+            this.reverseKnobsCheckbox.TabIndex = 11;
+            this.reverseKnobsCheckbox.Text = "Reverse Knob Order";
+            this.reverseKnobsCheckbox.UseVisualStyleBackColor = true;
+            this.reverseKnobsCheckbox.CheckedChanged += new System.EventHandler(this.reverseKnobsCheckbox_CheckedChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1077, 718);
+            this.ClientSize = new System.Drawing.Size(1328, 718);
+            this.Controls.Add(this.additionalBox);
             this.Controls.Add(this.discSelBtn);
             this.Controls.Add(this.delItemBtn);
             this.Controls.Add(this.groupBox5);
@@ -298,12 +377,18 @@
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
             this.groupBox5.ResumeLayout(false);
+            this.groupBox5.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.additionalBox.ResumeLayout(false);
+            this.additionalBox.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -333,6 +418,12 @@
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveToToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
+        private System.Windows.Forms.GroupBox additionalBox;
+        private System.Windows.Forms.CheckBox reverseCheckbox1;
+        private System.Windows.Forms.CheckBox reverseCheckbox2;
+        private System.Windows.Forms.CheckBox reverseCheckbox3;
+        private System.Windows.Forms.CheckBox reverseCheckbox4;
+        private System.Windows.Forms.CheckBox reverseKnobsCheckbox;
     }
 }
 

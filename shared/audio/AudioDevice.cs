@@ -1,4 +1,5 @@
 ﻿using NAudio.CoreAudioApi;
+using System;
 using System.Collections.Generic;
 
 /**
@@ -45,8 +46,15 @@ class AudioDevice : AudioOutput
         //Collect Apps related to device 
         for (int i = 0; i < sessionCollection.Count; i++)
         {
-            var asc = sessionCollection[i];
-            audioApps.Add(new AudioApp(asc, this));
+            try
+            {
+                var asc = sessionCollection[i];
+                audioApps.Add(new AudioApp(asc, this));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Couldnt get audio output:\n" + e.StackTrace);
+            }
         }
 
         return audioApps.ToArray(); 
@@ -60,6 +68,14 @@ class AudioDevice : AudioOutput
     public override void SetVolume(float volume)
     {
         mmd.AudioEndpointVolume.MasterVolumeLevelScalar = volume;
+    }
+
+
+    /* Type Device
+     */
+    public override string GetAudioType()
+    {
+        return "Device";
     }
 
     /**
@@ -79,6 +95,6 @@ class AudioDevice : AudioOutput
      */
     public override string ToString()
     {
-        return "(Device)  " + GetName();
+        return "(" + GetAudioType() + ")" + "  " + GetName();
     }
 }

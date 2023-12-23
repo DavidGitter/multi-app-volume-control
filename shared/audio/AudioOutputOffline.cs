@@ -12,9 +12,14 @@ class AudioOutputOffline : AudioOutput
 		this.name = name;	
 	}
 
+	public override string GetAudioType()
+	{
+		return "Offline";
+	}
+
 	public override string GetName()
 	{
-        return "(offline)   " + name;
+        return name;
     }
 
 	public override float GetVolume()
@@ -27,4 +32,10 @@ class AudioOutputOffline : AudioOutput
 	{
 		// audio output offline, no funtion
 	}
+
+	public override string ToString()
+	{
+		return "(" + GetAudioType() + ")" + "   " + name;
+
+    }
 }

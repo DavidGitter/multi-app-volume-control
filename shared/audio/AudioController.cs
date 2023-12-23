@@ -1,4 +1,5 @@
 ﻿using NAudio.CoreAudioApi;
+using System;
 using System.Collections.Generic;
 
 /**
@@ -54,14 +55,20 @@ class AudioController
             outputs.Add((AudioOutput)device);
             foreach(var app in device.GetAudioApps())
             {
-                outputs.Add((AudioOutput)app);
+                try
+                {
+                    outputs.Add((AudioOutput)app);
+                }catch(Exception e)
+                {
+                    Console.WriteLine("Couldnt get audio output:\n" + e.StackTrace);
+                }
             }
         }
         return outputs;
 	}
 
     /**
-     * Returns a AudioOutput object by a string name if found
+     * Returns the first AudioOutput object by a string name if found
      * 
      * @returns     the audio output object if found, else throws exception
      */
@@ -69,5 +76,24 @@ class AudioController
     {
         List<AudioOutput> outs = GetAllAudioOutputs();
         return outs.Find(e => e.GetName().Equals(name));
+    }
+
+    /**
+     * Returns all AudioOutput objects by a string name if found
+     * 
+     * @returns     the audio output object if found, else throws exception
+     */
+    public List<AudioOutput> GetOutputsByName(string name)
+    {
+        List<AudioOutput> outs = GetAllAudioOutputs();
+        List<AudioOutput> aos = new List<AudioOutput> ();
+        foreach(var outp in outs)
+        {
+            if (outp.GetName().Equals(name))
+            {
+                aos.Add(outp);
+            }
+        }
+        return aos;
     }
 }
