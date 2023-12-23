@@ -228,6 +228,9 @@ namespace mavc_target_ui_win
             reverseCheckbox3.Checked = mavcSave.reverseKnob3;
             reverseCheckbox4.Checked = mavcSave.reverseKnob4;
 
+            //update knob order
+            reverseKnobsCheckbox.Checked = mavcSave.reverseKnobOrder;
+
         }
 
         /**
