@@ -260,7 +260,7 @@ class MavcAgent
             Console.WriteLine("Waiting for hardware to connect.");
             try
             {
-                comServer = new COM("COM3", 115200);
+                comServer = new COM("COM3", 9600);
                 Console.WriteLine("Hardware connected.");
                 comServer.OnWordStreamReceive(MavcAgent.interpretWord);
             } catch (Exception e)
