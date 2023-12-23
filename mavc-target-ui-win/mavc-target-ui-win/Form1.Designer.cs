@@ -352,9 +352,9 @@
             this.reverseKnobsCheckbox.AutoSize = true;
             this.reverseKnobsCheckbox.Location = new System.Drawing.Point(6, 19);
             this.reverseKnobsCheckbox.Name = "reverseKnobsCheckbox";
-            this.reverseKnobsCheckbox.Size = new System.Drawing.Size(123, 17);
+            this.reverseKnobsCheckbox.Size = new System.Drawing.Size(120, 17);
             this.reverseKnobsCheckbox.TabIndex = 11;
-            this.reverseKnobsCheckbox.Text = "Reverse Knob Order";
+            this.reverseKnobsCheckbox.Text = "Reverse knob order";
             this.reverseKnobsCheckbox.UseVisualStyleBackColor = true;
             this.reverseKnobsCheckbox.CheckedChanged += new System.EventHandler(this.reverseKnobsCheckbox_CheckedChanged);
             // 
