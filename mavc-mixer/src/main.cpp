@@ -1,6 +1,7 @@
 #include <Arduino.h>
-#include <COMClient.h>
-#include <ADC.h>
+#include "COMClient.h"
+#include "ADC.h"
+#include "TemporalTresholdLock.h"
 
 COMClient cc("COM3", 9600);
 
@@ -11,17 +12,25 @@ COMClient cc("COM3", 9600);
 
 #define POTI_COUNT 4
 
+
+
 // #define ADC_MAX_VAL 2048
+
+TemporalTresholdLock tta[4]; // for preventing poti flickering
 
 void setup() {
   analogReadResolution(12);
+  int i=0;
+  for(i; i<4; i++){
+    tta[i].setMsUnlocked(2000);
+    tta[i].setUnlockDiff(2);
+  }
 }
 
-int lastVal[4];
 ADC potis[POTI_COUNT] = {ADC(POTI1, 100),ADC(POTI2, 100),ADC(POTI3, 100),ADC(POTI4, 100)};
 
 void sendVolume(int potiNum, char action, int volume) {
-  if(lastVal[potiNum-1] != volume) {
+  if(tta[potiNum-1].isUnlocked(volume)) {
     lastVal[potiNum-1] = volume;
     cc.sendCommand(action, String(volume));
   }
@@ -38,11 +47,11 @@ void loop() {
   while(1==1){
 
     int e, potValue;
-    for(e=0; e<POTI_COUNT; e++){
-      potValue = potis[e].getUpperThreshAvgValue(10, 0.5f);
+    for(e=0; e<POTI_COUNT; e++) {
+      potValue = potis[e].getValue();
       sendVolume(e+1, ((char)(65+e)), potValue);
     }
 
-    delay(20);
+    delay(40);
   }
 }
