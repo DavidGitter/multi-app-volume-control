@@ -18,6 +18,12 @@ namespace mavc_target_ui_win
         private List<AudioOutput> availableOutputs;
         private MAVCSave mavcSave;
 
+        // general purpose timer for updating etc.
+        Timer updateTimer = new Timer();
+
+        // for notifying if there is a ui update
+        ThreadSafeBool updateUIFlag = new ThreadSafeBool();
+
         public Form1()
         {
             //load list of apps and devices
@@ -31,6 +37,37 @@ namespace mavc_target_ui_win
             configFilePath = Path.Combine(configSavePath, configFileName);
 
             loadConfig(configSavePath, configFileName);
+
+            var devices = audioController.GetAudioDevices();
+            foreach(var dev in devices)
+            {
+                dev.OnOutputCreated((sender, newSession) => {
+                    Console.WriteLine("new output registered");
+                    updateUIFlag.Value = true;
+                });
+            }
+
+            foreach(var ou in availableOutputs)
+            {
+                Console.WriteLine(ou.ToString());
+            }
+
+            updateTimer.Interval = 3000;   // milliseconds
+            updateTimer.Tick += updateTimer_Tick;  // set handler
+            updateTimer.Start();
+        }
+
+        private void updateTimer_Tick(object sender, EventArgs e)  //run this logic each timer tick
+        {
+
+            //check for new audio outputs
+            if (updateUIFlag.Value == true)
+            {
+                updateUIFlag.Value = false;
+                refreshAvailableOutputs();
+                loadFromMavcSave();
+            }
+
         }
 
         /**
@@ -53,6 +90,17 @@ namespace mavc_target_ui_win
             }
         }
 
+        /** 
+         * Refreshes the available outputs
+         */
+        private void refreshAvailableOutputs()
+        {
+            availableOutputs.Clear();
+            removeAvailableOutputs();
+            availableOutputs = audioController.GetAllAudioOutputs();
+            initAvailableOutputs(availableOutputs.ToArray());
+        }
+
         /**
          * Removes a item of the avail. outp. comboboxes
          * 
@@ -65,6 +113,18 @@ namespace mavc_target_ui_win
             AddVol2.Items.Remove(output);
             AddVol3.Items.Remove(output);
             AddVol4.Items.Remove(output);
+        }
+
+        /**
+         * Removes all items of the avail. outp. comboboxes
+         */
+        private void removeAvailableOutputs()
+        {
+
+            AddVol1.Items.Clear();
+            AddVol2.Items.Clear();
+            AddVol3.Items.Clear();
+            AddVol4.Items.Clear();
         }
 
         /** adds a audio output to the avail. outp. comboboxes
@@ -173,6 +233,7 @@ namespace mavc_target_ui_win
          */
         private void loadFromMavcSave()
         {
+            ClearVolLists();
 
             foreach (string name in mavcSave.namesVol1)
                 try
@@ -446,6 +507,13 @@ namespace mavc_target_ui_win
         private void reverseKnobsCheckbox_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.reverseKnobOrder = reverseKnobsCheckbox.Checked;
+        }
+
+        private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //refresh all audio outputs available + there state
+            refreshAvailableOutputs();
+            loadFromMavcSave();
         }
     }
 }
