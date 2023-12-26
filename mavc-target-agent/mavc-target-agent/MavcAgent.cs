@@ -173,7 +173,7 @@ class MavcAgent
             try
             {
                 comServer.updateVolumes();
-                UpdateAudioOutputs();
+                UpdateMAVCSave();
                 Console.WriteLine("Conf Update: " + mavcSave);
             }catch(Exception ex)
             {
@@ -185,36 +185,42 @@ class MavcAgent
         watcher.EnableRaisingEvents = true;
     }
 
-    /**
-     * Updates the available volume mappings
-     */
-    public static void UpdateAudioOutputs()
+
+    public static void UpdateMAVCSave()
     {
-       lock(mavcSaveLock)
+        lock (mavcSaveLock)
         {
             string json = File.ReadAllText(configFilePath);
 
             // Deserialize the JSON back to a class instance
             mavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
-
-            aoListVol1.Clear();
-            aoListVol2.Clear();
-            aoListVol3.Clear();
-            aoListVol4.Clear();
-
-            // update the vol mappings with the conf
-            foreach (string name in mavcSave.namesVol1)
-                aoListVol1.AddRange(audioContr.GetOutputsByName(name));
-
-            foreach (string name in mavcSave.namesVol2)
-                aoListVol2.AddRange(audioContr.GetOutputsByName(name));
-
-            foreach (string name in mavcSave.namesVol3)
-                aoListVol3.AddRange(audioContr.GetOutputsByName(name));
-
-            foreach (string name in mavcSave.namesVol4)
-                aoListVol4.AddRange(audioContr.GetOutputsByName(name));
         }
+
+        UpdateAudioOutputs();
+    }
+
+    /**
+     * Updates the available volume mappings
+     */
+    public static void UpdateAudioOutputs()
+    {
+        aoListVol1.Clear();
+        aoListVol2.Clear();
+        aoListVol3.Clear();
+        aoListVol4.Clear();
+
+        // update the vol mappings with the conf
+        foreach (string name in mavcSave.namesVol1)
+            aoListVol1.AddRange(audioContr.GetOutputsByName(name));
+
+        foreach (string name in mavcSave.namesVol2)
+            aoListVol2.AddRange(audioContr.GetOutputsByName(name));
+
+        foreach (string name in mavcSave.namesVol3)
+            aoListVol3.AddRange(audioContr.GetOutputsByName(name));
+
+        foreach (string name in mavcSave.namesVol4)
+            aoListVol4.AddRange(audioContr.GetOutputsByName(name));
     }
 
     static void Main(string[] args)
@@ -246,7 +252,7 @@ class MavcAgent
             {
                 if (File.Exists(configFilePath))
                 {
-                    UpdateAudioOutputs();
+                    UpdateMAVCSave();
                     SetupConfUpdater();
                     foundFile = true;
                 }
