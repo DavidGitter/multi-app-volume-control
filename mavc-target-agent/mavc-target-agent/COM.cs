@@ -67,14 +67,21 @@ class COM
 
     /*** ########## SENDER */
 
-     /**
-     * Sends a word by its two propeties
-     * 
-     * @param action    a letter that is related to a action or data (freely chooseable)
-     * @param args      the data in form of a string (formless)
-     */
-    void sendCommand(char action, String args) {
+    /**
+    * Sends a word by its two propeties
+    * 
+    * @param action    a letter that is related to a action or data (freely chooseable)
+    * @param args      the data in form of a string (formless)
+    */
+    public void sendCommand(char action, String args) {
         serialPort.Write(action + "," + args + "#");
+    }
+
+    /** Updates the currecnt values of all volumes 
+    */
+    public void updateVolumes()
+    {
+        sendCommand('A', "");
     }
 
     /**
@@ -83,7 +90,7 @@ class COM
     * @param action    a letter that is related to a action or data (freely chooseable)
     * @param args      the data in form of a string (formless)
     */
-    void sendCommand(Word w)
+    public  void sendCommand(Word w)
     {
         serialPort.Write(w.ToString());
     }

@@ -17,6 +17,7 @@ COMClient cc("COM3", 9600);
 // #define ADC_MAX_VAL 2048
 
 TemporalTresholdLock tta[4]; // for preventing poti flickering
+int lastVol[4];
 
 void setup() {
   analogReadResolution(12);
@@ -30,9 +31,26 @@ void setup() {
 ADC potis[POTI_COUNT] = {ADC(POTI1, 100),ADC(POTI2, 100),ADC(POTI3, 100),ADC(POTI4, 100)};
 
 void sendVolume(int potiNum, char action, int volume) {
-  if(tta[potiNum-1].isUnlocked(volume)) {
-    lastVal[potiNum-1] = volume;
+  if(tta[potiNum-1].isUnlocked(volume) && lastVol[potiNum-1] != volume) {
+    lastVol[potiNum-1] = volume;
     cc.sendCommand(action, String(volume));
+  }
+}
+
+void sendVolumes() {
+  int i, potInitValue;
+  for(i=0; i<POTI_COUNT; i++){
+    potInitValue = potis[i].getValue();
+    cc.sendCommand(((char)(65+i)), String(potInitValue));
+  }
+}
+
+void onReceive(COMClient::Command c) {
+  char action = c.action;
+  switch(action){
+    case 'A':
+      sendVolumes();
+      break;
   }
 }
 
@@ -51,6 +69,13 @@ void loop() {
       potValue = potis[e].getValue();
       sendVolume(e+1, ((char)(65+e)), potValue);
     }
+
+    if(cc.receivedCommand()) {
+      COMClient::Command c = cc.readCommand();
+      Serial.println("Received action " + c.action);
+      onReceive(c);
+    }
+
 
     delay(40);
   }

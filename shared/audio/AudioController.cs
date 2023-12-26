@@ -1,4 +1,5 @@
 ﻿using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi.Interfaces;
 using System;
 using System.Collections.Generic;
 
@@ -95,5 +96,19 @@ class AudioController
             }
         }
         return aos;
+    }
+
+    /**
+     * gets called when a output-added event occures
+     */
+    public void onOutputAddedCallback(Action<object, IAudioSessionControl> callback)
+    {
+        //TODO: for calling update audios when new application is opend so it is also used by the mixer 
+
+        var devices = GetAudioDevices();
+        foreach(var dev in devices)
+        {
+            dev.OnOutputCreated(callback);
+        }
     }
 }

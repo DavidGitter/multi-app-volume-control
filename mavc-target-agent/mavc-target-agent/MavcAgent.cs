@@ -48,6 +48,8 @@ class MavcAgent
     private static List<AudioOutput> aoListVol3 = new List<AudioOutput>();
     private static List<AudioOutput> aoListVol4 = new List<AudioOutput>();
 
+    private static COM comServer = null;
+
     public static void interpretWord(COM.Word word)
     {
          char action = word.action;
@@ -170,6 +172,7 @@ class MavcAgent
         {
             try
             {
+                comServer.updateVolumes();
                 UpdateAudioOutputs();
                 Console.WriteLine("Conf Update: " + mavcSave);
             }catch(Exception ex)
@@ -219,6 +222,7 @@ class MavcAgent
         bool foundFile = false;
 
         var def = audioContr.GetAudioDevices();
+        audioContr.onOutputAddedCallback((sender, newSession) => { Console.WriteLine("new audio output found!"); UpdateAudioOutputs(); comServer.updateVolumes(); });
         foreach (var dev in def)
         {
             Console.WriteLine(dev.GetName());   
@@ -255,7 +259,6 @@ class MavcAgent
 
         }
 
-        COM comServer = null;
         while (true) {
             Console.WriteLine("Waiting for hardware to connect.");
             try

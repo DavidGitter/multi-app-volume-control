@@ -1,6 +1,9 @@
 ﻿using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using static NAudio.CoreAudioApi.AudioSessionManager;
 
 /**
  * Represents a audio output device of windows
@@ -96,5 +99,10 @@ class AudioDevice : AudioOutput
     public override string ToString()
     {
         return "(" + GetAudioType() + ")" + "  " + GetName();
+    }
+
+    public void OnOutputCreated(Action<object, IAudioSessionControl> callback)
+    {
+        mmd.AudioSessionManager.OnSessionCreated += new SessionCreatedDelegate(callback);
     }
 }
