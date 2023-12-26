@@ -105,4 +105,19 @@ class AudioDevice : AudioOutput
     {
         mmd.AudioSessionManager.OnSessionCreated += new SessionCreatedDelegate(callback);
     }
+
+
+    public override bool available()
+    {
+        try
+        {
+            if (mmd == null)
+                return false;
+
+            return mmd.State == NAudio.CoreAudioApi.DeviceState.Active;
+        }catch(NullReferenceException e)
+        {
+            return false;
+        }
+    }
 }

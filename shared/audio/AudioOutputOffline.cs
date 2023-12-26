@@ -38,4 +38,9 @@ class AudioOutputOffline : AudioOutput
 		return "(" + GetAudioType() + ")" + "   " + name;
 
     }
+
+    public override bool available()
+    {
+        return false;
+    }
 }

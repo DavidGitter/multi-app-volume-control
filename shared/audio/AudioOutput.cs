@@ -5,6 +5,22 @@ using System;
  */
 public abstract class AudioOutput
 {
+    public struct LastUpdate
+    {
+        public bool Available;
+    }
+    private LastUpdate lastUpdate;
+
+    public AudioOutput()
+    {
+        lastUpdate.Available = available();
+    }
+
+    public LastUpdate getLastUpdatedValues()
+    {
+        return lastUpdate;
+    }
+
     /*
      * Returns the name of the Audio Output
      *
@@ -75,4 +91,11 @@ public abstract class AudioOutput
         }
     }
 
+
+    /*
+     * Checks if the audio output is available
+     *
+     * @returns     true if the output is available, otherwise false
+     */
+    public abstract bool available();
 }

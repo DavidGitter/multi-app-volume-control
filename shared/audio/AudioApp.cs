@@ -91,4 +91,17 @@ class AudioApp : AudioOutput
     {
         return asc.IconPath;
     }
+
+    public override bool available()
+    {
+        try
+        {
+            if (asc == null)
+                return false;
+            return asc.State != NAudio.CoreAudioApi.Interfaces.AudioSessionState.AudioSessionStateExpired;
+        }catch(NullReferenceException nre)
+        {
+            return false;   
+        }
+    }
 }
