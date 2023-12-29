@@ -5,6 +5,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using System.Xml.Linq;
 
 namespace mavc_target_ui_win
 {
@@ -88,6 +89,13 @@ namespace mavc_target_ui_win
                     AddVol4.Items.Add(output);
                 }
             }
+
+            //add additional functions
+            AudioFocused af = new AudioFocused(audioController);
+            AddVol1.Items.Add(af);
+            AddVol2.Items.Add(af);
+            AddVol3.Items.Add(af);
+            AddVol4.Items.Add(af);
         }
 
         /** 
@@ -148,10 +156,10 @@ namespace mavc_target_ui_win
         private bool confHasAudioOutput(AudioOutput ao)
         {
 
-            return mavcSave.namesVol1.Exists(name => ao.GetName().Equals(name)) ||
-                   mavcSave.namesVol2.Exists(name => ao.GetName().Equals(name)) ||
-                   mavcSave.namesVol3.Exists(name => ao.GetName().Equals(name)) ||
-                   mavcSave.namesVol4.Exists(name => ao.GetName().Equals(name));
+            return mavcSave.AOsVol1.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name)) ||
+                   mavcSave.AOsVol2.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name)) ||
+                   mavcSave.AOsVol3.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name)) ||
+                   mavcSave.AOsVol4.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name));
         }
 
         /**
@@ -213,19 +221,19 @@ namespace mavc_target_ui_win
          */
         private void updateMavcSave()
         {
-            mavcSave.namesVol1.Clear();
-            mavcSave.namesVol2.Clear();
-            mavcSave.namesVol3.Clear();
-            mavcSave.namesVol4.Clear();
+            mavcSave.AOsVol1.Clear();
+            mavcSave.AOsVol2.Clear();
+            mavcSave.AOsVol3.Clear();
+            mavcSave.AOsVol4.Clear();
 
             foreach (AudioOutput ao in VolList1.Items) //TODO: handle apps that are online while mapping and then offline when saving
-                mavcSave.namesVol1.Add(ao.GetName());
+                mavcSave.AOsVol1.Add(new MAVCSave.AudioOutput(ao.GetName(), ao.GetAudioType()));
             foreach (AudioOutput ao in VolList2.Items)
-                mavcSave.namesVol2.Add(ao.GetName());
+                mavcSave.AOsVol2.Add(new MAVCSave.AudioOutput(ao.GetName(), ao.GetAudioType()));
             foreach (AudioOutput ao in VolList3.Items)
-                mavcSave.namesVol3.Add(ao.GetName());
+                mavcSave.AOsVol3.Add(new MAVCSave.AudioOutput(ao.GetName(), ao.GetAudioType()));
             foreach (AudioOutput ao in VolList4.Items)
-                mavcSave.namesVol4.Add(ao.GetName());
+                mavcSave.AOsVol4.Add(new MAVCSave.AudioOutput(ao.GetName(), ao.GetAudioType()));
         }
 
         /**
@@ -235,62 +243,72 @@ namespace mavc_target_ui_win
         {
             ClearVolLists();
 
-            foreach (string name in mavcSave.namesVol1)
-                try
-                {
-                    VolList1.Items.Add(audioController.GetOutputByName(name));
-                }catch(Exception knfe)
-                {
-                    // Add Log / Debug
-                    Console.WriteLine("AudioOutput " + name + " of mavc save not found");
-                    VolList1.Items.Add(new AudioOutputOffline(name));
-                }
+            try
+            {
+                foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol1)
+                    try
+                    {
+                        VolList1.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                    }
+                    catch (Exception knfe)
+                    {
+                        // Add Log / Debug
+                        Console.WriteLine("AudioOutput " + mavc_ao.name + " of mavc save not found");
+                        VolList1.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                    }
 
-            foreach (string name in mavcSave.namesVol2)
-                try
-                {
-                    VolList2.Items.Add(audioController.GetOutputByName(name));
-                }
-                catch (Exception knfe)
-                {
-                    // Add Log / Debug
-                    Console.WriteLine("AudioOutput " + name + " of mavc save not found");
-                    VolList2.Items.Add(new AudioOutputOffline(name));
-                }
+                foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol2)
+                    try
+                    {
+                        VolList2.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                    }
+                    catch (Exception knfe)
+                    {
+                        // Add Log / Debug
+                        Console.WriteLine("AudioOutput " + mavc_ao.name + " of mavc save not found");
+                        VolList2.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                    }
 
-            foreach (string name in mavcSave.namesVol3)
-                try
-                {
-                    VolList3.Items.Add(audioController.GetOutputByName(name));
-                }
-                catch (Exception knfe)
-                {
-                    // Add Log / Debug
-                    Console.WriteLine("AudioOutput " + name + " of mavc save not found");
-                    VolList3.Items.Add(new AudioOutputOffline(name));
-                }
+                foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol3)
+                    try
+                    {
+                        VolList3.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                    }
+                    catch (Exception knfe)
+                    {
+                        // Add Log / Debug
+                        Console.WriteLine("AudioOutput " + mavc_ao + " of mavc save not found");
+                        VolList3.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                    }
 
-            foreach (string name in mavcSave.namesVol4)
-                try
-                {
-                    VolList4.Items.Add(audioController.GetOutputByName(name));
-                }
-                catch (Exception knfe)
-                {
-                    // Add Log / Debug
-                    Console.WriteLine("AudioOutput " + name + " of mavc save not found");
-                    VolList4.Items.Add(new AudioOutputOffline(name));
-                }
+                foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
+                    try
+                    {
+                        VolList4.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                    }
+                    catch (Exception knfe)
+                    {
+                        // Add Log / Debug
+                        Console.WriteLine("AudioOutput " + mavc_ao + " of mavc save not found");
+                        VolList4.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                    }
 
 
-            // update knob-reversed checkboxes
-            reverseCheckbox1.Checked = mavcSave.reverseKnob1;
-            reverseCheckbox2.Checked = mavcSave.reverseKnob2;
-            reverseCheckbox3.Checked = mavcSave.reverseKnob3;
-            reverseCheckbox4.Checked = mavcSave.reverseKnob4;
+                // update knob-reversed checkboxes
+                reverseCheckbox1.Checked = mavcSave.reverseKnob1;
+                reverseCheckbox2.Checked = mavcSave.reverseKnob2;
+                reverseCheckbox3.Checked = mavcSave.reverseKnob3;
+                reverseCheckbox4.Checked = mavcSave.reverseKnob4;
 
-            //update knob order
-            reverseKnobsCheckbox.Checked = mavcSave.reverseKnobOrder;
+                //update knob order
+                reverseKnobsCheckbox.Checked = mavcSave.reverseKnobOrder;
+
+            }catch(Exception e){
+                Console.WriteLine(e.Message + "\n" + e.StackTrace);
+                Console.WriteLine("Config file cannot be opened or is invalid - creating new one...");
+
+                save(configSavePath, configFileName);
+            }
 
         }
 

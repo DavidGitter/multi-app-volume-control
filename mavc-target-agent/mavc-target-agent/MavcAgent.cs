@@ -210,17 +210,17 @@ class MavcAgent
         aoListVol4.Clear();
 
         // update the vol mappings with the conf
-        foreach (string name in mavcSave.namesVol1)
-            aoListVol1.AddRange(audioContr.GetOutputsByName(name));
+        foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol1)
+            aoListVol1.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
 
-        foreach (string name in mavcSave.namesVol2)
-            aoListVol2.AddRange(audioContr.GetOutputsByName(name));
+        foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol2)
+            aoListVol2.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
 
-        foreach (string name in mavcSave.namesVol3)
-            aoListVol3.AddRange(audioContr.GetOutputsByName(name));
+        foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol3)
+            aoListVol3.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
 
-        foreach (string name in mavcSave.namesVol4)
-            aoListVol4.AddRange(audioContr.GetOutputsByName(name));
+        foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
+            aoListVol4.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
     }
 
     static void Main(string[] args)

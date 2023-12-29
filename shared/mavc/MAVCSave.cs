@@ -6,12 +6,23 @@ using System.Collections.Generic;
 [System.Serializable]
 class MAVCSave
 {
+    public class AudioOutput
+    {
+        public AudioOutput(string name, string type)
+        {
+            this.name = name;
+            this.type = type;
+        }
+        public string name;
+        public string type;
+    }
+
 	public MAVCSave()
 	{
-		namesVol1 = new List<string>();
-		namesVol2 = new List<string>();
-		namesVol3 = new List<string>();
-		namesVol4 = new List<string>();
+        AOsVol1 = new List<AudioOutput>();
+        AOsVol2 = new List<AudioOutput>();
+        AOsVol3 = new List<AudioOutput>();
+        AOsVol4 = new List<AudioOutput>();
         reverseKnob1 = false;
         reverseKnob2 = false;
         reverseKnob3 = false;
@@ -19,16 +30,16 @@ class MAVCSave
     }
 
 	// volume 1 mappings
-	public List<string> namesVol1;
+	public List<AudioOutput> AOsVol1;
 
     // volume 2 mappings
-    public List<string> namesVol2;
+    public List<AudioOutput> AOsVol2;
 
     // volume 3 mappings
-    public List<string> namesVol3;
+    public List<AudioOutput> AOsVol3;
 
     // volume 4 mappings
-    public List<string> namesVol4;
+    public List<AudioOutput> AOsVol4;
 
     // reverse knob of volume 1
     public bool reverseKnob1;
