@@ -248,7 +248,13 @@ namespace mavc_target_ui_win
                 foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol1)
                     try
                     {
-                        VolList1.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                        if (!mavc_ao.type.Equals("Function"))
+                            VolList1.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                        else
+                            if (mavc_ao.name.Equals("Focused"))
+                            VolList1.Items.Add(new AudioFocused(audioController));
+                        else
+                            throw new NotImplementedException();
                     }
                     catch (Exception knfe)
                     {
@@ -260,7 +266,13 @@ namespace mavc_target_ui_win
                 foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol2)
                     try
                     {
-                        VolList2.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                        if (!mavc_ao.type.Equals("Function"))
+                            VolList2.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                        else
+                            if (mavc_ao.name.Equals("Focused"))
+                            VolList2.Items.Add(new AudioFocused(audioController));
+                        else
+                            throw new NotImplementedException();
                     }
                     catch (Exception knfe)
                     {
@@ -272,7 +284,13 @@ namespace mavc_target_ui_win
                 foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol3)
                     try
                     {
-                        VolList3.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                        if (!mavc_ao.type.Equals("Function"))
+                            VolList3.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                        else
+                            if (mavc_ao.name.Equals("Focused"))
+                            VolList3.Items.Add(new AudioFocused(audioController));
+                        else
+                            throw new NotImplementedException();
                     }
                     catch (Exception knfe)
                     {
@@ -284,7 +302,13 @@ namespace mavc_target_ui_win
                 foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
                     try
                     {
-                        VolList4.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                        if (!mavc_ao.type.Equals("Function"))
+                            VolList4.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                        else
+                            if (mavc_ao.name.Equals("Focused"))
+                            VolList4.Items.Add(new AudioFocused(audioController));
+                        else
+                            throw new NotImplementedException();
                     }
                     catch (Exception knfe)
                     {
