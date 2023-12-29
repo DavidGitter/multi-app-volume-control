@@ -211,16 +211,48 @@ class MavcAgent
 
         // update the vol mappings with the conf
         foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol1)
-            aoListVol1.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+            if(!mavc_ao.type.Equals("Function"))
+                aoListVol1.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+            else
+            {
+                if (mavc_ao.name.Equals("Focused"))
+                    aoListVol1.Add(new AudioFocused(audioContr));
+                else
+                    throw new NotImplementedException();
+            }
 
         foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol2)
-            aoListVol2.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+            if (!mavc_ao.type.Equals("Function"))
+                aoListVol2.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+            else
+            {
+                if (mavc_ao.name.Equals("Focused"))
+                    aoListVol2.Add(new AudioFocused(audioContr));
+                else
+                    throw new NotImplementedException();
+            }
 
         foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol3)
-            aoListVol3.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+            if (!mavc_ao.type.Equals("Function"))
+                aoListVol3.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+            else
+            {
+                if (mavc_ao.name.Equals("Focused"))
+                    aoListVol3.Add(new AudioFocused(audioContr));
+                else
+                    throw new NotImplementedException();
+            }
 
         foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
-            aoListVol4.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+            if (!mavc_ao.type.Equals("Function"))
+                aoListVol4.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+            else
+            {
+                if (mavc_ao.name.Equals("Focused"))
+                    aoListVol4.Add(new AudioFocused(audioContr));
+                else
+                    throw new NotImplementedException();
+            }
     }
 
     static void Main(string[] args)

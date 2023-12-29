@@ -104,4 +104,9 @@ class AudioApp : AudioOutput
             return false;   
         }
     }
+
+    public AudioSessionControl getSessionController()
+    {
+        return asc;
+    }
 }

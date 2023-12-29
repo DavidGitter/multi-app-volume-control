@@ -7,6 +7,9 @@
     <Compile Include="../../shared/audio/AudioController.cs" />
     <Compile Include="../../shared/audio/AudioDevice.cs" />
     <Compile Include="../../shared/audio/AudioApp.cs" />
+    <Compile Include="..\..\shared\audio\AudioFocused.cs">
+      <Link>AudioFocused.cs</Link>
+    </Compile>
     <Compile Include="ThreadSafeBool.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
