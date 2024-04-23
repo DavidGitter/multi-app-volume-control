@@ -89,33 +89,48 @@ namespace mavc_target_ui_win
 
         private void checkForUpdate()
         {
-            Debug.WriteLine("Checking for latest version available...");
-
-            GitHubClient client = new GitHubClient(new ProductHeaderValue("MavcAutoUpdater"));
-            IReadOnlyList<Release> releases = Task.Run(() => client.Repository.Release.GetAll("DavidGitter", "multi-app-volume-control")).GetAwaiter().GetResult();
-
-            Debug.WriteLine("Latest Release Tag found: " + releases[0].TagName);
-
-            //Setup the versions
-            Version latestGitHubVersion = new Version(releases[0].TagName);
-            Version localVersion = new Version(CURRENT_VERSION); //Replace this with your local version. 
-                                                         //Only tested with numeric values.
-
-            //Compare the Versions
-            //Source: https://stackoverflow.com/questions/7568147/compare-version-numbers-without-using-split-function
-            int versionComparison = localVersion.CompareTo(latestGitHubVersion);
-            if (versionComparison < 0)
+            Version latestGitHubVersion = null;
+            Version localVersion = null;
+            try
             {
-                //The version on GitHub is more up to date than this local release.
-                updateApplication();
+                Debug.WriteLine("Checking for latest version available...");
+
+                GitHubClient client = new GitHubClient(new ProductHeaderValue("MavcAutoUpdater"));
+                IReadOnlyList<Release> releases = Task.Run(() => client.Repository.Release.GetAll("DavidGitter", "multi-app-volume-control")).GetAwaiter().GetResult();
+
+                Debug.WriteLine("Latest Release Tag found: " + releases[0].TagName);
+
+                //Setup the versions
+                latestGitHubVersion = new Version(releases[0].TagName);
+                localVersion = new Version(CURRENT_VERSION); //Replace this with your local version. 
             }
-            else if (versionComparison > 0)
+            catch (Exception e)
             {
-                //This local version is greater than the release version on GitHub.
+                logger.Error("An error occured while checking for available updates: " + e.ToString());
+            }                                                                     //Only tested with numeric values.
+
+            try
+            {
+                //Compare the Versions
+                //Source: https://stackoverflow.com/questions/7568147/compare-version-numbers-without-using-split-function
+                int versionComparison = localVersion.CompareTo(latestGitHubVersion);
+                if (versionComparison < 0 && localVersion != null && latestGitHubVersion != null)
+                {
+                        //The version on GitHub is more up to date than this local release.
+                        updateApplication();
+                }
+                else if (versionComparison > 0)
+                {
+                    //This local version is greater than the release version on GitHub.
+                }
+                else
+                {
+                    //This local Version and the Version on GitHub are equal.
+                }
             }
-            else
+            catch (Exception e)
             {
-                //This local Version and the Version on GitHub are equal.
+                logger.Error("An error occured while trying to install the latest update: " + e.ToString());
             }
         }
 
