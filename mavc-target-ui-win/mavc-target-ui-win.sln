@@ -5,16 +5,32 @@ VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mavc-target-ui-win", "mavc-target-ui-win\mavc-target-ui-win.csproj", "{68766CD6-CCA8-4E09-8506-07FD0A9748FC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "mavc-target-agent", "..\mavc-target-agent\mavc-target-agent\mavc-target-agent.csproj", "{A3792127-162D-4CC1-9895-0533388AAACB}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "MavcSetup", "..\mavc-setup\MavcSetup\MavcSetup.vdproj", "{7A003B39-5459-4D51-99ED-D785CB873FE8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_Console|Any CPU = Debug_Console|Any CPU
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{68766CD6-CCA8-4E09-8506-07FD0A9748FC}.Debug_Console|Any CPU.ActiveCfg = Debug|Any CPU
+		{68766CD6-CCA8-4E09-8506-07FD0A9748FC}.Debug_Console|Any CPU.Build.0 = Debug|Any CPU
 		{68766CD6-CCA8-4E09-8506-07FD0A9748FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{68766CD6-CCA8-4E09-8506-07FD0A9748FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{68766CD6-CCA8-4E09-8506-07FD0A9748FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{68766CD6-CCA8-4E09-8506-07FD0A9748FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3792127-162D-4CC1-9895-0533388AAACB}.Debug_Console|Any CPU.ActiveCfg = Debug_Console|Any CPU
+		{A3792127-162D-4CC1-9895-0533388AAACB}.Debug_Console|Any CPU.Build.0 = Debug_Console|Any CPU
+		{A3792127-162D-4CC1-9895-0533388AAACB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3792127-162D-4CC1-9895-0533388AAACB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3792127-162D-4CC1-9895-0533388AAACB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3792127-162D-4CC1-9895-0533388AAACB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A003B39-5459-4D51-99ED-D785CB873FE8}.Debug_Console|Any CPU.ActiveCfg = Debug
+		{7A003B39-5459-4D51-99ED-D785CB873FE8}.Debug|Any CPU.ActiveCfg = Debug
+		{7A003B39-5459-4D51-99ED-D785CB873FE8}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

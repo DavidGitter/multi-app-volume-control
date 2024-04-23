@@ -6,11 +6,19 @@ using System.Runtime.Serialization;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 using System.Xml.Linq;
+using System.Diagnostics;
+using System.IO.Compression;
+using System.Net;
+using static System.Net.WebRequestMethods;
+using Octokit;
+using System.Threading.Tasks;
 
 namespace mavc_target_ui_win
 {
     public partial class Form1 : Form
     {
+        private string CURRENT_VERSION = "1.0.0";
+
         private AudioController audioController;
         private string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
         private string configFileName = "config.json";
@@ -25,37 +33,123 @@ namespace mavc_target_ui_win
         // for notifying if there is a ui update
         ThreadSafeBool updateUIFlag = new ThreadSafeBool();
 
+        Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"MAVC", "form-log.txt"));
+
         public Form1()
         {
-            //load list of apps and devices
-            InitializeComponent();
-
-            this.Text = "MAVC";
-            this.Icon = new System.Drawing.Icon("../../icon.ico");
-
-            mavcSave = new MAVCSave();
-            audioController = new AudioController();
-            configFilePath = Path.Combine(configSavePath, configFileName);
-
-            loadConfig(configSavePath, configFileName);
-
-            var devices = audioController.GetAudioDevices();
-            foreach(var dev in devices)
+            try
             {
-                dev.OnOutputCreated((sender, newSession) => {
-                    Console.WriteLine("new output registered");
-                    updateUIFlag.Value = true;
-                });
-            }
+                //load list of apps and devices
+                InitializeComponent();
 
-            foreach(var ou in availableOutputs)
+                // Auto Check for update
+                checkForUpdate();
+
+                this.Text = "MAVC";
+                this.versionText.Text = CURRENT_VERSION;
+
+                try
+                {
+                    this.Icon = new System.Drawing.Icon("./icon.ico");
+                }
+                catch
+                {
+                    logger.Warning("App-Icon not found!");
+                }
+
+                mavcSave = new MAVCSave();
+                audioController = new AudioController();
+                configFilePath = Path.Combine(configSavePath, configFileName);
+
+                loadConfig(configSavePath, configFileName);
+
+                var devices = audioController.GetAudioDevices();
+                foreach (var dev in devices)
+                {
+                    dev.OnOutputCreated((sender, newSession) =>
+                    {
+                        Console.WriteLine("new output registered");
+                        updateUIFlag.Value = true;
+                    });
+                }
+
+                foreach (var ou in availableOutputs)
+                {
+                    Console.WriteLine(ou.ToString());
+                }
+
+                updateTimer.Interval = 3000;   // milliseconds
+                updateTimer.Tick += updateTimer_Tick;  // set handler
+                updateTimer.Start();
+            }
+            catch (Exception e){
+                logger.Error(e.ToString());
+            }
+        }
+
+        private void checkForUpdate()
+        {
+            Debug.WriteLine("Checking for latest version available...");
+
+            GitHubClient client = new GitHubClient(new ProductHeaderValue("MavcAutoUpdater"));
+            IReadOnlyList<Release> releases = Task.Run(() => client.Repository.Release.GetAll("DavidGitter", "multi-app-volume-control")).GetAwaiter().GetResult();
+
+            Debug.WriteLine("Latest Release Tag found: " + releases[0].TagName);
+
+            //Setup the versions
+            Version latestGitHubVersion = new Version(releases[0].TagName);
+            Version localVersion = new Version(CURRENT_VERSION); //Replace this with your local version. 
+                                                         //Only tested with numeric values.
+
+            //Compare the Versions
+            //Source: https://stackoverflow.com/questions/7568147/compare-version-numbers-without-using-split-function
+            int versionComparison = localVersion.CompareTo(latestGitHubVersion);
+            if (versionComparison < 0)
             {
-                Console.WriteLine(ou.ToString());
+                //The version on GitHub is more up to date than this local release.
+                updateApplication();
             }
+            else if (versionComparison > 0)
+            {
+                //This local version is greater than the release version on GitHub.
+            }
+            else
+            {
+                //This local Version and the Version on GitHub are equal.
+            }
+        }
 
-            updateTimer.Interval = 3000;   // milliseconds
-            updateTimer.Tick += updateTimer_Tick;  // set handler
-            updateTimer.Start();
+        private void updateApplication()
+        {
+            WebClient webClient = new WebClient();
+            var client = new WebClient();
+
+            string repoLink = "https://github.com/DavidGitter/multi-app-volume-control";
+            string repoLatestRelease = repoLink + "/releases/latest/download/MavcSetup.zip";
+
+            if (MessageBox.Show("A new update is available! Do you want to download it?", "Update Available!", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                try
+                {
+                    string mavcFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
+                    string msiFilePath = Path.Combine(mavcFolderPath, "MavcSetup.msi");
+                    string zipFilePath = Path.Combine(mavcFolderPath, "MavcSetup.zip");
+                    if (System.IO.File.Exists(msiFilePath)) { System.IO.File.Delete(msiFilePath); }
+                    client.DownloadFile(repoLatestRelease, zipFilePath);
+                    string zipPath = zipFilePath;
+                    string extractPath = mavcFolderPath;
+                    ZipFile.ExtractToDirectory(zipPath, extractPath);
+                    Process process = new Process();
+                    process.StartInfo.FileName = "msiexec.exe";
+                    process.StartInfo.Arguments = string.Format("/i " + msiFilePath);
+                    this.Close();
+                    process.Start();
+                }
+                catch(Exception ex)
+                {
+                    logger.Error(ex.ToString());
+                }
+            }
         }
 
         private void updateTimer_Tick(object sender, EventArgs e)  //run this logic each timer tick
@@ -394,17 +488,17 @@ namespace mavc_target_ui_win
         private void save(string path, string file)
         {
             updateMavcSave();
-            if (!File.Exists(Path.Combine(path, file)))
+            if (!System.IO.File.Exists(Path.Combine(path, file)))
             {
                 Directory.CreateDirectory(path);
-                File.Create(file);
+                System.IO.File.Create(file);
             }
 
             // Serialize the class to JSON
             string json = JsonConvert.SerializeObject(mavcSave);
 
             // Save the JSON string to a file
-            File.WriteAllText(configFilePath, json);
+            System.IO.File.WriteAllText(configFilePath, json);
         }
 
         /**
@@ -467,9 +561,9 @@ namespace mavc_target_ui_win
         private void loadConfig(string configFileFolder, string configFileName)
         {
             string configFilePath = Path.Combine(configFileFolder, configFileName);
-            if (File.Exists(configFilePath))
+            if (System.IO.File.Exists(configFilePath))
             {
-                string json = File.ReadAllText(configFilePath);
+                string json = System.IO.File.ReadAllText(configFilePath);
                 mavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
                 loadFromMavcSave();
             }
