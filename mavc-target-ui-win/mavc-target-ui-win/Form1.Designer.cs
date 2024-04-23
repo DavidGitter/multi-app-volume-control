@@ -58,6 +58,7 @@
             this.refreshToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.additionalBox = new System.Windows.Forms.GroupBox();
             this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
+            this.versionText = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -367,11 +368,23 @@
             this.reverseKnobsCheckbox.UseVisualStyleBackColor = true;
             this.reverseKnobsCheckbox.CheckedChanged += new System.EventHandler(this.reverseKnobsCheckbox_CheckedChanged);
             // 
+            // versionText
+            // 
+            this.versionText.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.versionText.BackColor = System.Drawing.SystemColors.MenuBar;
+            this.versionText.Location = new System.Drawing.Point(1256, 4);
+            this.versionText.Name = "versionText";
+            this.versionText.ReadOnly = true;
+            this.versionText.Size = new System.Drawing.Size(72, 20);
+            this.versionText.TabIndex = 12;
+            this.versionText.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1328, 718);
+            this.Controls.Add(this.versionText);
             this.Controls.Add(this.additionalBox);
             this.Controls.Add(this.discSelBtn);
             this.Controls.Add(this.delItemBtn);
@@ -434,6 +447,7 @@
         private System.Windows.Forms.CheckBox reverseCheckbox4;
         private System.Windows.Forms.CheckBox reverseKnobsCheckbox;
         private System.Windows.Forms.ToolStripMenuItem refreshToolStripMenuItem;
+        private System.Windows.Forms.TextBox versionText;
     }
 }
 
