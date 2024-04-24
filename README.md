@@ -29,7 +29,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[!Intro Picture](/docs/readme-pics/mixer-pic.jpg)
+![Intro-Picture](/docs/readme-pics/mixer-pic.jpg)
 
 Can you relate? You're playing a relaxed game or concentrating on your work and suddenly your mate comes into the voice channel who installed a soundboard for the first time and is now getting on your nerves with unfunny meme sounds. I have good news for you! 
 
@@ -53,7 +53,7 @@ This project consits of the following components:
 - The **User Interface (UI)** with which you configurate your mixer
 
 This results in the following structure:
-[!Archtitecture](/docs/diagrams/architecture.png)
+![Archtitecture](./docs/diagrams/architecture.png?raw)
 
 ### Knowledge Prerequisites
 - A little knowledge about Mirocontroller and electronics
@@ -70,10 +70,10 @@ What you need in terms of software in order to use your own mixer:
 What you need in to build your own volume controller:
 - 4x 10kOhm Potentiometer (linear)
 
-<!--[!Poti](/docs/readme-pics/architecture.png)-->
+<!--![Poti](/docs/readme-pics/architecture.png)-->
 
 - Breadboard and Jumper Cable (just for the development phase, later you might want to switch to a PCB)
-<!--[!Breadboard and Jumpercable](/docs/readme-pics/breadboard.png)-->
+<!--![Breadboard and Jumpercable](/docs/readme-pics/breadboard.png)-->
 
 - A Microcontroller that can be used out-of-the-box with the Arduino Enviroment, e.g. ESP32 like in this project, Arduino UNO...
 >[!IMPORTANT]
@@ -82,7 +82,7 @@ What you need in to build your own volume controller:
 
 - A breadboard and jumper cables (now or later you might consider getting a PCB online for a small amount of money)
 <!-- TODO: provide a working PCB file for the users -->
-<!--[!Microcontroller](/docs/readme-pics/breadboard.png)-->
+<!--![Microcontroller](/docs/readme-pics/breadboard.png)-->
 
 - A cool looking case for your mixer (this might be the hardest part where you are on your own ;))
 
@@ -103,23 +103,27 @@ To use the mixer the [MavcSetup.zip](https://github.com/DavidGitter/multi-app-vo
 Once the MavcSetup is installed you will get a Short-Cut to the Desktop for the User Interface with which you can configurate your mixer.
 
 *The user interface*
-[!UI](/docs/readme-pics/gui-v1.png)
+![UI](/docs/readme-pics/gui-v1.png)
 
 The UI consists of four sections. Each secetion belongs to one rotary knob that you can map your devices and applications too. The mapped applications and devices are shown in the list of each section. 
-[!GUI Sections](/docs/readme-pics/gui-sections.png)
-
 For every section there is a dropbox that provides the available Audio-Outputs like devices and applications you can map, but also higher functions. When selecting a item, it gets added to the list and is ready to be used. Every item has a type as bracket before the name (e.g. (Type) name-of-audio-output)
 There are currently four types:
 - **App**: A normal application that was found on your pc like a game
 - **Device**: A audio output device like a headphone or your speakers where you want to regulate the master volume
 - **Funtion**: A complex function of MAVC that allows you to make cool stuff (like "focus" where the application you currently using is choosen as regulation target)
-[!GUI Dropboxes](/docs/readme-pics/gui-sections.png)
+<p align="center">
+  <img src="/docs/readme-pics/gui-sections.png" />
+</p>
 
 On the right hand side there is a section for settings. Here you can apply specific configurations to your MAVC-system including actions like inverting the rotary knob mapping so that the rotary knobs are used in the reversed order.
-[!GUI Reverse Order](/docs/readme-pics/gui-reverse-order.png)
+<p align="center">
+  <img src="/docs/readme-pics/gui-reverse-order.png" />
+</p>
 
 If you have everything configurated the way you want you must save the configurations by pressing the *Save*-button in the right down corner. This saves the configurations made to the config.json file in your MAVC folder under documents.
-[!GUI Reverse Order](/docs/readme-pics/gui-save.png)
+<p align="center">
+  <img src="/docs/readme-pics/gui-save.png" />
+</p>
 
 For more information on the usage of the UI please refer to the [User-Interface.md](/docs/User-Interface.md)
 
