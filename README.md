@@ -53,6 +53,7 @@ This project consits of the following components:
 - The **User Interface (UI)** with which you configurate your mixer
 
 This results in the following structure:
+
 ![Archtitecture](./docs/diagrams/architecture.png?raw)
 
 ### Knowledge Prerequisites
