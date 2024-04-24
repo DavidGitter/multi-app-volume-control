@@ -106,21 +106,19 @@ Once the MavcSetup is installed you will get a Short-Cut to the Desktop for the 
 ![UI](/docs/readme-pics/gui-v1.png)
 
 The UI consists of four sections. Each secetion belongs to one rotary knob that you can map your devices and applications too. The mapped applications and devices are shown in the list of each section. 
-![GUI Sections](/docs/readme-pics/gui-sections.png)
-
 For every section there is a dropbox that provides the available Audio-Outputs like devices and applications you can map, but also higher functions. When selecting a item, it gets added to the list and is ready to be used. Every item has a type as bracket before the name (e.g. (Type) name-of-audio-output)
 There are currently four types:
 - **App**: A normal application that was found on your pc like a game
 - **Device**: A audio output device like a headphone or your speakers where you want to regulate the master volume
 - **Funtion**: A complex function of MAVC that allows you to make cool stuff (like "focus" where the application you currently using is choosen as regulation target)
-![GUI Dropboxes](/docs/readme-pics/gui-sections.png)
+![GUI Sections](/docs/readme-pics/gui-sections.png)
 
 On the right hand side there is a section for settings. Here you can apply specific configurations to your MAVC-system including actions like inverting the rotary knob mapping so that the rotary knobs are used in the reversed order.
 ![GUI Reverse Order](/docs/readme-pics/gui-reverse-order.png)
 
 If you have everything configurated the way you want you must save the configurations by pressing the *Save*-button in the right down corner. This saves the configurations made to the config.json file in your MAVC folder under documents.
-<p>
-![GUI Reverse Order](/docs/readme-pics/gui-save.png)
+<p align="center">
+  <img src="/docs/readme-pics/gui-save.png" />
 </p>
 
 For more information on the usage of the UI please refer to the [User-Interface.md](/docs/User-Interface.md)
