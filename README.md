@@ -116,7 +116,9 @@ There are currently four types:
 </p>
 
 On the right hand side there is a section for settings. Here you can apply specific configurations to your MAVC-system including actions like inverting the rotary knob mapping so that the rotary knobs are used in the reversed order.
-![GUI Reverse Order](/docs/readme-pics/gui-reverse-order.png)
+<p align="center">
+  <img src="/docs/readme-pics/gui-reverse-order.png" />
+</p>
 
 If you have everything configurated the way you want you must save the configurations by pressing the *Save*-button in the right down corner. This saves the configurations made to the config.json file in your MAVC folder under documents.
 <p align="center">
