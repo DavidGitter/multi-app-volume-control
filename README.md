@@ -29,7 +29,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[!Intro Picture](https://raw.githubusercontent.com/DavidGitter/multi-app-volume-control/dev/docs/readme-pics/mixer-pic.jpg)
+[!Intro-Picture](https://raw.githubusercontent.com/DavidGitter/multi-app-volume-control/dev/docs/readme-pics/mixer-pic.jpg)
 
 Can you relate? You're playing a relaxed game or concentrating on your work and suddenly your mate comes into the voice channel who installed a soundboard for the first time and is now getting on your nerves with unfunny meme sounds. I have good news for you! 
 
