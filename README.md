@@ -29,7 +29,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[!Intro-Picture](/docs/readme-pics/mixer-pic.jpg)
+![Intro-Picture](/docs/readme-pics/mixer-pic.jpg)
 
 Can you relate? You're playing a relaxed game or concentrating on your work and suddenly your mate comes into the voice channel who installed a soundboard for the first time and is now getting on your nerves with unfunny meme sounds. I have good news for you! 
 
@@ -119,7 +119,9 @@ On the right hand side there is a section for settings. Here you can apply speci
 ![GUI Reverse Order](/docs/readme-pics/gui-reverse-order.png)
 
 If you have everything configurated the way you want you must save the configurations by pressing the *Save*-button in the right down corner. This saves the configurations made to the config.json file in your MAVC folder under documents.
+<p>
 ![GUI Reverse Order](/docs/readme-pics/gui-save.png)
+</p>
 
 For more information on the usage of the UI please refer to the [User-Interface.md](/docs/User-Interface.md)
 
