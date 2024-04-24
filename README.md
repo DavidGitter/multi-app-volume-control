@@ -111,7 +111,9 @@ There are currently four types:
 - **App**: A normal application that was found on your pc like a game
 - **Device**: A audio output device like a headphone or your speakers where you want to regulate the master volume
 - **Funtion**: A complex function of MAVC that allows you to make cool stuff (like "focus" where the application you currently using is choosen as regulation target)
-![GUI Sections](/docs/readme-pics/gui-sections.png)
+<p align="center">
+  <img src="/docs/readme-pics/gui-sections.png" />
+</p>
 
 On the right hand side there is a section for settings. Here you can apply specific configurations to your MAVC-system including actions like inverting the rotary knob mapping so that the rotary knobs are used in the reversed order.
 ![GUI Reverse Order](/docs/readme-pics/gui-reverse-order.png)
