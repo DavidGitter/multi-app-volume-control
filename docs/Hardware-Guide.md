@@ -7,11 +7,13 @@ This guide contains a step-by-step instruction on how to build your own volume m
 You will need the following parts to build your mixer:
 - **10 kOhm Potentiometer (linear)**
   For this project 4x B10K Potentiometer are used
-  <img src="/docs/readme-pics/poti.png" alt="drawing" width="200"/>
+
+<img src="/docs/readme-pics/poti.png" alt="drawing" width="200"/>
 
 - **Breadboard and Jumper Cable** 
   Just for the development phase, later you might want to switch to a PCB
-  <img src="/docs/readme-pics/bread.png" alt="drawing" width="200"/>
+  
+<img src="/docs/readme-pics/bread.png" alt="drawing" width="200"/>
 
 - **A Microcontroller** 
   It should be able to be used out-of-the-box with the Arduino Enviroment like a ESP32 or a Arduino UNO.
@@ -20,7 +22,7 @@ You will need the following parts to build your mixer:
   >[!IMPORTANT]
   >The micro controller you choose should be have atleast 4 ADC Pins where the rotary knobs are connected to. To find out if a microcontroller is usaable please refer to its datasheet.
   
-  <img src="/docs/readme-pics/microcontroller.png" alt="drawing" width="200"/>
+<img src="/docs/readme-pics/microcontroller.png" alt="drawing" width="200"/>
 
 - **Mixer Casing**
   You can let your creativity run wild when building the casing for your volume mixer. Bear in mind that all parts of your project must fit inside and that no short circuits are caused by contacts that are in contact with a metal casing, for example. 
