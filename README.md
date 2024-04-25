@@ -100,6 +100,8 @@ For the build of the mixer hardware in detail please refer to the [Hardware Setu
 
 To use the mixer the [MavcSetup.zip](https://github.com/DavidGitter/multi-app-volume-control/releases/latest) needs to be installed. It automaticlly looks for updates on every startup of the user-interface.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 <!-- USAGE EXAMPLES -->
 ## Usage
 Once the MavcSetup is installed you will get a Short-Cut to the Desktop for the User Interface with which you can configurate your mixer.
