@@ -37,7 +37,7 @@ Can you relate? You're playing a relaxed game or concentrating on your work and 
 With this repository you have all the basics to build your own open-source soundboard and mute your mate for all eternity with a single turn of a knob. This means you don't have to go to the Windows volume mixer but can easily adjust the volume for any application with (currently) upto 4 rotary knobs and a User Interface to configurate them.
 
 ### Have I piqued your interest?
-Then continue reading below under [Getting Started](##Getting-Started).
+Then continue reading below under [Getting Started](#Getting-Started).
 
 ### Do you want to costumise or improve the project?
 Then read the [Developer Guide](/docs/Developer.md) to further develope the project.
