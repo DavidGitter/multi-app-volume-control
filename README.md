@@ -32,9 +32,9 @@
 
 ![Intro-Picture](/docs/readme-pics/mixer-pic.jpg)
 
-Can you relate? You're playing a relaxed game or concentrating on your work and suddenly your mate comes into the voice channel who installed a soundboard for the first time and is now getting on your nerves with unfunny meme sounds. I have good news for you! 
+Can you relate? You're playing a relaxed game or concentrating on your work and suddenly your mate comes into the voice channel who installed a soundboard for the first time and is now getting on your nerves with unfunny meme sounds. I have good news for you! Now you can mute your mate for all eternity with a single turn of a knob.
 
-With this repository you have all the basics to build your own open-source soundboard and mute your mate for all eternity with a single turn of a knob. This means you don't have to go to the Windows volume mixer but can easily adjust the volume for any application with (currently) upto 4 rotary knobs and a User Interface to configurate them.
+With this repository you have all the basics to build your own open-source soundboard. This means you don't have to use the Windows volume mixer or some shortcuts on your keyboard but can easily adjust the volume for any application with (currently) upto 4 rotary knobs and a User Interface to configurate them.
 
 ### Have I piqued your interest?
 Then continue reading below under [Getting Started](#Getting-Started).
@@ -127,6 +127,7 @@ If you have everything configurated the way you want you must save the configura
 ## Roadmap
 This roadmap has to be updated in the future.
 - [x] Basic software system
+- [ ] Support for Incremental Encoders as an alternative to potentiometers
 - [ ] Burn-Application for μ-Controller
 - [ ] Make system more generic (e.g. choosable how much knobs to use and so on)
 - [ ] Plugin system
