@@ -69,7 +69,7 @@ What you need in terms of software in order to use your own mixer:
 - The latest [MavcSetup.zip](https://github.com/DavidGitter/multi-app-volume-control/releases/latest) found in this repository under Release
 
 ### Hardware Prerequisites
-This is a small overview of what you need in order to build your own volume controller. For more details please refer to the [Hardware Setup Guide](/docs/Hardware-Setup.md) in the docs folder.
+This is a small overview of what you need in order to build your own volume controller. For more details please refer to the [Hardware Setup Guide](/docs/Hardware-Guide.md) in the docs folder.
 - 4x 10kOhm Potentiometer (linear)
 - A Microcontroller that can be used out-of-the-box with the Arduino Enviroment and has 4 ADC pins
 <!--(otherwise if you have less you might need to customise the Microcontroller code to do [multiplexing](https://en.wikipedia.org/wiki/Multiplexing) or use an external AD-IC). To find out whether your Microcontroller is suitable, you can usually simply lookup Images with "your-Microcontroller-name pinout" in your browser or refer to the appropriate data sheet.-->
@@ -84,7 +84,7 @@ This is a small overview of what you need in order to build your own volume cont
 
 
 ### Installation
-For the build of the mixer hardware in detail please refer to the [Hardware Setup Guide](/docs/Hardware-Setup.md) in the docs folder.
+For the build of the mixer hardware in detail please refer to the [Hardware Setup Guide](/docs/Hardware-Guide.md) in the docs folder.
 
 To use the mixer the [MavcSetup.zip](https://github.com/DavidGitter/multi-app-volume-control/releases/latest) needs to be installed. It automaticlly looks for updates on every startup of the user-interface.
 
