@@ -96,7 +96,7 @@ What you need in to build your own volume controller:
 
 
 ### Installation
-For the build of the mixer hardware in detail please refer to the [Hardware Setup Guide](/docs/Hardware Setup.md) in the docs folder.
+For the build of the mixer hardware in detail please refer to the [Hardware Setup Guide](/docs/Hardware-Setup.md) in the docs folder.
 
 To use the mixer the [MavcSetup.zip](https://github.com/DavidGitter/multi-app-volume-control/releases/latest) needs to be installed. It automaticlly looks for updates on every startup of the user-interface.
 
@@ -109,12 +109,12 @@ Once the MavcSetup is installed you will get a Short-Cut to the Desktop for the 
 *The user interface*
 ![UI](/docs/readme-pics/gui-v1.png)
 
-The UI consists of four sections. Each secetion belongs to one rotary knob that you can map your devices and applications too. The mapped applications and devices are shown in the list of each section. 
-For every section there is a dropbox that provides the available Audio-Outputs like devices and applications you can map, but also higher functions. When selecting a item, it gets added to the list and is ready to be used. Every item has a type as bracket before the name (e.g. (Type) name-of-audio-output)
-There are currently four types:
-- **App**: A normal application that was found on your pc like a game
-- **Device**: A audio output device like a headphone or your speakers where you want to regulate the master volume
-- **Funtion**: A complex function of MAVC that allows you to make cool stuff (like "focus" where the application you currently using is choosen as regulation target)
+The UI consists of four sections. Each section belongs to one rotary knob that you can map your devices and applications too. The mapped applications and devices are shown in the list of each section. 
+For every section there is a dropbox that provides the available Audio-Outputs like devices and applications you can map, but also other functions. When selecting a item, it gets added to the list and is ready to be used. Every item has a bracket on front of its name containing the type of it (e.g. "(Type) name-of-audio-output")
+There are currently three types:
+- **App**: A normal application that was found on your pc like a game or your browser
+- **Device**: A audio output device like a headphone or your speakers on which you want to regulate the master volume
+- **Function**: A complex function of MAVC that allows you to make cool stuff (like "focus" where the application you currently using is choosen as regulation target)
 <p align="center">
   <img src="/docs/readme-pics/gui-sections.png" />
 </p>
@@ -124,12 +124,12 @@ On the right hand side there is a section for settings. Here you can apply speci
   <img src="/docs/readme-pics/gui-reverse-order.png" />
 </p>
 
-If you have everything configurated the way you want you must save the configurations by pressing the *Save*-button in the right down corner. This saves the configurations made to the config.json file in your MAVC folder under documents.
+If you have everything configurated the way you want you must save the configurations by pressing the *Save*-button in the right down corner. This saves your configurations to the config.json file in your MAVC folder under documents.
 <p align="center">
   <img src="/docs/readme-pics/gui-save.png" />
 </p>
 
-For more information on the usage of the UI please refer to the [User-Interface.md](/docs/User-Interface.md)
+<!--TODO: For more information on the usage of the UI please refer to the [User-Interface.md](/docs/User-Interface.md)-->
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
