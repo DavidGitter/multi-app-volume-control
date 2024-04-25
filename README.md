@@ -69,25 +69,13 @@ What you need in terms of software in order to use your own mixer:
 - The latest [MavcSetup.zip](https://github.com/DavidGitter/multi-app-volume-control/releases/latest) found in this repository under Release
 
 ### Hardware Prerequisites
-What you need in to build your own volume controller:
+This is a small overview of what you need in order to build your own volume controller. For more details please refer to the [Hardware Setup Guide](/docs/Hardware-Setup.md) in the docs folder.
 - 4x 10kOhm Potentiometer (linear)
-
-<!--![Poti](/docs/readme-pics/architecture.png)-->
-
-- Breadboard and Jumper Cable (just for the development phase, later you might want to switch to a PCB)
-<!--![Breadboard and Jumpercable](/docs/readme-pics/breadboard.png)-->
-
-- A Microcontroller that can be used out-of-the-box with the Arduino Enviroment, e.g. ESP32 like in this project, Arduino UNO...
->[!IMPORTANT]
->The micro controller you choose should be have atleast 4 ADC Pins where the rotary knobs are connected to
+- A Microcontroller that can be used out-of-the-box with the Arduino Enviroment and has 4 ADC pins
 <!--(otherwise if you have less you might need to customise the Microcontroller code to do [multiplexing](https://en.wikipedia.org/wiki/Multiplexing) or use an external AD-IC). To find out whether your Microcontroller is suitable, you can usually simply lookup Images with "your-Microcontroller-name pinout" in your browser or refer to the appropriate data sheet.-->
-
 - A breadboard and jumper cables (now or later you might consider getting a PCB online for a small amount of money)
 <!-- TODO: provide a working PCB file for the users -->
-<!--![Microcontroller](/docs/readme-pics/breadboard.png)-->
-
 - A cool looking case for your mixer (this might be the hardest part where you are on your own ;))
-
 <!-- TODO: add 3D printing files for users owning a 3D printer -->
 
 ### Other Prerequisites
