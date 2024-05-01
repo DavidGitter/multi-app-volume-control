@@ -11,8 +11,8 @@ class AudioFocused : AudioOutput
 {
     // the audio controller
     private AudioController ac;
-    // the focused audio app -> NULL WHEN NOT A AUDIO APP
-    private AudioApp aa;
+    // the focused audio outputs -> NULL WHEN NOT A AUDIO APP
+    private List<AudioOutput> aos;
     // name of the app
     private string name;
     // pid of the last updated focus
@@ -26,16 +26,16 @@ class AudioFocused : AudioOutput
     {
         this.name = "Focused";
         this.ac = ac;
-        this.aa = GetFocusedAudioApp();
+        this.aos = GetFocusedAudioApp();
     }
 
     public override bool available()
     {
         try
         {
-            if (aa == null)
+            if (aos == null || aos[0] == null)
                 return false;
-            var asc = aa.getSessionController();
+            var asc = ((AudioApp)aos[0]).getSessionController();
             if (asc == null)
                 return false;
             return asc.State != NAudio.CoreAudioApi.Interfaces.AudioSessionState.AudioSessionStateExpired;
@@ -58,15 +58,29 @@ class AudioFocused : AudioOutput
 
     public override float GetVolume()
     {
-        AudioApp focused = GetFocusedAudioApp();
-        return focused != null ? focused.GetVolume() : -1;
+        List<AudioOutput> focused = GetFocusedAudioApp();
+        if (focused == null || focused.Count == 0)
+            return -1;
+        float vol = -1;
+        foreach(AudioOutput ao in aos)
+        {
+            AudioApp aa = (AudioApp)ao;
+            if (aa.getSessionController().State != NAudio.CoreAudioApi.Interfaces.AudioSessionState.AudioSessionStateInactive && ((AudioApp)ao).getSessionController().State != NAudio.CoreAudioApi.Interfaces.AudioSessionState.AudioSessionStateExpired)
+                vol = aa.GetVolume();
+        }
+        return focused != null ? vol : -1;
     }
 
     public override void SetVolume(float volume)
     {
-        AudioApp focused = GetFocusedAudioApp();
-        if(focused != null)
-            focused.SetVolume(volume);
+        List<AudioOutput> focused = GetFocusedAudioApp();
+        if (focused == null || focused.Count == 0)
+            return;
+
+        foreach (AudioOutput ao in aos)
+        {
+            ((AudioApp)ao).SetVolume(volume);
+        }
     }
 
     public override string ToString()
@@ -94,7 +108,7 @@ class AudioFocused : AudioOutput
         return 0;
     }
 
-    private AudioApp GetFocusedAudioApp()
+    private List<AudioOutput> GetFocusedAudioApp()
     {
         try
         {
@@ -102,9 +116,9 @@ class AudioFocused : AudioOutput
             if (pid != newestPid)
             {
                 pid = newestPid;
-                aa = (AudioApp)ac.GetOutputByName(Process.GetProcessById(GetFocusedProcessId()).ProcessName);
+                aos = ac.GetOutputsByName(Process.GetProcessById(GetFocusedProcessId()).ProcessName);
             }
-            return aa;
+            return aos;
         }
         catch (KeyNotFoundException knfe)
         {
