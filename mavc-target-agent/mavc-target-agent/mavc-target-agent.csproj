@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -17,7 +17,8 @@
 	<Compile Include="../../shared/audio/AudioController.cs" />
 	<Compile Include="../../shared/audio/AudioDevice.cs" />
 	<Compile Include="../../shared/audio/AudioApp.cs" />
-	<Compile Include="..\..\shared\audio\AudioFocused.cs" Link="AudioFocused.cs" />
+	<Compile Include="../../shared/audio/AudioFocused.cs" />
+	<Compile Include="../../shared/audio/AudioStream.cs" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
   </ItemGroup>
