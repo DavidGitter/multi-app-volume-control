@@ -7,6 +7,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;Debug_Console</Configurations>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +21,11 @@
 	<Compile Include="../../shared/audio/AudioApp.cs" />
 	<Compile Include="../../shared/audio/AudioFocused.cs" />
 	<Compile Include="../../shared/audio/AudioStream.cs" />
+	<Content Include="icon.ico" />
+	<None Include="..\..\docs\icon\icon.png">
+	  <Pack>True</Pack>
+	  <PackagePath>\</PackagePath>
+	</None>
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
   </ItemGroup>
