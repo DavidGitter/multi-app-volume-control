@@ -34,9 +34,9 @@ class AudioDevice : AudioOutput
     }
 
     /**
-     * Returns all audio apps that are running and outputing to this device
+     * Returns all audio streams that are running and outputing to this device
      *
-     * @returns a list of apps using this device
+     * @returns a list of streams using this device
      */
     public List<AudioStream> GetAudioStreams()
     {

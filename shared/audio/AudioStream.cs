@@ -1,7 +1,12 @@
 using NAudio.CoreAudioApi;
 using System.Diagnostics;
 using System;
+using System.Drawing;
 
+/**
+ * Represents a audio stream that streams sound on a specific device for a specific application
+ * Gets bundles by an AudioApplication
+ */
 class AudioStream : AudioOutput
 {
     // the related session controller
@@ -53,7 +58,7 @@ class AudioStream : AudioOutput
     }
 
     /**
-     * Set the volume of the app
+     * Set the volume of the stream
      *
      * @params volume   a value for the volume between 0 and 1
      */
@@ -70,7 +75,7 @@ class AudioStream : AudioOutput
     }
 
     /**
-     * returns the volume of the app
+     * returns the volume of the stream
      *
      * @returns a number between 0 and 1
      */
@@ -89,6 +94,11 @@ class AudioStream : AudioOutput
         return asc.IconPath;
     }
 
+    /**
+     * Returns if the stream is available
+     *
+     * @returns true if the stream is available (active or inactiv but not expired)
+     */
     public override bool available()
     {
         try
@@ -103,6 +113,11 @@ class AudioStream : AudioOutput
         }
     }
 
+    /**
+     * Returns the session controller of the stream
+     *
+     * @returns AudioSessionControl session controller
+     */
     public AudioSessionControl getSessionController()
     {
         return asc;

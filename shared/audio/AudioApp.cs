@@ -7,11 +7,11 @@ using System.Collections.Generic;
  */
 class AudioApp : AudioOutput
 {
+    // bundles all streams that are related to the application
     List<AudioStream> streams;
 
     /**
-     * @param asc           the audio controller
-     * @param audioDevice   the parent audio device of the application
+     * @param streams   the streams that are related with the application
      */
     public AudioApp(List<AudioStream> streams)
     {
@@ -92,6 +92,11 @@ class AudioApp : AudioOutput
         return streams[0].getSessionController().IconPath;
     }
 
+    /**
+     * Returns if the app is available
+     *
+     * @returns true if the stream is available (active or inactiv but not expired)
+     */
     public override bool available()
     {
         try
@@ -105,6 +110,11 @@ class AudioApp : AudioOutput
         }
     }
 
+    /**
+     * Returns the session controller of the stream
+     *
+     * @returns AudioSessionControl session controller
+     */
     public AudioSessionControl getSessionController()
     {
         return streams[0].getSessionController();

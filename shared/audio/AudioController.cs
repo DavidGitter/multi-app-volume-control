@@ -59,7 +59,11 @@ class AudioController
         return outputs;
 	}
 
-
+    /**
+     * Returns all audio applications bundeling there related AudioStreams
+     * 
+     * @returns     a list of the audio apps
+     */
     public List<AudioApp> GetAllAudioApps()
     {
         List<AudioApp> apps = new List<AudioApp>();
@@ -75,24 +79,15 @@ class AudioController
                                                               .Select(g => g.ToList())
                                                               .ToList();
 
-        //Console.WriteLine(sessionGroups);
-
-
-        //Console.WriteLine("########################################");
         foreach (List<AudioStream> las in sessionGroups)
         {
             try
             {
-                //Console.WriteLine("--------------------------");
-                foreach (AudioStream lstream in las)
-                {
-                    //Console.WriteLine(lstream.ToString());
-                }
                 apps.Add(new AudioApp(las));
             }
             catch (Exception e)
             {
-                //Console.WriteLine("Couldnt get audio output:\n" + e.StackTrace);
+                Console.WriteLine("Couldnt get audio output:\n" + e.StackTrace);
             }
         }
 
