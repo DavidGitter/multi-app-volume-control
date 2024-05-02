@@ -1134,7 +1134,7 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:MavcSetup"
+        "ProductName" = "8:Mavc"
         "ProductCode" = "8:{FB396EBC-5DFF-4042-86BA-AE2804958EAF}"
         "PackageCode" = "8:{872A75D2-3863-413F-8385-D5AA6913F9D2}"
         "UpgradeCode" = "8:{E7436358-7646-4783-91C4-F2C86C114CC8}"
@@ -1147,13 +1147,13 @@
         "Manufacturer" = "8:Admin"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
-        "Title" = "8:MavcSetup"
+        "Title" = "8:Mavc"
         "Subject" = "8:"
-        "ARPCONTACT" = "8:Admin"
+        "ARPCONTACT" = "8:"
         "Keywords" = "8:"
         "ARPCOMMENTS" = "8:"
         "ARPURLINFOABOUT" = "8:"
-        "ARPPRODUCTICON" = "8:"
+        "ARPPRODUCTICON" = "8:_70F96E04C6DA49018D02D57E9AE23101"
         "ARPIconIndex" = "3:0"
         "SearchPath" = "8:"
         "UseSystemSearchPath" = "11:TRUE"
@@ -1267,7 +1267,7 @@
             "Target" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
             "Folder" = "8:_E55A57CDD16943C38C2E49F1B8CC6840"
             "WorkingFolder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
-            "Icon" = "8:"
+            "Icon" = "8:_70F96E04C6DA49018D02D57E9AE23101"
             "Feature" = "8:"
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_141E945A8F2145D0ACDF3D65BE795AC6"
@@ -1281,7 +1281,7 @@
             "Target" = "8:_40C899DE0A394364AE6460244CD130B7"
             "Folder" = "8:_EDC69BB43DC2482F9291E6543ECE2C90"
             "WorkingFolder" = "8:_9194BC932B8F473591A9A10405E3BB8A"
-            "Icon" = "8:"
+            "Icon" = "8:_70F96E04C6DA49018D02D57E9AE23101"
             "Feature" = "8:"
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_506FF4AB378F4FACB4EDA0FE09383916"
@@ -1295,7 +1295,7 @@
             "Target" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
             "Folder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
             "WorkingFolder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
-            "Icon" = "8:"
+            "Icon" = "8:_70F96E04C6DA49018D02D57E9AE23101"
             "Feature" = "8:"
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_B34C61A4BA14493583C9A6447C3A4014"
@@ -1309,7 +1309,7 @@
             "Target" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
             "Folder" = "8:_B184A3F78C0B46ED8D3EF480F6B573E0"
             "WorkingFolder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
-            "Icon" = "8:"
+            "Icon" = "8:_70F96E04C6DA49018D02D57E9AE23101"
             "Feature" = "8:"
             }
         }
