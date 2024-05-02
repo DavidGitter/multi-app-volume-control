@@ -1,21 +1,24 @@
-﻿using System;
 using NAudio.CoreAudioApi;
-using System.Collections.Generic;
+using System.Diagnostics;
 
-/** 
- * Represents a audio app (e.g. Spotify) that outputs sound to a audio device
- */
-class AudioApp : AudioOutput
+class  AudioStream : AudioOutput
 {
-    List<AudioStream> streams;
+    // the related session controller
+    private AudioSessionControl asc;
+    // the parent audio deive where the sound gets outputed
+    private AudioDevice audioDevice;
+    // name of the app session
+    private string name;
 
     /**
      * @param asc           the audio controller
      * @param audioDevice   the parent audio device of the application
      */
-    public AudioApp(List<AudioStream> streams)
+    public AudioStream(AudioSessionControl asc, AudioDevice audioDevice)
     {
-        this.streams = streams;
+        this.asc = asc;
+        this.audioDevice = audioDevice;
+        this.name = Process.GetProcessById((int)asc.GetProcessID).ProcessName;
     }
 
     /**
@@ -25,7 +28,7 @@ class AudioApp : AudioOutput
      */
     public override string GetName()
     {
-        return streams[0].GetName();
+        return name;
     }
 
     /**
@@ -35,7 +38,7 @@ class AudioApp : AudioOutput
      */
     public AudioDevice GetIODevice()
     {
-        return streams[0].GetIODevice();
+        return audioDevice;
     }
 
     /**
@@ -45,7 +48,7 @@ class AudioApp : AudioOutput
      */
     public override string ToString()
     {
-        return "("+GetAudioType()+")" + "       " + GetName();
+        return "(" + GetAudioType() + ")" + "       " + GetName();
     }
 
     /**
@@ -55,15 +58,14 @@ class AudioApp : AudioOutput
      */
     public override void SetVolume(float volume)
     {
-        foreach (AudioStream stream in streams)
-            stream.getSessionController().SimpleAudioVolume.Volume = volume;
+        asc.SimpleAudioVolume.Volume = volume;
     }
 
     /* Type App
      */
     public override string GetAudioType()
     {
-        return "App";
+        return "Session";
     }
 
     /**
@@ -73,13 +75,7 @@ class AudioApp : AudioOutput
      */
     public override float GetVolume()
     {
-        float highest = 0;
-        foreach (AudioStream stream in streams)
-        {
-            float vol = stream.getSessionController().SimpleAudioVolume.Volume;
-            highest = vol > highest ? vol : highest;
-        }
-        return highest;
+        return asc.SimpleAudioVolume.Volume;
     }
 
     /**
@@ -89,24 +85,25 @@ class AudioApp : AudioOutput
      */
     public string GetIconPath()
     {
-        return streams[0].getSessionController().IconPath;
+        return asc.IconPath;
     }
 
     public override bool available()
     {
         try
         {
-            if (streams == null || streams[0].getSessionController() == null)
+            if (asc == null)
                 return false;
-            return streams[0].getSessionController().State != NAudio.CoreAudioApi.Interfaces.AudioSessionState.AudioSessionStateExpired;
-        }catch(NullReferenceException nre)
+            return asc.State != NAudio.CoreAudioApi.Interfaces.AudioSessionState.AudioSessionStateExpired;
+        }
+        catch (NullReferenceException nre)
         {
-            return false;   
+            return false;
         }
     }
 
     public AudioSessionControl getSessionController()
     {
-        return streams[0].getSessionController();
+        return asc;
     }
 }

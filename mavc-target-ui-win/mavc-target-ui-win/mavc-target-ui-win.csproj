@@ -10,6 +10,9 @@
     <Compile Include="..\..\shared\audio\AudioFocused.cs">
       <Link>AudioFocused.cs</Link>
     </Compile>
+    <Compile Include="..\..\shared\audio\AudioStream.cs">
+      <Link>AudioStream.cs</Link>
+    </Compile>
     <Compile Include="Log.cs" />
     <Compile Include="ThreadSafeBool.cs" />
   </ItemGroup>

@@ -264,16 +264,6 @@ class MavcAgent
         foreach (var dev in def)
         {
             Console.WriteLine(dev.GetName());   
-            var apps = dev.GetAudioApps();
-            int count = 0;
-            foreach (var app in apps)
-            {
-                if (app.GetName().Equals("Spotify"))
-                {
-                    count++;
-                }
-            }
-            Console.WriteLine("Spotify Count: " + count);
         }
 
         Console.WriteLine(SerialPort.GetPortNames());

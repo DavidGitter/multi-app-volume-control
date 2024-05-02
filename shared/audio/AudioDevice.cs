@@ -1,9 +1,11 @@
 ﻿using NAudio.CoreAudioApi;
 using NAudio.CoreAudioApi.Interfaces;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using static NAudio.CoreAudioApi.AudioSessionManager;
+using System.Linq;
 
 /**
  * Represents a audio output device of windows
@@ -36,7 +38,7 @@ class AudioDevice : AudioOutput
      *
      * @returns a list of apps using this device
      */
-    public AudioApp[] GetAudioApps()
+    public List<AudioStream> GetAudioStreams()
     {
         List<AudioApp> audioApps = new List<AudioApp>();
 
@@ -46,21 +48,14 @@ class AudioDevice : AudioOutput
         // Get the audio session control collection
         var sessionCollection = sessionManager.Sessions;
 
-        //Collect Apps related to device 
-        for (int i = 0; i < sessionCollection.Count; i++)
+        // Devide the streams into groups according to their application id
+        List<AudioStream> audioSessions = new List<AudioStream>();
+        for ( int i=0; i < sessionCollection.Count; i++ )
         {
-            try
-            {
-                var asc = sessionCollection[i];
-                audioApps.Add(new AudioApp(asc, this));
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Couldnt get audio output:\n" + e.StackTrace);
-            }
+            audioSessions.Add(new AudioStream(sessionCollection[i], this));
         }
 
-        return audioApps.ToArray(); 
+        return audioSessions; 
     }
 
     /**

@@ -2,6 +2,7 @@
 using NAudio.CoreAudioApi.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /**
  * The base class to provide access to the windows sound api
@@ -49,24 +50,54 @@ class AudioController
      * @returns     a list of the audio outputs
      */
     public List<AudioOutput> GetAllAudioOutputs() {
-		List<AudioOutput> outputs = new List<AudioOutput>();        
-        foreach(var device in GetAudioDevices())
+        List<AudioOutput> outputs = new List<AudioOutput>();
+        foreach (var device in GetAudioDevices())
         {
-            // add device
             outputs.Add((AudioOutput)device);
-            foreach(var app in device.GetAudioApps())
-            {
-                try
-                {
-                    outputs.Add((AudioOutput)app);
-                }catch(Exception e)
-                {
-                    Console.WriteLine("Couldnt get audio output:\n" + e.StackTrace);
-                }
-            }
         }
+        outputs.AddRange(GetAllAudioApps());
         return outputs;
 	}
+
+
+    public List<AudioApp> GetAllAudioApps()
+    {
+        List<AudioApp> apps = new List<AudioApp>();
+        List<AudioStream> streams = new List<AudioStream>();
+        foreach (var device in GetAudioDevices())
+        {
+            // add device
+            foreach (AudioStream stream in device.GetAudioStreams())
+                streams.Add(stream);
+        }
+
+        List<List<AudioStream>> sessionGroups = streams.GroupBy(x => x.GetName())
+                                                              .Select(g => g.ToList())
+                                                              .ToList();
+
+        //Console.WriteLine(sessionGroups);
+
+
+        //Console.WriteLine("########################################");
+        foreach (List<AudioStream> las in sessionGroups)
+        {
+            try
+            {
+                //Console.WriteLine("--------------------------");
+                foreach (AudioStream lstream in las)
+                {
+                    //Console.WriteLine(lstream.ToString());
+                }
+                apps.Add(new AudioApp(las));
+            }
+            catch (Exception e)
+            {
+                //Console.WriteLine("Couldnt get audio output:\n" + e.StackTrace);
+            }
+        }
+
+        return apps;
+    }
 
     /**
      * Returns the first AudioOutput object by a string name if found
