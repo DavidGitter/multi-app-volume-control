@@ -17,7 +17,7 @@ namespace mavc_target_ui_win
 {
     public partial class Form1 : Form
     {
-        private string CURRENT_VERSION = "1.0.2";
+        private string CURRENT_VERSION = "1.0.3";
 
         private AudioController audioController;
         private string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
@@ -33,7 +33,7 @@ namespace mavc_target_ui_win
         // for notifying if there is a ui update
         ThreadSafeBool updateUIFlag = new ThreadSafeBool();
 
-        Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"MAVC", "form-log.txt"));
+        Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"MAVC", "ui-log.txt"));
 
         public Form1()
         {

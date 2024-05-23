@@ -258,9 +258,17 @@ class MavcAgent
     static void Main(string[] args)
     {
         bool foundFile = false;
+        Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC", "agent-log.txt"));
 
         var def = audioContr.GetAudioDevices();
-        audioContr.onOutputAddedCallback((sender, newSession) => { Console.WriteLine("new audio output found!"); UpdateAudioOutputs(); comServer.updateVolumes(); });
+        audioContr.onOutputAddedCallback((sender, newSession) => { 
+            Console.WriteLine("new audio output found!");
+            logger.Info("A new output was found and added to the agent.");
+            UpdateAudioOutputs(); 
+            comServer.updateVolumes(); 
+        });
+
+
         foreach (var dev in def)
         {
             Console.WriteLine(dev.GetName());   

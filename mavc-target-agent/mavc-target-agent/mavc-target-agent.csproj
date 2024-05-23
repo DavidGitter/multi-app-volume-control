@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>mavc_target_agent</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -22,6 +22,7 @@
 	<Compile Include="../../shared/audio/AudioApp.cs" />
 	<Compile Include="../../shared/audio/AudioFocused.cs" />
 	<Compile Include="../../shared/audio/AudioStream.cs" />
+	<Compile Include="..\..\shared\log\Log.cs" Link="Log.cs" />
 	<Content Include="icon.ico" />
 	<None Include="..\..\docs\icon\icon.png">
 	  <Pack>True</Pack>
