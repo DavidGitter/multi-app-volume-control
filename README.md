@@ -182,7 +182,7 @@ In no event shall the authors or copyright holders be liable for any claim, dama
 
 Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
 
-* See [Referende.md](/docs/Reference.md)
+* See [Referende.md](/docs/References.md)
 * [GitHub Readme Template](https://github.com/othneildrew/Best-README-Template)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
