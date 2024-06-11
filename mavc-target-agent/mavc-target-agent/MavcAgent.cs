@@ -43,16 +43,24 @@ class MavcAgent
 
     private static MAVCSave mavcSave = new MAVCSave();
     private static object mavcSaveLock = new object();
+
     private static List<AudioOutput> aoListVol1 = new List<AudioOutput>();
+    private static object aoList1Lock = new object();
+
     private static List<AudioOutput> aoListVol2 = new List<AudioOutput>();
+    private static object aoList2Lock = new object();
+
     private static List<AudioOutput> aoListVol3 = new List<AudioOutput>();
+    private static object aoList3Lock = new object();
+
     private static List<AudioOutput> aoListVol4 = new List<AudioOutput>();
+    private static object aoList4Lock = new object();
 
     private static COM comServer = null;
 
     public static void interpretWord(COM.Word word)
     {
-         char action = word.action;
+        char action = word.action;
         String arg = word.args;
 
         if (mavcSave.reverseKnobOrder)
@@ -79,19 +87,19 @@ class MavcAgent
             case 'A':
                 {
                     float argNum = int.Parse(arg);
-                    if(mavcSave.reverseKnob1 == true)
+                    if (mavcSave.reverseKnob1 == true)
                         argNum = argNum > 0 ? 1f - argNum / 100f : 100; // reversed knob 1
                     else
                         argNum = argNum > 0 ? argNum / 100f : 0;
                     Console.WriteLine("Set Volume 1: " + argNum);
-                    lock (mavcSaveLock)
-                    {
+                    //lock (aoList1Lock)
+                    //{
                         foreach (AudioOutput ao in aoListVol1)
                         {
                             if (ao != null)
                                 ao.SetVolume(argNum);
                         }
-                    }
+                    //}
                     break;
                 }
             case 'B':
@@ -102,14 +110,14 @@ class MavcAgent
                     else
                         argNum = argNum > 0 ? argNum / 100f : 0;
                     Console.WriteLine("Set Volume 2: " + argNum);
-                    lock (mavcSaveLock)
-                    {
+                    //lock (aoList2Lock)
+                    //{
                         foreach (AudioOutput ao in aoListVol2)
                         {
-                            if(ao != null)
+                            if (ao != null)
                                 ao.SetVolume(argNum);
                         }
-                    }
+                    //}
                     break;
                 }
             case 'C':
@@ -120,14 +128,14 @@ class MavcAgent
                     else
                         argNum = argNum > 0 ? argNum / 100f : 0;
                     Console.WriteLine("Set Volume 3: " + argNum);
-                    lock (mavcSaveLock)
-                    {
+                    //lock (aoList3Lock)
+                    //{
                         foreach (AudioOutput ao in aoListVol3)
                         {
                             if (ao != null)
                                 ao.SetVolume(argNum);
                         }
-                    }
+                    //}
                     break;
                 }
             case 'D':
@@ -138,14 +146,14 @@ class MavcAgent
                     else
                         argNum = argNum > 0 ? argNum / 100f : 0;
                     Console.WriteLine("Set Volume 4: " + argNum);
-                    lock (mavcSaveLock)
-                    {
+                    //lock (aoList4Lock)
+                    //{
                         foreach (AudioOutput ao in aoListVol4)
                         {
                             if (ao != null)
                                 ao.SetVolume(argNum);
                         }
-                    }
+                    //}
                     break;
                 }
             default:
@@ -175,7 +183,8 @@ class MavcAgent
                 comServer.updateVolumes();
                 UpdateMAVCSave();
                 Console.WriteLine("Conf Update: " + mavcSave);
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.StackTrace);
             }
@@ -188,6 +197,7 @@ class MavcAgent
 
     public static void UpdateMAVCSave()
     {
+
         lock (mavcSaveLock)
         {
             string json = File.ReadAllText(configFilePath);
@@ -196,64 +206,112 @@ class MavcAgent
             mavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
         }
 
-        UpdateAudioOutputs();
+        UpdateAllAOs();
     }
 
     /**
      * Updates the available volume mappings
      */
-    public static void UpdateAudioOutputs()
+    public static void UpdateAOsList1()
     {
-        aoListVol1.Clear();
-        aoListVol2.Clear();
-        aoListVol3.Clear();
-        aoListVol4.Clear();
+        lock (aoList1Lock)
+        {
+            aoListVol1.Clear();
 
-        // update the vol mappings with the conf
-        foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol1)
-            if(!mavc_ao.type.Equals("Function"))
-                aoListVol1.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
-            else
-            {
-                if (mavc_ao.name.Equals("Focused"))
-                    aoListVol1.Add(new AudioFocused(audioContr));
+            // update the vol mappings with the conf
+            foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol1)
+                if (!mavc_ao.type.Equals("Function"))
+                    aoListVol1.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
                 else
-                    throw new NotImplementedException();
-            }
-
-        foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol2)
-            if (!mavc_ao.type.Equals("Function"))
-                aoListVol2.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
-            else
-            {
-                if (mavc_ao.name.Equals("Focused"))
-                    aoListVol2.Add(new AudioFocused(audioContr));
-                else
-                    throw new NotImplementedException();
-            }
-
-        foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol3)
-            if (!mavc_ao.type.Equals("Function"))
-                aoListVol3.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
-            else
-            {
-                if (mavc_ao.name.Equals("Focused"))
-                    aoListVol3.Add(new AudioFocused(audioContr));
-                else
-                    throw new NotImplementedException();
-            }
-
-        foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
-            if (!mavc_ao.type.Equals("Function"))
-                aoListVol4.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
-            else
-            {
-                if (mavc_ao.name.Equals("Focused"))
-                    aoListVol4.Add(new AudioFocused(audioContr));
-                else
-                    throw new NotImplementedException();
-            }
+                {
+                    if (mavc_ao.name.Equals("Focused"))
+                        aoListVol1.Add(new AudioFocused(audioContr));
+                    else if(mavc_ao.name.Equals("Other Apps"))
+                        aoListVol1.Add(new AudioFocused(audioContr));
+                    else
+                        throw new NotImplementedException();
+                }
+        }
     }
+
+    public static void UpdateAOsList2()
+    {
+        lock (aoList2Lock)
+        {
+            aoListVol2.Clear();
+
+            // update the vol mappings with the conf
+            foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol2)
+                if (!mavc_ao.type.Equals("Function"))
+                    aoListVol2.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+                else
+                {
+                    if (mavc_ao.name.Equals("Focused"))
+                        aoListVol2.Add(new AudioFocused(audioContr));
+                    else if(mavc_ao.name.Equals("Other Apps"))
+                        aoListVol2.Add(new AudioFocused(audioContr));
+                    else
+                        throw new NotImplementedException();
+                }
+        }
+    }
+
+    public static void UpdateAOsList3()
+    {
+        lock (aoList3Lock)
+        {
+            aoListVol3.Clear();
+
+            // update the vol mappings with the conf
+            foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol3)
+                if (!mavc_ao.type.Equals("Function"))
+                    aoListVol3.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+                else
+                {
+                    if (mavc_ao.name.Equals("Focused"))
+                        aoListVol3.Add(new AudioFocused(audioContr));
+                    else if(mavc_ao.name.Equals("Other Apps"))
+                        aoListVol3.Add(new AudioFocused(audioContr));
+                    else
+                        throw new NotImplementedException();
+                }
+        }
+    }
+
+    public static void UpdateAOsList4()
+    {
+        lock (aoList4Lock)
+        {
+            aoListVol4.Clear();
+
+            // update the vol mappings with the conf
+            foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
+                if (!mavc_ao.type.Equals("Function"))
+                    aoListVol4.AddRange(audioContr.GetOutputsByName(mavc_ao.name));
+                else
+                {
+                    if (mavc_ao.name.Equals("Focused"))
+                        aoListVol4.Add(new AudioFocused(audioContr));
+                    else if (mavc_ao.name.Equals("Other Apps"))
+                        aoListVol4.Add(new AudioFocused(audioContr));
+                    else
+                        throw new NotImplementedException();
+                }
+        }
+    }
+
+    public static void UpdateAllAOs()
+    {
+        lock (mavcSaveLock)
+        {
+            UpdateAOsList1();
+            UpdateAOsList2();
+            UpdateAOsList3();
+            UpdateAOsList4();
+        }
+    }
+
+
 
     static void Main(string[] args)
     {
@@ -261,17 +319,37 @@ class MavcAgent
         Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC", "agent-log.txt"));
 
         var def = audioContr.GetAudioDevices();
-        audioContr.onOutputAddedCallback((sender, newSession) => { 
+        audioContr.onOutputAddedCallback((sender, newSession) => {
             Console.WriteLine("new audio output found!");
             logger.Info("A new output was found and added to the agent.");
-            UpdateAudioOutputs(); 
-            comServer.updateVolumes(); 
+            UpdateAllAOs();
+            comServer.updateVolumes();
         });
+
+        //Interval Updater
+        Task intervalUpdater = new Task(() => {
+            while (true)
+            {
+                lock (mavcSaveLock)
+                    UpdateAOsList1();
+                Thread.Sleep(2500);
+                lock (mavcSaveLock)
+                    UpdateAOsList2();
+                Thread.Sleep(2500);
+                lock (mavcSaveLock)
+                    UpdateAOsList3();
+                Thread.Sleep(2500);
+                lock (mavcSaveLock)
+                    UpdateAOsList4();
+                Thread.Sleep(2500);
+            }
+        });
+        intervalUpdater.Start();
 
 
         foreach (var dev in def)
         {
-            Console.WriteLine(dev.GetName());   
+            Console.WriteLine(dev.GetName());
         }
 
         Console.WriteLine(SerialPort.GetPortNames());
@@ -288,21 +366,24 @@ class MavcAgent
                 }
 
             }
-            catch (Exception e){
+            catch (Exception e)
+            {
                 Console.WriteLine(e.StackTrace);
                 Thread.Sleep(5000);
             }
 
         }
 
-        while (true) {
+        while (true)
+        {
             Console.WriteLine("Waiting for hardware to connect.");
             try
             {
                 comServer = new COM("COM3", 9600);
                 Console.WriteLine("Hardware connected.");
                 comServer.OnWordStreamReceive(MavcAgent.interpretWord);
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
                 Thread.Sleep(1000);
@@ -315,7 +396,8 @@ class MavcAgent
                     //Console.ReadLine();
                     Thread.Sleep(10000);
 
-                } catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     Console.WriteLine(e.ToString());
                     Thread.Sleep(1000);
