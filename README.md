@@ -1,6 +1,6 @@
 # Multi App Volume Control (MAVC)
 
-> **Warning**
+> [!WARNING]
 > There is currently a bug in the NAudio library, which is why a workaround is being used. This has the consequence that the application may run somewhat unstable under certain circumstances.
 
 <a name="readme-top"></a>
