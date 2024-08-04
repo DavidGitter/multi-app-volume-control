@@ -9,8 +9,8 @@
     <Configurations>Debug;Release;Debug_Console</Configurations>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <PackageIcon>icon.png</PackageIcon>
-    <AssemblyVersion>1.0.4</AssemblyVersion>
-    <FileVersion>1.0.4</FileVersion>
+    <AssemblyVersion>1.1.0</AssemblyVersion>
+    <FileVersion>1.1.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +23,7 @@
 	<Compile Include="../../shared/audio/AudioApp.cs" />
 	<Compile Include="../../shared/audio/AudioFocused.cs" />
 	<Compile Include="../../shared/audio/AudioStream.cs" />
+	<Compile Include="..\..\shared\audio\AudioOtherApps.cs" Link="AudioOtherApps.cs" />
 	<Compile Include="..\..\shared\log\Log.cs" Link="Log.cs" />
 	<Content Include="icon.ico" />
 	<None Include="..\..\docs\icon\icon.png">

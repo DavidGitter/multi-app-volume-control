@@ -227,7 +227,7 @@ class MavcAgent
                     if (mavc_ao.name.Equals("Focused"))
                         aoListVol1.Add(new AudioFocused(audioContr));
                     else if(mavc_ao.name.Equals("Other Apps"))
-                        aoListVol1.Add(new AudioFocused(audioContr));
+                        aoListVol1.Add(new AudioOtherApps(audioContr, mavcSave));
                     else
                         throw new NotImplementedException();
                 }
@@ -249,7 +249,7 @@ class MavcAgent
                     if (mavc_ao.name.Equals("Focused"))
                         aoListVol2.Add(new AudioFocused(audioContr));
                     else if(mavc_ao.name.Equals("Other Apps"))
-                        aoListVol2.Add(new AudioFocused(audioContr));
+                        aoListVol2.Add(new AudioOtherApps(audioContr, mavcSave));
                     else
                         throw new NotImplementedException();
                 }
@@ -271,7 +271,7 @@ class MavcAgent
                     if (mavc_ao.name.Equals("Focused"))
                         aoListVol3.Add(new AudioFocused(audioContr));
                     else if(mavc_ao.name.Equals("Other Apps"))
-                        aoListVol3.Add(new AudioFocused(audioContr));
+                        aoListVol3.Add(new AudioOtherApps(audioContr, mavcSave));
                     else
                         throw new NotImplementedException();
                 }
@@ -293,7 +293,7 @@ class MavcAgent
                     if (mavc_ao.name.Equals("Focused"))
                         aoListVol4.Add(new AudioFocused(audioContr));
                     else if (mavc_ao.name.Equals("Other Apps"))
-                        aoListVol4.Add(new AudioFocused(audioContr));
+                        aoListVol4.Add(new AudioOtherApps(audioContr, mavcSave));
                     else
                         throw new NotImplementedException();
                 }

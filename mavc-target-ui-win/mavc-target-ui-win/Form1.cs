@@ -9,15 +9,15 @@ using System.Xml.Linq;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
-using static System.Net.WebRequestMethods;
 using Octokit;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace mavc_target_ui_win
 {
     public partial class Form1 : Form
     {
-        private string CURRENT_VERSION = "1.0.4";
+        private string CURRENT_VERSION = "1.1.0";
 
         private AudioController audioController;
         private string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
@@ -205,6 +205,12 @@ namespace mavc_target_ui_win
             AddVol2.Items.Add(af);
             AddVol3.Items.Add(af);
             AddVol4.Items.Add(af);
+
+            AudioOtherApps aoa = new AudioOtherApps(audioController, mavcSave);
+            AddVol1.Items.Add(aoa);
+            AddVol2.Items.Add(aoa);
+            AddVol3.Items.Add(aoa);
+            AddVol4.Items.Add(aoa);
         }
 
         /** 
@@ -361,7 +367,9 @@ namespace mavc_target_ui_win
                             VolList1.Items.Add(audioController.GetOutputByName(mavc_ao.name));
                         else
                             if (mavc_ao.name.Equals("Focused"))
-                            VolList1.Items.Add(new AudioFocused(audioController));
+                                VolList1.Items.Add(new AudioFocused(audioController));
+                            else if (mavc_ao.name.Equals("Other Apps"))
+                                VolList1.Items.Add(new AudioOtherApps(audioController, mavcSave));
                         else
                             throw new NotImplementedException();
                     }
@@ -379,7 +387,9 @@ namespace mavc_target_ui_win
                             VolList2.Items.Add(audioController.GetOutputByName(mavc_ao.name));
                         else
                             if (mavc_ao.name.Equals("Focused"))
-                            VolList2.Items.Add(new AudioFocused(audioController));
+                                VolList2.Items.Add(new AudioFocused(audioController));
+                            else if (mavc_ao.name.Equals("Other Apps"))
+                                VolList2.Items.Add(new AudioOtherApps(audioController, mavcSave));
                         else
                             throw new NotImplementedException();
                     }
@@ -397,7 +407,9 @@ namespace mavc_target_ui_win
                             VolList3.Items.Add(audioController.GetOutputByName(mavc_ao.name));
                         else
                             if (mavc_ao.name.Equals("Focused"))
-                            VolList3.Items.Add(new AudioFocused(audioController));
+                                VolList3.Items.Add(new AudioFocused(audioController));
+                            else if (mavc_ao.name.Equals("Other Apps"))
+                                VolList3.Items.Add(new AudioOtherApps(audioController, mavcSave));
                         else
                             throw new NotImplementedException();
                     }
@@ -415,7 +427,9 @@ namespace mavc_target_ui_win
                             VolList4.Items.Add(audioController.GetOutputByName(mavc_ao.name));
                         else
                             if (mavc_ao.name.Equals("Focused"))
-                            VolList4.Items.Add(new AudioFocused(audioController));
+                                VolList4.Items.Add(new AudioFocused(audioController));
+                            else if (mavc_ao.name.Equals("Other Apps"))
+                                VolList4.Items.Add(new AudioOtherApps(audioController, mavcSave));
                         else
                             throw new NotImplementedException();
                     }
