@@ -1,5 +1,3 @@
-
-
 using NAudio.CoreAudioApi;
 using System;
 using System.Collections.Generic;
