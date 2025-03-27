@@ -393,14 +393,17 @@ class MavcAgent
             {
                 try
                 {
-                    //Console.ReadLine();
-                    Thread.Sleep(10000);
-
+                    Thread.Sleep(5000);
+                    if (comServer == null || !comServer.IsOpen())
+                    {
+                        comServer = new COM("COM3", 9600);
+                        Console.WriteLine("Hardware connected.");
+                        comServer.OnWordStreamReceive(MavcAgent.interpretWord);
+                    }
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.ToString());
-                    Thread.Sleep(1000);
                 }
             }
         }
