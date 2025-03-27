@@ -17,7 +17,7 @@ namespace mavc_target_ui_win
 {
     public partial class Form1 : Form
     {
-        private string CURRENT_VERSION = "1.1.0";
+        private string CURRENT_VERSION = "1.1.1";
 
         private AudioController audioController;
         private string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
