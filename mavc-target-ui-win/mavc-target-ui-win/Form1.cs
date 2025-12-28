@@ -451,6 +451,10 @@ namespace mavc_target_ui_win
                 //update knob order
                 reverseKnobsCheckbox.Checked = mavcSave.reverseKnobOrder;
 
+                // load darkmode state
+                darkModeToolStripMenuItem.Checked = mavcSave.darkMode;
+                ApplyTheme(mavcSave.darkMode);
+
                 // update enable debug mode
                 enableDebugBox.Checked = mavcSave.enableDebugMode;
 
