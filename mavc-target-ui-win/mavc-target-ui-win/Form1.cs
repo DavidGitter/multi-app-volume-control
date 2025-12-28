@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using System.Windows.Forms;
-using Newtonsoft.Json;
-using System.Xml.Linq;
-using System.Diagnostics;
-using System.IO.Compression;
-using System.Net;
+﻿using Newtonsoft.Json;
 using Octokit;
-using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace mavc_target_ui_win
 {
@@ -679,6 +680,43 @@ namespace mavc_target_ui_win
             //refresh all audio outputs available + there state
             refreshAvailableOutputs();
             loadFromMavcSave();
+        }
+
+        private void darkModeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            mavcSave.darkMode = !mavcSave.darkMode; // toggle
+            ApplyTheme(mavcSave.darkMode);          // refresh
+            save(configSavePath, configFileName);   // save
+        }
+        private void ApplyTheme(bool isDark)
+        {
+            Color backColor = isDark ? Color.FromArgb(45, 45, 48) : SystemColors.Control;
+            Color textColor = isDark ? Color.White : SystemColors.ControlText;
+            Color listBackColor = isDark ? Color.FromArgb(30, 30, 30) : Color.White;
+
+            this.BackColor = backColor;
+            UpdateControlTheme(this, backColor, textColor, listBackColor);
+
+            darkModeToolStripMenuItem.Checked = isDark;
+        }
+
+        private void UpdateControlTheme(Control parent, Color back, Color text, Color listBack)
+        {
+            foreach (Control c in parent.Controls)
+            {
+                if (c is ListBox || c is ComboBox || c is TextBox)
+                {
+                    c.BackColor = listBack;
+                    c.ForeColor = text;
+                }
+                else if (c is CheckBox || c is System.Windows.Forms.Label || c is GroupBox)
+                {
+                    c.ForeColor = text;
+                }
+
+                if (c.HasChildren) UpdateControlTheme(c, back, text, listBack);
+            }
+
         }
     }
 }

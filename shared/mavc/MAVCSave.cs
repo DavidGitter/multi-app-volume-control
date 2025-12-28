@@ -27,6 +27,7 @@ class MAVCSave
         reverseKnob2 = false;
         reverseKnob3 = false;
         reverseKnob4 = false;
+        this.darkMode = false; //default
     }
 
 	// volume 1 mappings
@@ -55,4 +56,7 @@ class MAVCSave
 
     //reverse knob order (Knob 1 <-> Knob 4, Knob 2 <-> Knob 3)
     public bool reverseKnobOrder;
+
+    //Dark Mode Status
+    public bool darkMode;
 }
