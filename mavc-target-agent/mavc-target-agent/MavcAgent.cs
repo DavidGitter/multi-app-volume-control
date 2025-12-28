@@ -1,6 +1,8 @@
 ﻿using static COM;
 using Newtonsoft.Json;
 using System.IO.Ports;
+using System.Runtime.InteropServices;
+using System.Text;
 
 /**
  * Test enviroment of the target service/agent
@@ -9,6 +11,10 @@ using System.IO.Ports;
 // For console debugging -> change Project > Properties > Windows Application to Console Application
 class MavcAgent
 {
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    static extern bool AllocConsole();
+
     /*static void Main(string[] args)
     {
         AudioController controller = new AudioController();
@@ -57,6 +63,9 @@ class MavcAgent
     private static object aoList4Lock = new object();
 
     private static COM comServer = null;
+
+    private static Stream stdOut = null;
+    private static StreamWriter writer = null;
 
     public static void interpretWord(COM.Word word)
     {
@@ -311,10 +320,27 @@ class MavcAgent
         }
     }
 
+    private static void enableDebugWindow()
+    {
+        AllocConsole();
+
+        stdOut = Console.OpenStandardOutput();
+        writer = new StreamWriter(stdOut)
+        {
+            AutoFlush = true
+        };
+        Console.SetOut(writer);
+        Console.SetError(writer);
+
+        Console.OutputEncoding = Encoding.UTF8;
+    }
+
 
 
     static void Main(string[] args)
     {
+
+        Console.WriteLine("Started Mavc Debug-Console");
         bool foundFile = false;
         Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC", "agent-log.txt"));
 
@@ -346,14 +372,6 @@ class MavcAgent
         });
         intervalUpdater.Start();
 
-
-        foreach (var dev in def)
-        {
-            Console.WriteLine(dev.GetName());
-        }
-
-        Console.WriteLine(SerialPort.GetPortNames());
-
         while (!foundFile)
         {
             try
@@ -363,6 +381,9 @@ class MavcAgent
                     UpdateMAVCSave();
                     SetupConfUpdater();
                     foundFile = true;
+
+                    if (mavcSave.enableDebugMode)
+                        enableDebugWindow();
                 }
 
             }
@@ -376,36 +397,23 @@ class MavcAgent
 
         while (true)
         {
-            Console.WriteLine("Waiting for hardware to connect.");
+            Console.WriteLine("Waiting for hardware to connect (COM3, 9600).");
             try
             {
-                comServer = new COM("COM3", 9600);
-                Console.WriteLine("Hardware connected.");
-                comServer.OnWordStreamReceive(MavcAgent.interpretWord);
+                if (comServer == null || !comServer.IsOpen())
+                {
+                    comServer = new COM("COM3", 9600);
+                    Console.WriteLine("Hardware connected.");
+                    comServer.OnWordStreamReceive(MavcAgent.interpretWord);
+                }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                Console.WriteLine("An error occured: " + e.ToString());
                 Thread.Sleep(1000);
             }
 
-            while (1 == 1)
-            {
-                try
-                {
-                    Thread.Sleep(5000);
-                    if (comServer == null || !comServer.IsOpen())
-                    {
-                        comServer = new COM("COM3", 9600);
-                        Console.WriteLine("Hardware connected.");
-                        comServer.OnWordStreamReceive(MavcAgent.interpretWord);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
-            }
+            Thread.Sleep(5000);
         }
     }
 }

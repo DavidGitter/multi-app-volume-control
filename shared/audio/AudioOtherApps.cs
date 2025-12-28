@@ -30,7 +30,6 @@ class AudioOtherApps : AudioOutput
     private void UpdateOtherApps()
     {
         List<AudioApp> aos = ac.GetAllAudioApps();
-        Console.WriteLine(save.AOsVol1);
         foreach (AudioApp app in aos)
         {
             if( !save.AOsVol1.Any(o => o.name.Equals(app.GetName())) &&
@@ -40,8 +39,6 @@ class AudioOtherApps : AudioOutput
                 otherApps.Add(app);
             }
         }
-
-        Console.WriteLine("Other-Apps:\n");
 
         foreach (AudioApp app in otherApps)
         {
