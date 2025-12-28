@@ -451,6 +451,9 @@ namespace mavc_target_ui_win
                 //update knob order
                 reverseKnobsCheckbox.Checked = mavcSave.reverseKnobOrder;
 
+                // update enable debug mode
+                enableDebugBox.Checked = mavcSave.enableDebugMode;
+
             }catch(Exception e){
                 Console.WriteLine(e.Message + "\n" + e.StackTrace);
                 Console.WriteLine("Config file cannot be opened or is invalid - creating new one...");
@@ -717,6 +720,11 @@ namespace mavc_target_ui_win
                 if (c.HasChildren) UpdateControlTheme(c, back, text, listBack);
             }
 
+        }
+
+        private void enableDebugBox_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.enableDebugMode = enableDebugBox.Checked;
         }
     }
 }

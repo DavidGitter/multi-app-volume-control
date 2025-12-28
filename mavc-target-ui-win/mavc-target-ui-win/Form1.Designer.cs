@@ -58,6 +58,7 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.additionalBox = new System.Windows.Forms.GroupBox();
+            this.enableDebugBox = new System.Windows.Forms.CheckBox();
             this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
             this.versionText = new System.Windows.Forms.TextBox();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -352,6 +353,7 @@
             // 
             // additionalBox
             // 
+            this.additionalBox.Controls.Add(this.enableDebugBox);
             this.additionalBox.Controls.Add(this.reverseKnobsCheckbox);
             this.additionalBox.Location = new System.Drawing.Point(1020, 41);
             this.additionalBox.Name = "additionalBox";
@@ -360,6 +362,17 @@
             this.additionalBox.TabStop = false;
             this.additionalBox.Text = "Settings";
             this.additionalBox.Enter += new System.EventHandler(this.groupBox6_Enter);
+            // 
+            // enableDebugBox
+            // 
+            this.enableDebugBox.AutoSize = true;
+            this.enableDebugBox.Location = new System.Drawing.Point(6, 42);
+            this.enableDebugBox.Name = "enableDebugBox";
+            this.enableDebugBox.Size = new System.Drawing.Size(221, 17);
+            this.enableDebugBox.TabIndex = 12;
+            this.enableDebugBox.Text = "Enable debug mode (agent needs restart)";
+            this.enableDebugBox.UseVisualStyleBackColor = true;
+            this.enableDebugBox.CheckedChanged += new System.EventHandler(this.enableDebugBox_CheckedChanged);
             // 
             // reverseKnobsCheckbox
             // 
@@ -470,6 +483,7 @@
         private System.Windows.Forms.TextBox versionText;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem darkModeToolStripMenuItem;
+        private System.Windows.Forms.CheckBox enableDebugBox;
     }
 }
 

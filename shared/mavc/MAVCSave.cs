@@ -54,9 +54,12 @@ class MAVCSave
     // reverse knob of volume 4
     public bool reverseKnob4;
 
-    //reverse knob order (Knob 1 <-> Knob 4, Knob 2 <-> Knob 3)
+    // reverse knob order (Knob 1 <-> Knob 4, Knob 2 <-> Knob 3)
     public bool reverseKnobOrder;
 
-    //Dark Mode Status
+    // enable debug mode
+    public bool enableDebugMode;
+
+    // dark mode status
     public bool darkMode;
 }
