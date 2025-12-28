@@ -57,6 +57,7 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.additionalBox = new System.Windows.Forms.GroupBox();
+            this.enableDebugBox = new System.Windows.Forms.CheckBox();
             this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
             this.versionText = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
@@ -321,14 +322,14 @@
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveToToolStripMenuItem
             // 
             this.saveToToolStripMenuItem.Name = "saveToToolStripMenuItem";
-            this.saveToToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
+            this.saveToToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.saveToToolStripMenuItem.Text = "Save To...";
             this.saveToToolStripMenuItem.Click += new System.EventHandler(this.SaveToToolStripMenuItem_Click);
             // 
@@ -348,6 +349,7 @@
             // 
             // additionalBox
             // 
+            this.additionalBox.Controls.Add(this.enableDebugBox);
             this.additionalBox.Controls.Add(this.reverseKnobsCheckbox);
             this.additionalBox.Location = new System.Drawing.Point(1020, 41);
             this.additionalBox.Name = "additionalBox";
@@ -356,6 +358,17 @@
             this.additionalBox.TabStop = false;
             this.additionalBox.Text = "Settings";
             this.additionalBox.Enter += new System.EventHandler(this.groupBox6_Enter);
+            // 
+            // enableDebugBox
+            // 
+            this.enableDebugBox.AutoSize = true;
+            this.enableDebugBox.Location = new System.Drawing.Point(6, 42);
+            this.enableDebugBox.Name = "enableDebugBox";
+            this.enableDebugBox.Size = new System.Drawing.Size(221, 17);
+            this.enableDebugBox.TabIndex = 12;
+            this.enableDebugBox.Text = "Enable debug mode (agent needs restart)";
+            this.enableDebugBox.UseVisualStyleBackColor = true;
+            this.enableDebugBox.CheckedChanged += new System.EventHandler(this.enableDebugBox_CheckedChanged);
             // 
             // reverseKnobsCheckbox
             // 
@@ -448,6 +461,7 @@
         private System.Windows.Forms.CheckBox reverseKnobsCheckbox;
         private System.Windows.Forms.ToolStripMenuItem refreshToolStripMenuItem;
         private System.Windows.Forms.TextBox versionText;
+        private System.Windows.Forms.CheckBox enableDebugBox;
     }
 }
 
