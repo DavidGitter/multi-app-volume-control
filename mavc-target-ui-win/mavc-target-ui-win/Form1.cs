@@ -298,11 +298,6 @@ namespace mavc_target_ui_win
             save(configSavePath, configFileName);
         }
 
-        private void groupBox1_Enter(object sender, EventArgs e)
-        {
-
-        }
-
         /**
         * Eventhandler of the Volume 1 Combobox  (available audio outputs)
         */
@@ -504,11 +499,6 @@ namespace mavc_target_ui_win
             }
         }
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
-
         /**
          * Discards all selected audio outputs in the list boxes
          */
@@ -659,16 +649,6 @@ namespace mavc_target_ui_win
             }
         }
 
-        private void VolList4_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBox6_Enter(object sender, EventArgs e)
-        {
-
-        }
-
         private void reverseCheckbox1_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.reverseKnob1 = reverseCheckbox1.Checked;
@@ -709,12 +689,9 @@ namespace mavc_target_ui_win
         }
         private void ApplyTheme(bool isDark)
         {
-            Color backColor = ThemeColors.GetBackground(isDark);
-            Color textColor = ThemeColors.GetText(isDark);
-            Color listBackColor = ThemeColors.GetListBackground(isDark);
-            Color buttonBackColor = ThemeColors.GetButtonBackground(isDark);
-            Color menuBackColor = ThemeColors.GetMenuBackground(isDark);
-            Color borderColor = ThemeColors.GetBorder(isDark);
+            Color backColor = ThemeColors.GetBgPrimary(isDark);
+            Color textColor = ThemeColors.GetTextPrimary(isDark);
+            Color borderColor = ThemeColors.GetBorderPrimary(isDark);
 
             SetTitleBarTheme(isDark);
 
@@ -724,17 +701,17 @@ namespace mavc_target_ui_win
             {
                 if (topControl is MenuStrip menuStrip)
                 {
-                    menuStrip.BackColor = menuBackColor;
+                    menuStrip.BackColor = backColor;
                     menuStrip.ForeColor = textColor;
-                    menuStrip.Renderer = new ToolStripProfessionalRenderer(new DiscordColorTable(isDark));
+                    menuStrip.Renderer = new ToolStripProfessionalRenderer(new DarkModeColorTable(isDark));
                     foreach (ToolStripMenuItem menuItem in menuStrip.Items)
                     {
-                        ApplyThemeToMenuItem(menuItem, menuBackColor, textColor);
+                        ApplyThemeToMenuItem(menuItem, backColor, textColor);
                     }
                 }
             }
             
-            UpdateControlTheme(this, backColor, textColor, listBackColor, buttonBackColor, borderColor, isDark);
+            UpdateControlTheme(this, backColor, textColor, borderColor, isDark);
 
             darkModeToolStripMenuItem.Checked = isDark;
         }
@@ -754,8 +731,10 @@ namespace mavc_target_ui_win
             }
         }
 
-        private void UpdateControlTheme(Control parent, Color back, Color text, Color listBack, Color buttonBack, Color border, bool isDark)
+        private void UpdateControlTheme(Control parent, Color back, Color text, Color border, bool isDark)
         {
+            Color groupBoxBorderColor = ThemeColors.GetBorderPrimary(isDark);
+            
             foreach (Control c in parent.Controls)
             {
                 if (c is MenuStrip)
@@ -764,36 +743,41 @@ namespace mavc_target_ui_win
                 }
                 else if (c is ComboBox combo)
                 {
-                    combo.BackColor = listBack;
+                    combo.BackColor = back;
                     combo.ForeColor = text;
                     combo.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
                 }
                 else if (c is ListBox)
                 {
-                    c.BackColor = listBack;
+                    c.BackColor = back;
                     c.ForeColor = text;
                 }
                 else if (c is TextBox txt)
                 {
-                    txt.BackColor = listBack;
+                    txt.BackColor = back;
                     txt.ForeColor = text;
                     txt.BorderStyle = BorderStyle.FixedSingle;
                 }
                 else if (c is Button btn)
                 {
-                    btn.BackColor = buttonBack;
+                    btn.BackColor = back;
                     btn.ForeColor = text;
                     btn.FlatStyle = FlatStyle.Flat;
                     btn.FlatAppearance.BorderSize = 1;
                     btn.FlatAppearance.BorderColor = border;
                 }
-                else if (c is CheckBox || c is System.Windows.Forms.Label)
+                else if (c is CheckBox chk)
+                {
+                    chk.ForeColor = text;
+                    chk.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
+                }
+                else if (c is System.Windows.Forms.Label)
                 {
                     c.ForeColor = text;
                 }
                 else if (c is GroupBox gb)
                 {
-                    gb.ForeColor = text;
+                    gb.ForeColor = groupBoxBorderColor;
                     gb.FlatStyle = FlatStyle.Flat;
                 }
                 else if (c is Panel || c is TabControl || c is TabPage)
@@ -802,75 +786,29 @@ namespace mavc_target_ui_win
                     c.ForeColor = text;
                 }
 
-                if (c.HasChildren) UpdateControlTheme(c, back, text, listBack, buttonBack, border, isDark);
+                if (c.HasChildren) UpdateControlTheme(c, back, text, border, isDark);
             }
         }
 
-        private class DiscordColorTable : ProfessionalColorTable
+        private class DarkModeColorTable : ProfessionalColorTable
         {
-            private bool isDark;
+            private readonly bool _isDark;
 
-            public DiscordColorTable(bool isDarkMode)
-            {
-                isDark = isDarkMode;
-            }
+            public DarkModeColorTable(bool isDark) => _isDark = isDark;
 
-            public override Color MenuItemSelected
-            {
-                get { return ThemeColors.GetMenuItemSelected(isDark); }
-            }
-
-            public override Color MenuItemSelectedGradientBegin
-            {
-                get { return ThemeColors.GetMenuItemSelected(isDark); }
-            }
-
-            public override Color MenuItemSelectedGradientEnd
-            {
-                get { return ThemeColors.GetMenuItemSelected(isDark); }
-            }
-
-            public override Color MenuItemBorder
-            {
-                get { return ThemeColors.GetBorder(isDark); }
-            }
-
-            public override Color MenuBorder
-            {
-                get { return ThemeColors.GetBorder(isDark); }
-            }
-
-            public override Color MenuItemPressedGradientBegin
-            {
-                get { return ThemeColors.GetMenuItemPressed(isDark); }
-            }
-
-            public override Color MenuItemPressedGradientEnd
-            {
-                get { return ThemeColors.GetMenuItemPressed(isDark); }
-            }
-
-            public override Color ImageMarginGradientBegin
-            {
-                get { return ThemeColors.GetMenuBackground(isDark); }
-            }
-
-            public override Color ImageMarginGradientMiddle
-            {
-                get { return ThemeColors.GetMenuBackground(isDark); }
-            }
-
-            public override Color ImageMarginGradientEnd
-            {
-                get { return ThemeColors.GetMenuBackground(isDark); }
-            }
-
-            public override Color ToolStripDropDownBackground
-            {
-                get { return ThemeColors.GetMenuBackground(isDark); }
-            }
+            public override Color MenuItemSelected => ThemeColors.GetInteractivePrimary(_isDark);
+            public override Color MenuItemSelectedGradientBegin => ThemeColors.GetInteractivePrimary(_isDark);
+            public override Color MenuItemSelectedGradientEnd => ThemeColors.GetInteractivePrimary(_isDark);
+            public override Color MenuItemBorder => ThemeColors.GetBorderPrimary(_isDark);
+            public override Color MenuBorder => ThemeColors.GetBorderPrimary(_isDark);
+            public override Color MenuItemPressedGradientBegin => ThemeColors.GetBgPrimary(_isDark);
+            public override Color MenuItemPressedGradientEnd => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ImageMarginGradientBegin => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ImageMarginGradientMiddle => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ImageMarginGradientEnd => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ToolStripDropDownBackground => ThemeColors.GetBgPrimary(_isDark);
         }
-
+        
         private void enableDebugBox_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.enableDebugMode = enableDebugBox.Checked;
