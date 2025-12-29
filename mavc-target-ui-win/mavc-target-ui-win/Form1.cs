@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
@@ -35,6 +36,17 @@ namespace mavc_target_ui_win
         ThreadSafeBool updateUIFlag = new ThreadSafeBool();
 
         Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"MAVC", "ui-log.txt"));
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+        private void SetTitleBarTheme(bool isDark)
+        {
+            int darkMode = isDark ? 1 : 0;
+            DwmSetWindowAttribute(this.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+        }
 
         public Form1()
         {
@@ -697,33 +709,166 @@ namespace mavc_target_ui_win
         }
         private void ApplyTheme(bool isDark)
         {
-            Color backColor = isDark ? Color.FromArgb(45, 45, 48) : SystemColors.Control;
-            Color textColor = isDark ? Color.White : SystemColors.ControlText;
-            Color listBackColor = isDark ? Color.FromArgb(30, 30, 30) : Color.White;
+            Color backColor = ThemeColors.GetBackground(isDark);
+            Color textColor = ThemeColors.GetText(isDark);
+            Color listBackColor = ThemeColors.GetListBackground(isDark);
+            Color buttonBackColor = ThemeColors.GetButtonBackground(isDark);
+            Color menuBackColor = ThemeColors.GetMenuBackground(isDark);
+            Color borderColor = ThemeColors.GetBorder(isDark);
+
+            SetTitleBarTheme(isDark);
 
             this.BackColor = backColor;
-            UpdateControlTheme(this, backColor, textColor, listBackColor);
+            
+            foreach (Control topControl in this.Controls)
+            {
+                if (topControl is MenuStrip menuStrip)
+                {
+                    menuStrip.BackColor = menuBackColor;
+                    menuStrip.ForeColor = textColor;
+                    menuStrip.Renderer = new ToolStripProfessionalRenderer(new DiscordColorTable(isDark));
+                    foreach (ToolStripMenuItem menuItem in menuStrip.Items)
+                    {
+                        ApplyThemeToMenuItem(menuItem, menuBackColor, textColor);
+                    }
+                }
+            }
+            
+            UpdateControlTheme(this, backColor, textColor, listBackColor, buttonBackColor, borderColor, isDark);
 
             darkModeToolStripMenuItem.Checked = isDark;
         }
 
-        private void UpdateControlTheme(Control parent, Color back, Color text, Color listBack)
+        private void ApplyThemeToMenuItem(ToolStripMenuItem item, Color backColor, Color textColor)
+        {
+            item.BackColor = backColor;
+            item.ForeColor = textColor;
+            foreach (ToolStripItem subItem in item.DropDownItems)
+            {
+                subItem.BackColor = backColor;
+                subItem.ForeColor = textColor;
+                if (subItem is ToolStripMenuItem subMenuItem)
+                {
+                    ApplyThemeToMenuItem(subMenuItem, backColor, textColor);
+                }
+            }
+        }
+
+        private void UpdateControlTheme(Control parent, Color back, Color text, Color listBack, Color buttonBack, Color border, bool isDark)
         {
             foreach (Control c in parent.Controls)
             {
-                if (c is ListBox || c is ComboBox || c is TextBox)
+                if (c is MenuStrip)
+                {
+                    continue;
+                }
+                else if (c is ComboBox combo)
+                {
+                    combo.BackColor = listBack;
+                    combo.ForeColor = text;
+                    combo.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
+                }
+                else if (c is ListBox)
                 {
                     c.BackColor = listBack;
                     c.ForeColor = text;
                 }
-                else if (c is CheckBox || c is System.Windows.Forms.Label || c is GroupBox)
+                else if (c is TextBox txt)
+                {
+                    txt.BackColor = listBack;
+                    txt.ForeColor = text;
+                    txt.BorderStyle = BorderStyle.FixedSingle;
+                }
+                else if (c is Button btn)
+                {
+                    btn.BackColor = buttonBack;
+                    btn.ForeColor = text;
+                    btn.FlatStyle = FlatStyle.Flat;
+                    btn.FlatAppearance.BorderSize = 1;
+                    btn.FlatAppearance.BorderColor = border;
+                }
+                else if (c is CheckBox || c is System.Windows.Forms.Label)
                 {
                     c.ForeColor = text;
                 }
+                else if (c is GroupBox gb)
+                {
+                    gb.ForeColor = text;
+                    gb.FlatStyle = FlatStyle.Flat;
+                }
+                else if (c is Panel || c is TabControl || c is TabPage)
+                {
+                    c.BackColor = back;
+                    c.ForeColor = text;
+                }
 
-                if (c.HasChildren) UpdateControlTheme(c, back, text, listBack);
+                if (c.HasChildren) UpdateControlTheme(c, back, text, listBack, buttonBack, border, isDark);
+            }
+        }
+
+        private class DiscordColorTable : ProfessionalColorTable
+        {
+            private bool isDark;
+
+            public DiscordColorTable(bool isDarkMode)
+            {
+                isDark = isDarkMode;
             }
 
+            public override Color MenuItemSelected
+            {
+                get { return ThemeColors.GetMenuItemSelected(isDark); }
+            }
+
+            public override Color MenuItemSelectedGradientBegin
+            {
+                get { return ThemeColors.GetMenuItemSelected(isDark); }
+            }
+
+            public override Color MenuItemSelectedGradientEnd
+            {
+                get { return ThemeColors.GetMenuItemSelected(isDark); }
+            }
+
+            public override Color MenuItemBorder
+            {
+                get { return ThemeColors.GetBorder(isDark); }
+            }
+
+            public override Color MenuBorder
+            {
+                get { return ThemeColors.GetBorder(isDark); }
+            }
+
+            public override Color MenuItemPressedGradientBegin
+            {
+                get { return ThemeColors.GetMenuItemPressed(isDark); }
+            }
+
+            public override Color MenuItemPressedGradientEnd
+            {
+                get { return ThemeColors.GetMenuItemPressed(isDark); }
+            }
+
+            public override Color ImageMarginGradientBegin
+            {
+                get { return ThemeColors.GetMenuBackground(isDark); }
+            }
+
+            public override Color ImageMarginGradientMiddle
+            {
+                get { return ThemeColors.GetMenuBackground(isDark); }
+            }
+
+            public override Color ImageMarginGradientEnd
+            {
+                get { return ThemeColors.GetMenuBackground(isDark); }
+            }
+
+            public override Color ToolStripDropDownBackground
+            {
+                get { return ThemeColors.GetMenuBackground(isDark); }
+            }
         }
 
         private void enableDebugBox_CheckedChanged(object sender, EventArgs e)
