@@ -27,6 +27,7 @@ class MAVCSave
         reverseKnob2 = false;
         reverseKnob3 = false;
         reverseKnob4 = false;
+        this.darkMode = false; //default
     }
 
 	// volume 1 mappings
@@ -58,4 +59,7 @@ class MAVCSave
 
     // enable debug mode
     public bool enableDebugMode;
+
+    // dark mode status
+    public bool darkMode;
 }

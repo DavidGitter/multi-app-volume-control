@@ -1,17 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using System.Windows.Forms;
-using Newtonsoft.Json;
-using System.Xml.Linq;
-using System.Diagnostics;
-using System.IO.Compression;
-using System.Net;
+﻿using Newtonsoft.Json;
 using Octokit;
-using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace mavc_target_ui_win
 {
@@ -34,6 +36,17 @@ namespace mavc_target_ui_win
         ThreadSafeBool updateUIFlag = new ThreadSafeBool();
 
         Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"MAVC", "ui-log.txt"));
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+        private void SetTitleBarTheme(bool isDark)
+        {
+            int darkMode = isDark ? 1 : 0;
+            DwmSetWindowAttribute(this.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+        }
 
         public Form1()
         {
@@ -285,11 +298,6 @@ namespace mavc_target_ui_win
             save(configSavePath, configFileName);
         }
 
-        private void groupBox1_Enter(object sender, EventArgs e)
-        {
-
-        }
-
         /**
         * Eventhandler of the Volume 1 Combobox  (available audio outputs)
         */
@@ -450,6 +458,10 @@ namespace mavc_target_ui_win
                 //update knob order
                 reverseKnobsCheckbox.Checked = mavcSave.reverseKnobOrder;
 
+                // load darkmode state
+                darkModeToolStripMenuItem.Checked = mavcSave.darkMode;
+                ApplyTheme(mavcSave.darkMode);
+
                 // update enable debug mode
                 enableDebugBox.Checked = mavcSave.enableDebugMode;
 
@@ -485,11 +497,6 @@ namespace mavc_target_ui_win
                 VolList4.Items.Remove(ao);
                 addAvailableOutput(ao);
             }
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
         }
 
         /**
@@ -642,16 +649,6 @@ namespace mavc_target_ui_win
             }
         }
 
-        private void VolList4_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBox6_Enter(object sender, EventArgs e)
-        {
-
-        }
-
         private void reverseCheckbox1_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.reverseKnob1 = reverseCheckbox1.Checked;
@@ -684,6 +681,134 @@ namespace mavc_target_ui_win
             loadFromMavcSave();
         }
 
+        private void darkModeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            mavcSave.darkMode = !mavcSave.darkMode; // toggle
+            ApplyTheme(mavcSave.darkMode);          // refresh
+            save(configSavePath, configFileName);   // save
+        }
+        private void ApplyTheme(bool isDark)
+        {
+            Color backColor = ThemeColors.GetBgPrimary(isDark);
+            Color textColor = ThemeColors.GetTextPrimary(isDark);
+            Color borderColor = ThemeColors.GetBorderPrimary(isDark);
+
+            SetTitleBarTheme(isDark);
+
+            this.BackColor = backColor;
+            
+            foreach (Control topControl in this.Controls)
+            {
+                if (topControl is MenuStrip menuStrip)
+                {
+                    menuStrip.BackColor = backColor;
+                    menuStrip.ForeColor = textColor;
+                    menuStrip.Renderer = new ToolStripProfessionalRenderer(new DarkModeColorTable(isDark));
+                    foreach (ToolStripMenuItem menuItem in menuStrip.Items)
+                    {
+                        ApplyThemeToMenuItem(menuItem, backColor, textColor);
+                    }
+                }
+            }
+            
+            UpdateControlTheme(this, backColor, textColor, borderColor, isDark);
+
+            darkModeToolStripMenuItem.Checked = isDark;
+        }
+
+        private void ApplyThemeToMenuItem(ToolStripMenuItem item, Color backColor, Color textColor)
+        {
+            item.BackColor = backColor;
+            item.ForeColor = textColor;
+            foreach (ToolStripItem subItem in item.DropDownItems)
+            {
+                subItem.BackColor = backColor;
+                subItem.ForeColor = textColor;
+                if (subItem is ToolStripMenuItem subMenuItem)
+                {
+                    ApplyThemeToMenuItem(subMenuItem, backColor, textColor);
+                }
+            }
+        }
+
+        private void UpdateControlTheme(Control parent, Color back, Color text, Color border, bool isDark)
+        {
+            Color groupBoxBorderColor = ThemeColors.GetBorderPrimary(isDark);
+            
+            foreach (Control c in parent.Controls)
+            {
+                if (c is MenuStrip)
+                {
+                    continue;
+                }
+                else if (c is ComboBox combo)
+                {
+                    combo.BackColor = back;
+                    combo.ForeColor = text;
+                    combo.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
+                }
+                else if (c is ListBox)
+                {
+                    c.BackColor = back;
+                    c.ForeColor = text;
+                }
+                else if (c is TextBox txt)
+                {
+                    txt.BackColor = back;
+                    txt.ForeColor = text;
+                    txt.BorderStyle = BorderStyle.FixedSingle;
+                }
+                else if (c is Button btn)
+                {
+                    btn.BackColor = back;
+                    btn.ForeColor = text;
+                    btn.FlatStyle = FlatStyle.Flat;
+                    btn.FlatAppearance.BorderSize = 1;
+                    btn.FlatAppearance.BorderColor = border;
+                }
+                else if (c is CheckBox chk)
+                {
+                    chk.ForeColor = text;
+                    chk.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
+                }
+                else if (c is System.Windows.Forms.Label)
+                {
+                    c.ForeColor = text;
+                }
+                else if (c is GroupBox gb)
+                {
+                    gb.ForeColor = groupBoxBorderColor;
+                    gb.FlatStyle = FlatStyle.Flat;
+                }
+                else if (c is Panel || c is TabControl || c is TabPage)
+                {
+                    c.BackColor = back;
+                    c.ForeColor = text;
+                }
+
+                if (c.HasChildren) UpdateControlTheme(c, back, text, border, isDark);
+            }
+        }
+
+        private class DarkModeColorTable : ProfessionalColorTable
+        {
+            private readonly bool _isDark;
+
+            public DarkModeColorTable(bool isDark) => _isDark = isDark;
+
+            public override Color MenuItemSelected => ThemeColors.GetInteractivePrimary(_isDark);
+            public override Color MenuItemSelectedGradientBegin => ThemeColors.GetInteractivePrimary(_isDark);
+            public override Color MenuItemSelectedGradientEnd => ThemeColors.GetInteractivePrimary(_isDark);
+            public override Color MenuItemBorder => ThemeColors.GetBorderPrimary(_isDark);
+            public override Color MenuBorder => ThemeColors.GetBorderPrimary(_isDark);
+            public override Color MenuItemPressedGradientBegin => ThemeColors.GetBgPrimary(_isDark);
+            public override Color MenuItemPressedGradientEnd => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ImageMarginGradientBegin => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ImageMarginGradientMiddle => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ImageMarginGradientEnd => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ToolStripDropDownBackground => ThemeColors.GetBgPrimary(_isDark);
+        }
+        
         private void enableDebugBox_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.enableDebugMode = enableDebugBox.Checked;
