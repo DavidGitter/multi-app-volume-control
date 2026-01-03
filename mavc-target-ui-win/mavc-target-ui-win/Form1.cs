@@ -1,17 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using System.Windows.Forms;
-using Newtonsoft.Json;
-using System.Xml.Linq;
-using System.Diagnostics;
-using System.IO.Compression;
-using System.Net;
+﻿using Newtonsoft.Json;
 using Octokit;
-using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace mavc_target_ui_win
 {
@@ -35,12 +37,34 @@ namespace mavc_target_ui_win
 
         Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"MAVC", "ui-log.txt"));
 
+        // System tray components
+        private NotifyIcon trayIcon;
+        private ContextMenuStrip trayMenu;
+
+        // Agent process management
+        private Process agentProcess;
+        private string agentExecutablePath;
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+        private void SetTitleBarTheme(bool isDark)
+        {
+            int darkMode = isDark ? 1 : 0;
+            DwmSetWindowAttribute(this.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+        }
+
         public Form1()
         {
             try
             {
                 //load list of apps and devices
                 InitializeComponent();
+
+                // Initialize system tray icon
+                InitializeTrayIcon();
 
                 // Auto Check for update
                 checkForUpdate();
@@ -81,10 +105,352 @@ namespace mavc_target_ui_win
                 updateTimer.Interval = 3000;   // milliseconds
                 updateTimer.Tick += updateTimer_Tick;  // set handler
                 updateTimer.Start();
+
+                // Start the agent process
+                StartAgentProcess();
             }
             catch (Exception e){
                 logger.Error(e.ToString());
             }
+        }
+
+        /// <summary>
+        /// Starts the agent process
+        /// </summary>
+        private void StartAgentProcess()
+        {
+            try
+            {
+                // kill any existing agent processes
+                KillExistingAgentProcesses();
+
+                // Look for the agent executable in multiple locations
+                // Priority depends on whether we're debugging or running in production
+                string[] possiblePaths;
+                
+#if DEBUG
+                // When debugging, prioritize development build location
+                possiblePaths = new string[]
+                {
+                    // Development location (Debug build) - CHECK FIRST when debugging
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe"),
+                    // Production location (installed via MSI)
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Alternative production location (64-bit Program Files)
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Same directory as UI (portable deployment)
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agent", "mavc-target-agent.exe")
+                };
+#else
+                // When running in Release/Production, prioritize installed location
+                possiblePaths = new string[]
+                {
+                    // Production location (installed via MSI) - CHECK FIRST in production
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Alternative production location (64-bit Program Files)
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Same directory as UI (portable deployment)
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agent", "mavc-target-agent.exe"),
+                    // Development location (fallback)
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe")
+                };
+#endif
+                
+                agentExecutablePath = null;
+                
+                foreach (string path in possiblePaths)
+                {
+                    try
+                    {
+                        string fullPath = Path.GetFullPath(path);
+                        Debug.WriteLine($"Checking for agent at: {fullPath}");
+                        
+                        if (File.Exists(fullPath))
+                        {
+                            agentExecutablePath = fullPath;
+                            Debug.WriteLine($"Found agent executable at: {agentExecutablePath}");
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error checking path {path}: {ex.Message}");
+                    }
+                }
+
+                if (agentExecutablePath == null)
+                {
+                    string errorMessage = $"Agent executable not found.\n\n" +
+                                        $"Searched locations:\n" +
+                                        $"1. C:\\Program Files (x86)\\Mavc\\Mavc\\agent\\mavc-target-agent.exe\n" +
+                                        $"2. C:\\Program Files\\Mavc\\Mavc\\agent\\mavc-target-agent.exe\n" +
+                                        $"3. Development build folder\n" +
+                                        $"4. UI directory\\agent\\\n\n" +
+                                        $"Please ensure MAVC is installed or build the mavc-target-agent project.";
+                    
+                    Debug.WriteLine("Agent executable not found in any location.");
+                    MessageBox.Show(errorMessage, "Agent Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                agentProcess = new Process();
+                agentProcess.StartInfo.FileName = agentExecutablePath;
+                agentProcess.StartInfo.UseShellExecute = false;
+                agentProcess.StartInfo.CreateNoWindow = true;
+                agentProcess.EnableRaisingEvents = true;
+                
+                agentProcess.Exited += (sender, e) =>
+                {
+                    Debug.WriteLine("Agent process exited unexpectedly.");
+                };
+
+                agentProcess.Start();
+                Debug.WriteLine($"Agent process started successfully from: {agentExecutablePath}");
+                
+                // Show success notification
+                trayIcon.ShowBalloonTip(2000, "MAVC", "Agent started successfully", ToolTipIcon.Info);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to start agent process: {ex}");
+                string errorMessage = $"Failed to start agent process.\n\nError: {ex.Message}\n\n" +
+                                    $"The UI will continue to run, but the agent will need to be started manually.";
+                MessageBox.Show(errorMessage, "Agent Start Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Kills all existing agent processes that are currently running
+        /// </summary>
+        private void KillExistingAgentProcesses()
+        {
+            try
+            {
+                Process[] existingProcesses = Process.GetProcessesByName("mavc-target-agent");
+                
+                if (existingProcesses.Length > 0)
+                {
+                    Debug.WriteLine($"Found {existingProcesses.Length} existing agent process(es). Terminating...");
+                    
+                    foreach (Process proc in existingProcesses)
+                    {
+                        try
+                        {
+                            // Check if process has already exited before trying to access its properties
+                            if (proc.HasExited)
+                            {
+                                Debug.WriteLine($"Process already exited, skipping.");
+                                proc.Dispose();
+                                continue;
+                            }
+                            
+                            int processId = proc.Id; // Store PID before killing
+                            Debug.WriteLine($"Killing agent process with PID: {processId}");
+                            
+                            proc.Kill();
+                            proc.WaitForExit(2000); // Wait up to 2 seconds for each process
+                            proc.Dispose();
+                            
+                            Debug.WriteLine($"Successfully terminated agent process with PID: {processId}");
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            // Process has already exited or is no longer accessible
+                            Debug.WriteLine($"Process already exited or inaccessible, skipping.");
+                            try { proc.Dispose(); } catch { }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Failed to kill process: {ex.Message}");
+                            try { proc.Dispose(); } catch { }
+                        }
+                    }
+                    
+                    // Give a moment for all processes to fully terminate
+                    System.Threading.Thread.Sleep(500);
+                    Debug.WriteLine("All existing agent processes terminated.");
+                }
+                else
+                {
+                    Debug.WriteLine("No existing agent processes found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error checking for existing agent processes: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Stops the agent process
+        /// </summary>
+        private void StopAgentProcess()
+        {
+            try
+            {
+                if (agentProcess != null && !agentProcess.HasExited)
+                {
+                    Debug.WriteLine("Stopping agent process...");
+                    agentProcess.Kill();
+                    agentProcess.WaitForExit(5000); // Wait up to 5 seconds
+                    agentProcess.Dispose();
+                    agentProcess = null;
+                    Debug.WriteLine("Agent process stopped successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error stopping agent process: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// Restarts the agent process
+        /// </summary>
+        private void RestartAgentProcess()
+        {
+            Debug.WriteLine("Restarting agent process...");
+            
+            // Stop our tracked agent process
+            StopAgentProcess();
+            
+            // Also kill any other agent processes that might be running
+            KillExistingAgentProcesses();
+            
+            System.Threading.Thread.Sleep(500); // Give it a moment to fully terminate
+            StartAgentProcess();
+        }
+
+        /// <summary>
+        /// Initializes the system tray icon and context menu
+        /// </summary>
+        private void InitializeTrayIcon()
+        {
+            // Create the tray icon
+            trayIcon = new NotifyIcon();
+            
+            try
+            {
+                trayIcon.Icon = new System.Drawing.Icon("./icon.ico");
+            }
+            catch
+            {
+                trayIcon.Icon = this.Icon;
+                logger.Warning("Tray icon not found, using default!");
+            }
+            
+            trayIcon.Text = "MAVC - Multi-App Volume Control";
+            trayIcon.Visible = true;
+
+            // Create the context menu
+            trayMenu = new ContextMenuStrip();
+            
+            ToolStripMenuItem openUIItem = new ToolStripMenuItem("Open UI", null, OnOpenUI);
+            ToolStripMenuItem restartAgentItem = new ToolStripMenuItem("Restart Agent", null, OnRestartAgent);
+            ToolStripSeparator separator = new ToolStripSeparator();
+            ToolStripMenuItem exitItem = new ToolStripMenuItem("Exit", null, OnExit);
+
+            trayMenu.Items.Add(openUIItem);
+            trayMenu.Items.Add(restartAgentItem);
+            trayMenu.Items.Add(separator);
+            trayMenu.Items.Add(exitItem);
+
+            // Attach menu to tray icon
+            trayIcon.ContextMenuStrip = trayMenu;
+
+            // Double-click to show UI
+            trayIcon.DoubleClick += (s, e) => ShowUI();
+        }
+
+        /// <summary>
+        /// Event handler for "Open UI" menu item
+        /// </summary>
+        private void OnOpenUI(object sender, EventArgs e)
+        {
+            ShowUI();
+        }
+
+        /// <summary>
+        /// Event handler for "Restart Agent" menu item
+        /// </summary>
+        private void OnRestartAgent(object sender, EventArgs e)
+        {
+            try
+            {
+                RestartAgentProcess();
+                
+                // Show notification
+                trayIcon.ShowBalloonTip(2000, "MAVC", "Agent restarted successfully", ToolTipIcon.Info);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Failed to restart agent: " + ex.ToString());
+                MessageBox.Show("Failed to restart agent. Check logs for details.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Event handler for "Exit" menu item
+        /// </summary>
+        private void OnExit(object sender, EventArgs e)
+        {
+            // Confirm exit
+            DialogResult result = MessageBox.Show(
+                "Are you sure you want to exit MAVC? The agent will stop running.", 
+                "Exit MAVC", 
+                MessageBoxButtons.YesNo, 
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                logger.Info("Exiting application");
+                
+                // Stop the agent process
+                StopAgentProcess();
+                
+                trayIcon.Visible = false;
+                updateTimer.Stop();
+                System.Windows.Forms.Application.Exit();
+            }
+        }
+
+        /// <summary>
+        /// Shows the UI window
+        /// </summary>
+        private void ShowUI()
+        {
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+            this.ShowInTaskbar = true;
+            this.BringToFront();
+            this.Activate();
+        }
+
+        /// <summary>
+        /// Override form closing to minimize to tray instead of closing if toggle is enabled
+        /// </summary>
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing && closeActionToggle.Checked)
+            {
+                // Hide to tray instead of closing
+                e.Cancel = true;
+                this.Hide();
+                this.ShowInTaskbar = false;
+                
+                // Show notification first time
+                if (trayIcon.Tag == null)
+                {
+                    trayIcon.ShowBalloonTip(2000, "MAVC", "Application minimized to tray. Agent is still running.", ToolTipIcon.Info);
+                    trayIcon.Tag = "shown";
+                }
+            }
+            else if (e.CloseReason == CloseReason.UserClosing)
+            {
+                // User is closing without minimize to tray - stop the agent
+                StopAgentProcess();
+            }
+            base.OnFormClosing(e);
         }
 
         private void checkForUpdate()
@@ -285,11 +651,6 @@ namespace mavc_target_ui_win
             save(configSavePath, configFileName);
         }
 
-        private void groupBox1_Enter(object sender, EventArgs e)
-        {
-
-        }
-
         /**
         * Eventhandler of the Volume 1 Combobox  (available audio outputs)
         */
@@ -450,6 +811,16 @@ namespace mavc_target_ui_win
                 //update knob order
                 reverseKnobsCheckbox.Checked = mavcSave.reverseKnobOrder;
 
+                // load darkmode state
+                darkModeToolStripMenuItem.Checked = mavcSave.darkMode;
+                ApplyTheme(mavcSave.darkMode);
+
+                // load minimize on close setting
+                closeActionToggle.Checked = mavcSave.minimizeOnClose;
+
+                // update enable debug mode
+                enableDebugBox.Checked = mavcSave.enableDebugMode;
+
             }catch(Exception e){
                 Console.WriteLine(e.Message + "\n" + e.StackTrace);
                 Console.WriteLine("Config file cannot be opened or is invalid - creating new one...");
@@ -482,11 +853,6 @@ namespace mavc_target_ui_win
                 VolList4.Items.Remove(ao);
                 addAvailableOutput(ao);
             }
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
         }
 
         /**
@@ -639,16 +1005,6 @@ namespace mavc_target_ui_win
             }
         }
 
-        private void VolList4_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBox6_Enter(object sender, EventArgs e)
-        {
-
-        }
-
         private void reverseCheckbox1_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.reverseKnob1 = reverseCheckbox1.Checked;
@@ -679,6 +1035,145 @@ namespace mavc_target_ui_win
             //refresh all audio outputs available + there state
             refreshAvailableOutputs();
             loadFromMavcSave();
+        }
+
+        private void darkModeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            mavcSave.darkMode = !mavcSave.darkMode; // toggle
+            ApplyTheme(mavcSave.darkMode);          // refresh
+            save(configSavePath, configFileName);   // save
+        }
+        
+        private void ApplyTheme(bool isDark)
+        {
+            Color backColor = ThemeColors.GetBgPrimary(isDark);
+            Color textColor = ThemeColors.GetTextPrimary(isDark);
+            Color borderColor = ThemeColors.GetBorderPrimary(isDark);
+
+            SetTitleBarTheme(isDark);
+
+            this.BackColor = backColor;
+            
+            foreach (Control topControl in this.Controls)
+            {
+                if (topControl is MenuStrip menuStrip)
+                {
+                    menuStrip.BackColor = backColor;
+                    menuStrip.ForeColor = textColor;
+                    menuStrip.Renderer = new ToolStripProfessionalRenderer(new DarkModeColorTable(isDark));
+                    foreach (ToolStripMenuItem menuItem in menuStrip.Items)
+                    {
+                        ApplyThemeToMenuItem(menuItem, backColor, textColor);
+                    }
+                }
+            }
+            
+            UpdateControlTheme(this, backColor, textColor, borderColor, isDark);
+
+            darkModeToolStripMenuItem.Checked = isDark;
+        }
+
+        private void ApplyThemeToMenuItem(ToolStripMenuItem item, Color backColor, Color textColor)
+        {
+            item.BackColor = backColor;
+            item.ForeColor = textColor;
+            foreach (ToolStripItem subItem in item.DropDownItems)
+            {
+                subItem.BackColor = backColor;
+                subItem.ForeColor = textColor;
+                if (subItem is ToolStripMenuItem subMenuItem)
+                {
+                    ApplyThemeToMenuItem(subMenuItem, backColor, textColor);
+                }
+            }
+        }
+
+        private void UpdateControlTheme(Control parent, Color back, Color text, Color border, bool isDark)
+        {
+            Color groupBoxBorderColor = ThemeColors.GetBorderPrimary(isDark);
+            
+            foreach (Control c in parent.Controls)
+            {
+                if (c is MenuStrip)
+                {
+                    continue;
+                }
+                else if (c is ComboBox combo)
+                {
+                    combo.BackColor = back;
+                    combo.ForeColor = text;
+                    combo.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
+                }
+                else if (c is ListBox)
+                {
+                    c.BackColor = back;
+                    c.ForeColor = text;
+                }
+                else if (c is TextBox txt)
+                {
+                    txt.BackColor = back;
+                    txt.ForeColor = text;
+                    txt.BorderStyle = BorderStyle.FixedSingle;
+                }
+                else if (c is Button btn)
+                {
+                    btn.BackColor = back;
+                    btn.ForeColor = text;
+                    btn.FlatStyle = FlatStyle.Flat;
+                    btn.FlatAppearance.BorderSize = 1;
+                    btn.FlatAppearance.BorderColor = border;
+                }
+                else if (c is CheckBox chk)
+                {
+                    chk.ForeColor = text;
+                    chk.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
+                }
+                else if (c is System.Windows.Forms.Label)
+                {
+                    c.ForeColor = text;
+                }
+                else if (c is GroupBox gb)
+                {
+                    gb.ForeColor = groupBoxBorderColor;
+                    gb.FlatStyle = FlatStyle.Flat;
+                }
+                else if (c is Panel || c is TabControl || c is TabPage)
+                {
+                    c.BackColor = back;
+                    c.ForeColor = text;
+                }
+
+                if (c.HasChildren) UpdateControlTheme(c, back, text, border, isDark);
+            }
+        }
+
+        private class DarkModeColorTable : ProfessionalColorTable
+        {
+            private readonly bool _isDark;
+
+            public DarkModeColorTable(bool isDark) => _isDark = isDark;
+
+            public override Color MenuItemSelected => ThemeColors.GetInteractivePrimary(_isDark);
+            public override Color MenuItemSelectedGradientBegin => ThemeColors.GetInteractivePrimary(_isDark);
+            public override Color MenuItemSelectedGradientEnd => ThemeColors.GetInteractivePrimary(_isDark);
+            public override Color MenuItemBorder => ThemeColors.GetBorderPrimary(_isDark);
+            public override Color MenuBorder => ThemeColors.GetBorderPrimary(_isDark);
+            public override Color MenuItemPressedGradientBegin => ThemeColors.GetBgPrimary(_isDark);
+            public override Color MenuItemPressedGradientEnd => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ImageMarginGradientBegin => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ImageMarginGradientMiddle => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ImageMarginGradientEnd => ThemeColors.GetBgPrimary(_isDark);
+            public override Color ToolStripDropDownBackground => ThemeColors.GetBgPrimary(_isDark);
+        }
+        
+        private void enableDebugBox_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.enableDebugMode = enableDebugBox.Checked;
+        }
+
+        private void closeActionToggle_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.minimizeOnClose = closeActionToggle.Checked;
         }
     }
 }
