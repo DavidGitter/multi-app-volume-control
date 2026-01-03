@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.SaveBtn = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -60,9 +61,11 @@
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.darkModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.additionalBox = new System.Windows.Forms.GroupBox();
+            this.closeActionToggle = new System.Windows.Forms.CheckBox();
             this.enableDebugBox = new System.Windows.Forms.CheckBox();
             this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
             this.versionText = new System.Windows.Forms.TextBox();
+            this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -366,6 +369,7 @@
             // 
             // additionalBox
             // 
+            this.additionalBox.Controls.Add(this.closeActionToggle);
             this.additionalBox.Controls.Add(this.enableDebugBox);
             this.additionalBox.Controls.Add(this.reverseKnobsCheckbox);
             this.additionalBox.Location = new System.Drawing.Point(972, 38);
@@ -374,6 +378,17 @@
             this.additionalBox.TabIndex = 13;
             this.additionalBox.TabStop = false;
             this.additionalBox.Text = "Settings";
+            // 
+            // closeActionToggle
+            // 
+            this.closeActionToggle.AutoSize = true;
+            this.closeActionToggle.Location = new System.Drawing.Point(6, 65);
+            this.closeActionToggle.Name = "closeActionToggle";
+            this.closeActionToggle.Size = new System.Drawing.Size(109, 17);
+            this.closeActionToggle.TabIndex = 13;
+            this.closeActionToggle.Text = "Minimize on close";
+            this.closeActionToggle.UseVisualStyleBackColor = true;
+            this.closeActionToggle.CheckedChanged += new System.EventHandler(this.closeActionToggle_CheckedChanged);
             // 
             // enableDebugBox
             // 
@@ -418,6 +433,11 @@
             this.versionText.Size = new System.Drawing.Size(72, 20);
             this.versionText.TabIndex = 12;
             this.versionText.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // notifyIcon1
+            // 
+            this.notifyIcon1.Text = "notifyIcon1";
+            this.notifyIcon1.Visible = true;
             // 
             // Form1
             // 
@@ -488,9 +508,11 @@
         private System.Windows.Forms.CheckBox reverseKnobsCheckbox;
         private System.Windows.Forms.ToolStripMenuItem refreshToolStripMenuItem;
         private System.Windows.Forms.TextBox versionText;
+        private System.Windows.Forms.CheckBox closeActionToggle;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem darkModeToolStripMenuItem;
         private System.Windows.Forms.CheckBox enableDebugBox;
+        private System.Windows.Forms.NotifyIcon notifyIcon1;
     }
 }
 
