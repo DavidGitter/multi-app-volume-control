@@ -37,6 +37,14 @@ namespace mavc_target_ui_win
 
         Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"MAVC", "ui-log.txt"));
 
+        // System tray components
+        private NotifyIcon trayIcon;
+        private ContextMenuStrip trayMenu;
+
+        // Agent process management
+        private Process agentProcess;
+        private string agentExecutablePath;
+
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
@@ -54,6 +62,9 @@ namespace mavc_target_ui_win
             {
                 //load list of apps and devices
                 InitializeComponent();
+
+                // Initialize system tray icon
+                InitializeTrayIcon();
 
                 // Auto Check for update
                 checkForUpdate();
@@ -94,10 +105,233 @@ namespace mavc_target_ui_win
                 updateTimer.Interval = 3000;   // milliseconds
                 updateTimer.Tick += updateTimer_Tick;  // set handler
                 updateTimer.Start();
+
+                // Start the agent process
+                StartAgentProcess();
             }
             catch (Exception e){
                 logger.Error(e.ToString());
             }
+        }
+
+        /// <summary>
+        /// Starts the agent process
+        /// </summary>
+        private void StartAgentProcess()
+        {
+            try
+            {
+                // Look for the agent executable in common locations
+                string[] possiblePaths = new string[]
+                {
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mavc-target-agent.exe"),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe"),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "mavc-target-agent", "mavc-target-agent", "bin", "Release", "net6.0-windows", "mavc-target-agent.exe"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MAVC", "mavc-target-agent.exe")
+                };
+
+                agentExecutablePath = null;
+                foreach (string path in possiblePaths)
+                {
+                    string fullPath = Path.GetFullPath(path);
+                    if (File.Exists(fullPath))
+                    {
+                        agentExecutablePath = fullPath;
+                        break;
+                    }
+                }
+
+                if (agentExecutablePath == null)
+                {
+                    logger.Warning("Agent executable not found. Agent will not be started automatically.");
+                    return;
+                }
+
+                agentProcess = new Process();
+                agentProcess.StartInfo.FileName = agentExecutablePath;
+                agentProcess.StartInfo.UseShellExecute = false;
+                agentProcess.StartInfo.CreateNoWindow = true;
+                agentProcess.EnableRaisingEvents = true;
+                
+                agentProcess.Exited += (sender, e) =>
+                {
+                    logger.Warning("Agent process exited unexpectedly.");
+                };
+
+                agentProcess.Start();
+                logger.Info($"Agent process started successfully from: {agentExecutablePath}");
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Failed to start agent process: {ex.ToString()}");
+                MessageBox.Show($"Failed to start agent process. The agent may need to be started manually.\n\nError: {ex.Message}", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        /// <summary>
+        /// Stops the agent process
+        /// </summary>
+        private void StopAgentProcess()
+        {
+            try
+            {
+                if (agentProcess != null && !agentProcess.HasExited)
+                {
+                    logger.Info("Stopping agent process...");
+                    agentProcess.Kill();
+                    agentProcess.WaitForExit(5000); // Wait up to 5 seconds
+                    agentProcess.Dispose();
+                    agentProcess = null;
+                    logger.Info("Agent process stopped successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Error stopping agent process: {ex.ToString()}");
+            }
+        }
+
+        /// <summary>
+        /// Restarts the agent process
+        /// </summary>
+        private void RestartAgentProcess()
+        {
+            logger.Info("Restarting agent process...");
+            StopAgentProcess();
+            System.Threading.Thread.Sleep(1000); // Give it a moment to fully terminate
+            StartAgentProcess();
+        }
+
+        /// <summary>
+        /// Initializes the system tray icon and context menu
+        /// </summary>
+        private void InitializeTrayIcon()
+        {
+            // Create the tray icon
+            trayIcon = new NotifyIcon();
+            
+            try
+            {
+                trayIcon.Icon = new System.Drawing.Icon("./icon.ico");
+            }
+            catch
+            {
+                trayIcon.Icon = this.Icon;
+                logger.Warning("Tray icon not found, using default!");
+            }
+            
+            trayIcon.Text = "MAVC - Multi-App Volume Control";
+            trayIcon.Visible = true;
+
+            // Create the context menu
+            trayMenu = new ContextMenuStrip();
+            
+            ToolStripMenuItem openUIItem = new ToolStripMenuItem("Open UI", null, OnOpenUI);
+            ToolStripMenuItem restartAgentItem = new ToolStripMenuItem("Restart Agent", null, OnRestartAgent);
+            ToolStripSeparator separator = new ToolStripSeparator();
+            ToolStripMenuItem exitItem = new ToolStripMenuItem("Exit", null, OnExit);
+
+            trayMenu.Items.Add(openUIItem);
+            trayMenu.Items.Add(restartAgentItem);
+            trayMenu.Items.Add(separator);
+            trayMenu.Items.Add(exitItem);
+
+            // Attach menu to tray icon
+            trayIcon.ContextMenuStrip = trayMenu;
+
+            // Double-click to show UI
+            trayIcon.DoubleClick += (s, e) => ShowUI();
+        }
+
+        /// <summary>
+        /// Event handler for "Open UI" menu item
+        /// </summary>
+        private void OnOpenUI(object sender, EventArgs e)
+        {
+            ShowUI();
+        }
+
+        /// <summary>
+        /// Event handler for "Restart Agent" menu item
+        /// </summary>
+        private void OnRestartAgent(object sender, EventArgs e)
+        {
+            try
+            {
+                RestartAgentProcess();
+                
+                // Show notification
+                trayIcon.ShowBalloonTip(2000, "MAVC", "Agent restarted successfully", ToolTipIcon.Info);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Failed to restart agent: " + ex.ToString());
+                MessageBox.Show("Failed to restart agent. Check logs for details.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Event handler for "Exit" menu item
+        /// </summary>
+        private void OnExit(object sender, EventArgs e)
+        {
+            // Confirm exit
+            DialogResult result = MessageBox.Show(
+                "Are you sure you want to exit MAVC? The agent will stop running.", 
+                "Exit MAVC", 
+                MessageBoxButtons.YesNo, 
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                logger.Info("Exiting application");
+                
+                // Stop the agent process
+                StopAgentProcess();
+                
+                trayIcon.Visible = false;
+                updateTimer.Stop();
+                System.Windows.Forms.Application.Exit();
+            }
+        }
+
+        /// <summary>
+        /// Shows the UI window
+        /// </summary>
+        private void ShowUI()
+        {
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+            this.ShowInTaskbar = true;
+            this.BringToFront();
+            this.Activate();
+        }
+
+        /// <summary>
+        /// Override form closing to minimize to tray instead of closing if toggle is enabled
+        /// </summary>
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing && closeActionToggle.Checked)
+            {
+                // Hide to tray instead of closing
+                e.Cancel = true;
+                this.Hide();
+                this.ShowInTaskbar = false;
+                
+                // Show notification first time
+                if (trayIcon.Tag == null)
+                {
+                    trayIcon.ShowBalloonTip(2000, "MAVC", "Application minimized to tray. Agent is still running.", ToolTipIcon.Info);
+                    trayIcon.Tag = "shown";
+                }
+            }
+            else if (e.CloseReason == CloseReason.UserClosing)
+            {
+                // User is closing without minimize to tray - stop the agent
+                StopAgentProcess();
+            }
+            base.OnFormClosing(e);
         }
 
         private void checkForUpdate()
@@ -687,6 +921,7 @@ namespace mavc_target_ui_win
             ApplyTheme(mavcSave.darkMode);          // refresh
             save(configSavePath, configFileName);   // save
         }
+        
         private void ApplyTheme(bool isDark)
         {
             Color backColor = ThemeColors.GetBgPrimary(isDark);
@@ -812,6 +1047,11 @@ namespace mavc_target_ui_win
         private void enableDebugBox_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.enableDebugMode = enableDebugBox.Checked;
+        }
+
+        private void closeActionToggle_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }
