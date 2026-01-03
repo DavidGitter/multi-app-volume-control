@@ -27,7 +27,9 @@ class MAVCSave
         reverseKnob2 = false;
         reverseKnob3 = false;
         reverseKnob4 = false;
-        this.darkMode = false; //default
+        darkMode = false;
+        enableDebugMode = false;
+        minimizeOnClose = false;
     }
 
 	// volume 1 mappings
@@ -62,4 +64,7 @@ class MAVCSave
 
     // dark mode status
     public bool darkMode;
+
+    // minimize to tray on close
+    public bool minimizeOnClose;
 }

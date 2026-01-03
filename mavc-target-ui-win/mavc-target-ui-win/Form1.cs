@@ -121,29 +121,75 @@ namespace mavc_target_ui_win
         {
             try
             {
-                // Look for the agent executable in common locations
-                string[] possiblePaths = new string[]
-                {
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mavc-target-agent.exe"),
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe"),
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "mavc-target-agent", "mavc-target-agent", "bin", "Release", "net6.0-windows", "mavc-target-agent.exe"),
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MAVC", "mavc-target-agent.exe")
-                };
+                // kill any existing agent processes
+                KillExistingAgentProcesses();
 
+                // Look for the agent executable in multiple locations
+                // Priority depends on whether we're debugging or running in production
+                string[] possiblePaths;
+                
+#if DEBUG
+                // When debugging, prioritize development build location
+                possiblePaths = new string[]
+                {
+                    // Development location (Debug build) - CHECK FIRST when debugging
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe"),
+                    // Production location (installed via MSI)
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Alternative production location (64-bit Program Files)
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Same directory as UI (portable deployment)
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agent", "mavc-target-agent.exe")
+                };
+#else
+                // When running in Release/Production, prioritize installed location
+                possiblePaths = new string[]
+                {
+                    // Production location (installed via MSI) - CHECK FIRST in production
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Alternative production location (64-bit Program Files)
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Same directory as UI (portable deployment)
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agent", "mavc-target-agent.exe"),
+                    // Development location (fallback)
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe")
+                };
+#endif
+                
                 agentExecutablePath = null;
+                
                 foreach (string path in possiblePaths)
                 {
-                    string fullPath = Path.GetFullPath(path);
-                    if (File.Exists(fullPath))
+                    try
                     {
-                        agentExecutablePath = fullPath;
-                        break;
+                        string fullPath = Path.GetFullPath(path);
+                        Debug.WriteLine($"Checking for agent at: {fullPath}");
+                        
+                        if (File.Exists(fullPath))
+                        {
+                            agentExecutablePath = fullPath;
+                            Debug.WriteLine($"Found agent executable at: {agentExecutablePath}");
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error checking path {path}: {ex.Message}");
                     }
                 }
 
                 if (agentExecutablePath == null)
                 {
-                    logger.Warning("Agent executable not found. Agent will not be started automatically.");
+                    string errorMessage = $"Agent executable not found.\n\n" +
+                                        $"Searched locations:\n" +
+                                        $"1. C:\\Program Files (x86)\\Mavc\\Mavc\\agent\\mavc-target-agent.exe\n" +
+                                        $"2. C:\\Program Files\\Mavc\\Mavc\\agent\\mavc-target-agent.exe\n" +
+                                        $"3. Development build folder\n" +
+                                        $"4. UI directory\\agent\\\n\n" +
+                                        $"Please ensure MAVC is installed or build the mavc-target-agent project.";
+                    
+                    Debug.WriteLine("Agent executable not found in any location.");
+                    MessageBox.Show(errorMessage, "Agent Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -155,16 +201,83 @@ namespace mavc_target_ui_win
                 
                 agentProcess.Exited += (sender, e) =>
                 {
-                    logger.Warning("Agent process exited unexpectedly.");
+                    Debug.WriteLine("Agent process exited unexpectedly.");
                 };
 
                 agentProcess.Start();
-                logger.Info($"Agent process started successfully from: {agentExecutablePath}");
+                Debug.WriteLine($"Agent process started successfully from: {agentExecutablePath}");
+                
+                // Show success notification
+                trayIcon.ShowBalloonTip(2000, "MAVC", "Agent started successfully", ToolTipIcon.Info);
             }
             catch (Exception ex)
             {
-                logger.Error($"Failed to start agent process: {ex.ToString()}");
-                MessageBox.Show($"Failed to start agent process. The agent may need to be started manually.\n\nError: {ex.Message}", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Debug.WriteLine($"Failed to start agent process: {ex}");
+                string errorMessage = $"Failed to start agent process.\n\nError: {ex.Message}\n\n" +
+                                    $"The UI will continue to run, but the agent will need to be started manually.";
+                MessageBox.Show(errorMessage, "Agent Start Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Kills all existing agent processes that are currently running
+        /// </summary>
+        private void KillExistingAgentProcesses()
+        {
+            try
+            {
+                Process[] existingProcesses = Process.GetProcessesByName("mavc-target-agent");
+                
+                if (existingProcesses.Length > 0)
+                {
+                    Debug.WriteLine($"Found {existingProcesses.Length} existing agent process(es). Terminating...");
+                    
+                    foreach (Process proc in existingProcesses)
+                    {
+                        try
+                        {
+                            // Check if process has already exited before trying to access its properties
+                            if (proc.HasExited)
+                            {
+                                Debug.WriteLine($"Process already exited, skipping.");
+                                proc.Dispose();
+                                continue;
+                            }
+                            
+                            int processId = proc.Id; // Store PID before killing
+                            Debug.WriteLine($"Killing agent process with PID: {processId}");
+                            
+                            proc.Kill();
+                            proc.WaitForExit(2000); // Wait up to 2 seconds for each process
+                            proc.Dispose();
+                            
+                            Debug.WriteLine($"Successfully terminated agent process with PID: {processId}");
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            // Process has already exited or is no longer accessible
+                            Debug.WriteLine($"Process already exited or inaccessible, skipping.");
+                            try { proc.Dispose(); } catch { }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Failed to kill process: {ex.Message}");
+                            try { proc.Dispose(); } catch { }
+                        }
+                    }
+                    
+                    // Give a moment for all processes to fully terminate
+                    System.Threading.Thread.Sleep(500);
+                    Debug.WriteLine("All existing agent processes terminated.");
+                }
+                else
+                {
+                    Debug.WriteLine("No existing agent processes found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error checking for existing agent processes: {ex.Message}");
             }
         }
 
@@ -177,17 +290,17 @@ namespace mavc_target_ui_win
             {
                 if (agentProcess != null && !agentProcess.HasExited)
                 {
-                    logger.Info("Stopping agent process...");
+                    Debug.WriteLine("Stopping agent process...");
                     agentProcess.Kill();
                     agentProcess.WaitForExit(5000); // Wait up to 5 seconds
                     agentProcess.Dispose();
                     agentProcess = null;
-                    logger.Info("Agent process stopped successfully.");
+                    Debug.WriteLine("Agent process stopped successfully.");
                 }
             }
             catch (Exception ex)
             {
-                logger.Error($"Error stopping agent process: {ex.ToString()}");
+                Debug.WriteLine($"Error stopping agent process: {ex}");
             }
         }
 
@@ -196,9 +309,15 @@ namespace mavc_target_ui_win
         /// </summary>
         private void RestartAgentProcess()
         {
-            logger.Info("Restarting agent process...");
+            Debug.WriteLine("Restarting agent process...");
+            
+            // Stop our tracked agent process
             StopAgentProcess();
-            System.Threading.Thread.Sleep(1000); // Give it a moment to fully terminate
+            
+            // Also kill any other agent processes that might be running
+            KillExistingAgentProcesses();
+            
+            System.Threading.Thread.Sleep(500); // Give it a moment to fully terminate
             StartAgentProcess();
         }
 
@@ -696,6 +815,9 @@ namespace mavc_target_ui_win
                 darkModeToolStripMenuItem.Checked = mavcSave.darkMode;
                 ApplyTheme(mavcSave.darkMode);
 
+                // load minimize on close setting
+                closeActionToggle.Checked = mavcSave.minimizeOnClose;
+
                 // update enable debug mode
                 enableDebugBox.Checked = mavcSave.enableDebugMode;
 
@@ -1051,7 +1173,7 @@ namespace mavc_target_ui_win
 
         private void closeActionToggle_CheckedChanged(object sender, EventArgs e)
         {
-
+            mavcSave.minimizeOnClose = closeActionToggle.Checked;
         }
     }
 }
