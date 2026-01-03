@@ -19,7 +19,7 @@ namespace mavc_target_ui_win
 {
     public partial class Form1 : Form
     {
-        private string CURRENT_VERSION = "1.1.1";
+        private string CURRENT_VERSION = "1.2.0";
 
         private AudioController audioController;
         private string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
@@ -482,8 +482,8 @@ namespace mavc_target_ui_win
                 int versionComparison = localVersion.CompareTo(latestGitHubVersion);
                 if (versionComparison < 0 && localVersion != null && latestGitHubVersion != null)
                 {
-                        //The version on GitHub is more up to date than this local release.
-                        updateApplication();
+                    //The version on GitHub is more up to date than this local release.
+                    updateApplication();
                 }
                 else if (versionComparison > 0)
                 {
@@ -502,8 +502,7 @@ namespace mavc_target_ui_win
 
         private void updateApplication()
         {
-            WebClient webClient = new WebClient();
-            var client = new WebClient();
+            WebClient client = new WebClient();
 
             string repoLink = "https://github.com/DavidGitter/multi-app-volume-control";
             string repoLatestRelease = repoLink + "/releases/latest/download/MavcSetup.zip";
