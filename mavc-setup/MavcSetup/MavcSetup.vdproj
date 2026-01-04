@@ -581,7 +581,7 @@
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5191A4F39E7B435F904143359D994DD7"
             {
             "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\bin\\Release\\net6.0-windows\\mavc-target-agent.exe"
-            "TargetName" = "8:mavc-target-agent.exe"
+            "TargetName" = "8:mavc-target-agent"
             "Tag" = "8:"
             "Folder" = "8:_EDC69BB43DC2482F9291E6543ECE2C90"
             "Condition" = "8:"
@@ -1173,7 +1173,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Mavc"
         "ProductCode" = "8:{23948C72-FA6E-4061-B8BA-9386C074E7F6}"
-        "PackageCode" = "8:{B312DEFA-D874-43E9-A531-793607B4B668}"
+        "PackageCode" = "8:{1DA64D22-479F-4F06-A334-387033D66737}"
         "UpgradeCode" = "8:{C37BD98A-4861-4764-9AD8-E61364ED38A9}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -1778,7 +1778,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_54BAEAAFC0A54667AE60646C02CDB210"
             {
-            "SourcePath" = "8:"
+            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\obj\\Debug\\mavc-target-ui-win.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_D0C4871363C64F6E839ECA251272DC0A"

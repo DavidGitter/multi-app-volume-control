@@ -7,6 +7,15 @@
     <Compile Include="../../shared/audio/AudioController.cs" />
     <Compile Include="../../shared/audio/AudioDevice.cs" />
     <Compile Include="../../shared/audio/AudioApp.cs" />
+    <Compile Include="..\..\shared\audio\AudioApp.cs">
+      <Link>AudioApp.cs</Link>
+    </Compile>
+    <Compile Include="..\..\shared\audio\AudioController.cs">
+      <Link>AudioController.cs</Link>
+    </Compile>
+    <Compile Include="..\..\shared\audio\AudioDevice.cs">
+      <Link>AudioDevice.cs</Link>
+    </Compile>
     <Compile Include="..\..\shared\audio\AudioFocused.cs">
       <Link>AudioFocused.cs</Link>
     </Compile>
@@ -16,7 +25,12 @@
     <Compile Include="..\..\shared\audio\AudioStream.cs">
       <Link>AudioStream.cs</Link>
     </Compile>
-    <Compile Include="Log.cs" />
+    <Compile Include="..\..\shared\mavc\Log.cs">
+      <Link>Log.cs</Link>
+    </Compile>
+    <Compile Include="..\..\shared\mavc\MAVCSave.cs">
+      <Link>MAVCSave.cs</Link>
+    </Compile>
     <Compile Include="ThemeColors.cs" />
     <Compile Include="ThreadSafeBool.cs" />
   </ItemGroup>
