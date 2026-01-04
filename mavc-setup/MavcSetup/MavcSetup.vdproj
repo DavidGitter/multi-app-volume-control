@@ -1152,8 +1152,8 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Mavc"
-        "ProductCode" = "8:{989594B1-8548-4FFE-BE6D-9078296CEA48}"
-        "PackageCode" = "8:{EA5CB436-72E5-4AE1-9392-E7C9EB083E1E}"
+        "ProductCode" = "8:{23948C72-FA6E-4061-B8BA-9386C074E7F6}"
+        "PackageCode" = "8:{A0CEF5F0-CC32-49F5-9870-5D5E741AB9EF}"
         "UpgradeCode" = "8:{C37BD98A-4861-4764-9AD8-E61364ED38A9}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -1730,7 +1730,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_13A642BE88B34A7F962041AFA57EF573"
             {
-            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\obj\\Release\\net6.0-windows\\apphost.exe"
+            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\obj\\Debug\\net6.0-windows\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_9194BC932B8F473591A9A10405E3BB8A"
@@ -1758,7 +1758,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_54BAEAAFC0A54667AE60646C02CDB210"
             {
-            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\obj\\Release\\mavc-target-ui-win.exe"
+            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\obj\\Debug\\mavc-target-ui-win.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
@@ -1786,7 +1786,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_F112D8039F844441BF028F6193B69AA5"
             {
-            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\obj\\Release\\net6.0-windows\\apphost.exe"
+            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\obj\\Debug\\net6.0-windows\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_EDC69BB43DC2482F9291E6543ECE2C90"
