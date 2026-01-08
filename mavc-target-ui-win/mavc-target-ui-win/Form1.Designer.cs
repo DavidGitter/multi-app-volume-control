@@ -66,6 +66,7 @@
             this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
             this.versionText = new System.Windows.Forms.TextBox();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+            this.enableScreenOverlayCheckbox = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -369,6 +370,7 @@
             // 
             // additionalBox
             // 
+            this.additionalBox.Controls.Add(this.enableScreenOverlayCheckbox);
             this.additionalBox.Controls.Add(this.closeActionToggle);
             this.additionalBox.Controls.Add(this.enableDebugBox);
             this.additionalBox.Controls.Add(this.reverseKnobsCheckbox);
@@ -389,17 +391,6 @@
             this.closeActionToggle.Text = "Minimize on close";
             this.closeActionToggle.UseVisualStyleBackColor = true;
             this.closeActionToggle.CheckedChanged += new System.EventHandler(this.closeActionToggle_CheckedChanged);
-            // 
-            // enableDebugBox
-            // 
-            this.enableDebugBox.AutoSize = true;
-            this.enableDebugBox.Location = new System.Drawing.Point(6, 42);
-            this.enableDebugBox.Name = "enableDebugBox";
-            this.enableDebugBox.Size = new System.Drawing.Size(221, 17);
-            this.enableDebugBox.TabIndex = 12;
-            this.enableDebugBox.Text = "Enable debug mode (agent needs restart)";
-            this.enableDebugBox.UseVisualStyleBackColor = true;
-            this.enableDebugBox.CheckedChanged += new System.EventHandler(this.enableDebugBox_CheckedChanged);
             // 
             // enableDebugBox
             // 
@@ -438,6 +429,17 @@
             // 
             this.notifyIcon1.Text = "notifyIcon1";
             this.notifyIcon1.Visible = true;
+            // 
+            // enableScreenOverlayCheckbox
+            // 
+            this.enableScreenOverlayCheckbox.AutoSize = true;
+            this.enableScreenOverlayCheckbox.Location = new System.Drawing.Point(6, 88);
+            this.enableScreenOverlayCheckbox.Name = "enableScreenOverlayCheckbox";
+            this.enableScreenOverlayCheckbox.Size = new System.Drawing.Size(141, 17);
+            this.enableScreenOverlayCheckbox.TabIndex = 14;
+            this.enableScreenOverlayCheckbox.Text = "Activate Screen Overlay";
+            this.enableScreenOverlayCheckbox.UseVisualStyleBackColor = true;
+            this.enableScreenOverlayCheckbox.CheckedChanged += new System.EventHandler(this.enableScreenOverlayCheckbox_CheckedChanged);
             // 
             // Form1
             // 
@@ -513,6 +515,7 @@
         private System.Windows.Forms.ToolStripMenuItem darkModeToolStripMenuItem;
         private System.Windows.Forms.CheckBox enableDebugBox;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
+        private System.Windows.Forms.CheckBox enableScreenOverlayCheckbox;
     }
 }
 
