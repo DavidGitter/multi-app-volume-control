@@ -102,7 +102,7 @@ class AudioController
     public AudioOutput GetOutputByName(string name)
     {
         List<AudioOutput> outs = GetAllAudioOutputs();
-        AudioOutput res = outs.Find(e => e.GetName().Equals(name));
+        AudioOutput res = outs.AsParallel().FirstOrDefault(e => e.GetName().Equals(name));
         if (res == null)
             throw new KeyNotFoundException("no audio output with name " + name + " found");
         return res;

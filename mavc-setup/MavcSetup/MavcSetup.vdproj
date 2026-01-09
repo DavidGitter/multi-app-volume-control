@@ -45,6 +45,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_5191A4F39E7B435F904143359D994DD7"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_54ACE4623558674161A52D3BC7316113"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
         "MsmSig" = "8:_UNDEFINED"
@@ -251,12 +257,6 @@
         {
         "MsmKey" = "8:_EA75E4873965DC9491162DF547346A2F"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_F112D8039F844441BF028F6193B69AA5"
-        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -576,6 +576,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5191A4F39E7B435F904143359D994DD7"
+            {
+            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\bin\\Release\\net6.0-windows\\mavc-target-agent.exe"
+            "TargetName" = "8:mavc-target-agent"
+            "Tag" = "8:"
+            "Folder" = "8:_EDC69BB43DC2482F9291E6543ECE2C90"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_54ACE4623558674161A52D3BC7316113"
@@ -1152,8 +1172,8 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Mavc"
-        "ProductCode" = "8:{989594B1-8548-4FFE-BE6D-9078296CEA48}"
-        "PackageCode" = "8:{EA5CB436-72E5-4AE1-9392-E7C9EB083E1E}"
+        "ProductCode" = "8:{23948C72-FA6E-4061-B8BA-9386C074E7F6}"
+        "PackageCode" = "8:{1DA64D22-479F-4F06-A334-387033D66737}"
         "UpgradeCode" = "8:{C37BD98A-4861-4764-9AD8-E61364ED38A9}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -1287,20 +1307,6 @@
             "Icon" = "8:_70F96E04C6DA49018D02D57E9AE23101"
             "Feature" = "8:"
             }
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_506FF4AB378F4FACB4EDA0FE09383916"
-            {
-            "Name" = "8:MavcUI"
-            "Arguments" = "8:"
-            "Description" = "8:"
-            "ShowCmd" = "3:1"
-            "IconIndex" = "3:0"
-            "Transitive" = "11:FALSE"
-            "Target" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
-            "Folder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
-            "WorkingFolder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
-            "Icon" = "8:_70F96E04C6DA49018D02D57E9AE23101"
-            "Feature" = "8:"
-            }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_59B9201F50AE45CEA190B46F45DB87AE"
             {
             "Name" = "8:MavcUI"
@@ -1313,6 +1319,20 @@
             "Folder" = "8:_6CABE7172F044A55A1A003E0CBEBBB63"
             "WorkingFolder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
             "Icon" = "8:_70F96E04C6DA49018D02D57E9AE23101"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_A2BC3D4175F549DC8B80BE9225DA6BF4"
+            {
+            "Name" = "8:MavcUI"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
+            "Folder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
+            "WorkingFolder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
+            "Icon" = "8:"
             "Feature" = "8:"
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_B34C61A4BA14493583C9A6447C3A4014"
@@ -1730,7 +1750,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_13A642BE88B34A7F962041AFA57EF573"
             {
-            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\obj\\Release\\net6.0-windows\\apphost.exe"
+            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\obj\\Debug\\net6.0-windows\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_9194BC932B8F473591A9A10405E3BB8A"
@@ -1758,7 +1778,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_54BAEAAFC0A54667AE60646C02CDB210"
             {
-            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\obj\\Release\\mavc-target-ui-win.exe"
+            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\obj\\Debug\\mavc-target-ui-win.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
@@ -1779,34 +1799,6 @@
             "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:Built"
             "OutputProjectGuid" = "8:{68766CD6-CCA8-4E09-8506-07FD0A9748FC}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_F112D8039F844441BF028F6193B69AA5"
-            {
-            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\obj\\Release\\net6.0-windows\\apphost.exe"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_EDC69BB43DC2482F9291E6543ECE2C90"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:PublishItems"
-            "OutputProjectGuid" = "8:{BAD56109-87A2-4962-B57D-9879DBFACA80}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {
