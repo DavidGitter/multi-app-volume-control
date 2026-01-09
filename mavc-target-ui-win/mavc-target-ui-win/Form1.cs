@@ -57,6 +57,24 @@ namespace mavc_target_ui_win
             return mavcSave;
         }
 
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            
+            // Check if we should start minimized
+            if (mavcSave != null && mavcSave.startMinimized)
+            {
+                this.WindowState = FormWindowState.Minimized;
+                this.ShowInTaskbar = false;
+                
+                // Immediately hide the form
+                this.BeginInvoke(new System.Action(() =>
+                {
+                    this.Hide();
+                }));
+            }
+        }
+
         public Form1()
         {
             try
@@ -290,7 +308,7 @@ namespace mavc_target_ui_win
                         }
                     }
                     
-                    // Give a moment to for all processes to fully terminate
+                    // wait for all processes to fully terminate
                     System.Threading.Thread.Sleep(500);
                     Debug.WriteLine("All existing agent processes terminated.");
                 }
@@ -876,6 +894,9 @@ namespace mavc_target_ui_win
                 // load minimize on close setting
                 closeActionToggle.Checked = mavcSave.minimizeOnClose;
 
+                // load start minimized setting
+                startMinimized.Checked = mavcSave.startMinimized;
+
                 // update enable debug mode
                 enableDebugBox.Checked = mavcSave.enableDebugMode;
 
@@ -1141,6 +1162,14 @@ namespace mavc_target_ui_win
             mavcSave.activateAutoHide = activeAutoHideToolStripMenuItem.Checked;
         }
 
-        
+        private void closeActionToggle_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.minimizeOnClose = closeActionToggle.Checked;
+        }
+
+        private void startMinimized_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.startMinimized = startMinimized.Checked;
+        }
     }
 }

@@ -104,4 +104,7 @@ public class MAVCSave
             throw new FileLoadException("Could not load or create config file " + configLoadPath);
         }
     }
+
+    // start application minimized to tray
+    public bool startMinimized;
 }
