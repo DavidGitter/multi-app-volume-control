@@ -435,6 +435,12 @@ namespace mavc_target_ui_win
             this.ShowInTaskbar = true;
             this.BringToFront();
             this.Activate();
+
+            // Reapply title bar theme when showing from tray
+            if (mavcSave != null)
+            {
+                SetTitleBarTheme(mavcSave.darkMode);
+            }
         }
 
         /// <summary>
