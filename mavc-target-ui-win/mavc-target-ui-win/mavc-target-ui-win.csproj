@@ -31,9 +31,6 @@
     <Compile Include="..\..\shared\mavc\MAVCSave.cs">
       <Link>MAVCSave.cs</Link>
     </Compile>
-    <Compile Include="Overlay.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="ThemeColors.cs" />
     <Compile Include="ThreadSafeBool.cs" />
   </ItemGroup>

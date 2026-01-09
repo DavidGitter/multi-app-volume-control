@@ -93,6 +93,12 @@ namespace mavc_target_ui_win
                 // Auto Check for update
                 checkForUpdate();
 
+                autoHideAfterSectoolStripTextBox.Leave += (s, e) =>
+                {
+                    if(autoHideAfterSectoolStripTextBox.Text.All(char.IsDigit))
+                        mavcSave.autoHideAfterSec = int.Parse(autoHideAfterSectoolStripTextBox.Text);
+                };
+
                 this.Text = "MAVC";
                 this.versionText.Text = CURRENT_VERSION;
 
@@ -863,9 +869,16 @@ namespace mavc_target_ui_win
                 enableDebugBox.Checked = mavcSave.enableDebugMode;
 
                 // update box for screen overlay
-                enableScreenOverlayCheckbox.Checked = mavcSave.enableScreenOverlay;
+                toolStripMenuItemOverlay.Checked = mavcSave.enableScreenOverlay;
 
-            }catch(Exception e){
+                // update auto hide active checkbox item
+                activeAutoHideToolStripMenuItem.Checked = mavcSave.activateAutoHide;
+
+                // update auto hide after seconds textbox
+                autoHideAfterSectoolStripTextBox.Text = mavcSave.autoHideAfterSec.ToString(); 
+
+            }
+            catch(Exception e){
                 Console.WriteLine(e.Message + "\n" + e.StackTrace);
                 Console.WriteLine("Config file cannot be opened or is invalid - creating new one...");
 
@@ -1221,9 +1234,16 @@ namespace mavc_target_ui_win
             mavcSave.minimizeOnClose = closeActionToggle.Checked;
         }
 
-        private void enableScreenOverlayCheckbox_CheckedChanged(object sender, EventArgs e)
+        private void toolStripMenuItemOverlay_Click(object sender, EventArgs e)
         {
-            mavcSave.enableScreenOverlay = enableScreenOverlayCheckbox.Checked;
+            mavcSave.enableScreenOverlay = toolStripMenuItemOverlay.Checked;
+            save(configSavePath, configFileName);
+            Debug.WriteLine("checked: " + mavcSave.enableScreenOverlay);
+        }
+
+        private void activeAutoHideToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            mavcSave.activateAutoHide = activeAutoHideToolStripMenuItem.Checked;
         }
 
         private void startMinimized_CheckedChanged(object sender, EventArgs e)

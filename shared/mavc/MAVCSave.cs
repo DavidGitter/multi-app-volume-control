@@ -75,6 +75,12 @@ public class MAVCSave
     // enable the screen overlay
     public bool enableScreenOverlay;
 
+    // enable the auto hide for the overlay
+    public bool activateAutoHide;
+
+    // defines the seconds the auto hide waits until it hides
+    public int autoHideAfterSec;
+
     public static MAVCSave LoadConfigFromFile(string configLoadPath, string configSavePath)
     {
         try
