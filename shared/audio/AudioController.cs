@@ -12,6 +12,11 @@ class AudioController
     // Create an enumerator for audio endpoints
     private MMDeviceEnumerator enumerator;
 
+    private List<AudioOutput> cachedOutputs = new List<AudioOutput>();
+    private DateTime cacheTime = DateTime.MinValue;
+    private readonly TimeSpan cacheLifetime = TimeSpan.FromSeconds(2);
+    private readonly object cacheLock = new object();
+
     public AudioController()
     {
         enumerator = new MMDeviceEnumerator();
@@ -50,13 +55,22 @@ class AudioController
      * @returns     a list of the audio outputs
      */
     public List<AudioOutput> GetAllAudioOutputs() {
-        List<AudioOutput> outputs = new List<AudioOutput>();
-        foreach (var device in GetAudioDevices())
+        lock (cacheLock)
         {
-            outputs.Add((AudioOutput)device);
+            if (DateTime.UtcNow - cacheTime <= cacheLifetime && cachedOutputs.Count > 0)
+                return cachedOutputs;
+
+            List<AudioOutput> outputs = new List<AudioOutput>();
+            foreach (var device in GetAudioDevices())
+            {
+                outputs.Add((AudioOutput)device);
+            }
+            outputs.AddRange(GetAllAudioApps());
+
+            cachedOutputs = outputs;
+            cacheTime = DateTime.UtcNow;
+            return outputs;
         }
-        outputs.AddRange(GetAllAudioApps());
-        return outputs;
 	}
 
     /**
@@ -102,7 +116,7 @@ class AudioController
     public AudioOutput GetOutputByName(string name)
     {
         List<AudioOutput> outs = GetAllAudioOutputs();
-        AudioOutput res = outs.AsParallel().FirstOrDefault(e => e.GetName().Equals(name));
+        AudioOutput res = outs.FirstOrDefault(e => e.GetName().Equals(name));
         if (res == null)
             throw new KeyNotFoundException("no audio output with name " + name + " found");
         return res;
@@ -116,15 +130,16 @@ class AudioController
     public List<AudioOutput> GetOutputsByName(string name)
     {
         List<AudioOutput> outs = GetAllAudioOutputs();
-        List<AudioOutput> aos = new List<AudioOutput> ();
-        foreach(var outp in outs)
+        return outs.Where(o => o.GetName().Equals(name)).ToList();
+    }
+
+    public void InvalidateCache()
+    {
+        lock (cacheLock)
         {
-            if (outp.GetName().Equals(name))
-            {
-                aos.Add(outp);
-            }
+            cachedOutputs.Clear();
+            cacheTime = DateTime.MinValue;
         }
-        return aos;
     }
 
     /**
