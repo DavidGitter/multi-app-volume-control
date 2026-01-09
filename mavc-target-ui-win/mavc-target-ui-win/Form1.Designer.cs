@@ -401,17 +401,6 @@
             this.enableDebugBox.UseVisualStyleBackColor = true;
             this.enableDebugBox.CheckedChanged += new System.EventHandler(this.enableDebugBox_CheckedChanged);
             // 
-            // enableDebugBox
-            // 
-            this.enableDebugBox.AutoSize = true;
-            this.enableDebugBox.Location = new System.Drawing.Point(6, 42);
-            this.enableDebugBox.Name = "enableDebugBox";
-            this.enableDebugBox.Size = new System.Drawing.Size(221, 17);
-            this.enableDebugBox.TabIndex = 12;
-            this.enableDebugBox.Text = "Enable debug mode (agent needs restart)";
-            this.enableDebugBox.UseVisualStyleBackColor = true;
-            this.enableDebugBox.CheckedChanged += new System.EventHandler(this.enableDebugBox_CheckedChanged);
-            // 
             // reverseKnobsCheckbox
             // 
             this.reverseKnobsCheckbox.AutoSize = true;
