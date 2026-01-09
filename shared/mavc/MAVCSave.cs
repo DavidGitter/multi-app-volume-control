@@ -30,6 +30,7 @@ class MAVCSave
         darkMode = false;
         enableDebugMode = false;
         minimizeOnClose = false;
+        startMinimized = false;
     }
 
 	// volume 1 mappings
@@ -67,4 +68,7 @@ class MAVCSave
 
     // minimize to tray on close
     public bool minimizeOnClose;
+
+    // start application minimized to tray
+    public bool startMinimized;
 }
