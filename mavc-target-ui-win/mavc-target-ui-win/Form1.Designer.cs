@@ -61,6 +61,7 @@
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.darkModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.additionalBox = new System.Windows.Forms.GroupBox();
+            this.startMinimized = new System.Windows.Forms.CheckBox();
             this.closeActionToggle = new System.Windows.Forms.CheckBox();
             this.enableDebugBox = new System.Windows.Forms.CheckBox();
             this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
@@ -369,6 +370,7 @@
             // 
             // additionalBox
             // 
+            this.additionalBox.Controls.Add(this.startMinimized);
             this.additionalBox.Controls.Add(this.closeActionToggle);
             this.additionalBox.Controls.Add(this.enableDebugBox);
             this.additionalBox.Controls.Add(this.reverseKnobsCheckbox);
@@ -378,28 +380,28 @@
             this.additionalBox.TabIndex = 13;
             this.additionalBox.TabStop = false;
             this.additionalBox.Text = "Settings";
+            //
+            // startMinimized
+            // 
+            this.startMinimized.AutoSize = true;
+            this.startMinimized.Location = new System.Drawing.Point(6, 88);
+            this.startMinimized.Name = "startMinimizedBox";
+            this.startMinimized.Size = new System.Drawing.Size(162, 17);
+            this.startMinimized.TabIndex = 14;
+            this.startMinimized.Text = "Start minimized to Systemtray";
+            this.startMinimized.UseVisualStyleBackColor = true;
+            this.startMinimized.CheckedChanged += new System.EventHandler(this.startMinimized_CheckedChanged);
             // 
             // closeActionToggle
             // 
             this.closeActionToggle.AutoSize = true;
             this.closeActionToggle.Location = new System.Drawing.Point(6, 65);
-            this.closeActionToggle.Name = "closeActionToggle";
+            this.closeActionToggle.Name = "closeActionToggleBox";
             this.closeActionToggle.Size = new System.Drawing.Size(109, 17);
             this.closeActionToggle.TabIndex = 13;
             this.closeActionToggle.Text = "Minimize on close";
             this.closeActionToggle.UseVisualStyleBackColor = true;
             this.closeActionToggle.CheckedChanged += new System.EventHandler(this.closeActionToggle_CheckedChanged);
-            // 
-            // enableDebugBox
-            // 
-            this.enableDebugBox.AutoSize = true;
-            this.enableDebugBox.Location = new System.Drawing.Point(6, 42);
-            this.enableDebugBox.Name = "enableDebugBox";
-            this.enableDebugBox.Size = new System.Drawing.Size(221, 17);
-            this.enableDebugBox.TabIndex = 12;
-            this.enableDebugBox.Text = "Enable debug mode (agent needs restart)";
-            this.enableDebugBox.UseVisualStyleBackColor = true;
-            this.enableDebugBox.CheckedChanged += new System.EventHandler(this.enableDebugBox_CheckedChanged);
             // 
             // enableDebugBox
             // 
@@ -512,7 +514,8 @@
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem darkModeToolStripMenuItem;
         private System.Windows.Forms.CheckBox enableDebugBox;
-        private System.Windows.Forms.NotifyIcon notifyIcon1;
+        private System.Windows.Forms.NotifyIcon notifyIcon1; 
+        private System.Windows.Forms.CheckBox startMinimized;
     }
 }
 
