@@ -15,6 +15,12 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_06C57725FA4746679C8C0DD256CDCF5F"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_072866CF17EC77007C5668CAF22D9BEE"
         "OwnerKey" = "8:_E52FEA392BFCCFC515A6CD16FD357382"
         "MsmSig" = "8:_UNDEFINED"
@@ -23,6 +29,12 @@
         {
         "MsmKey" = "8:_07D5EC0D6CC5A710C4F9734D25F08747"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_07D5EC0D6CC5A710C4F9734D25F08747"
+        "OwnerKey" = "8:_06C57725FA4746679C8C0DD256CDCF5F"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -148,6 +160,12 @@
         "Entry"
         {
         "MsmKey" = "8:_A45C2D4AAF4E3950CDE1A9396EF6707B"
+        "OwnerKey" = "8:_06C57725FA4746679C8C0DD256CDCF5F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A45C2D4AAF4E3950CDE1A9396EF6707B"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -201,6 +219,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_D649E0481B42EE00FBB21903F680F2B4"
+        "OwnerKey" = "8:_06C57725FA4746679C8C0DD256CDCF5F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_E52FEA392BFCCFC515A6CD16FD357382"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
         "MsmSig" = "8:_UNDEFINED"
@@ -250,6 +274,12 @@
         "Entry"
         {
         "MsmKey" = "8:_EA75E4873965DC9491162DF547346A2F"
+        "OwnerKey" = "8:_06C57725FA4746679C8C0DD256CDCF5F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_EA75E4873965DC9491162DF547346A2F"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -263,6 +293,12 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_06C57725FA4746679C8C0DD256CDCF5F"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -448,6 +484,37 @@
         }
         "File"
         {
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_06C57725FA4746679C8C0DD256CDCF5F"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:mavc-target-ui-win, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_06C57725FA4746679C8C0DD256CDCF5F"
+                    {
+                    "Name" = "8:mavc-target-ui-win.exe"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\bin\\Release\\mavc-target-ui-win.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_EDC69BB43DC2482F9291E6543ECE2C90"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_072866CF17EC77007C5668CAF22D9BEE"
             {
             "AssemblyRegister" = "3:1"
@@ -1146,15 +1213,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Mavc"
-        "ProductCode" = "8:{23948C72-FA6E-4061-B8BA-9386C074E7F6}"
-        "PackageCode" = "8:{1DA64D22-479F-4F06-A334-387033D66737}"
+        "ProductCode" = "8:{A79F51D6-8D8A-4D93-9023-ED7F277C9B79}"
+        "PackageCode" = "8:{500F0825-7DCE-4B15-8F8D-BB1DDD33D26F}"
         "UpgradeCode" = "8:{C37BD98A-4861-4764-9AD8-E61364ED38A9}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.2.0"
+        "ProductVersion" = "8:1.3.0"
         "Manufacturer" = "8:Mavc"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -1752,7 +1819,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_54BAEAAFC0A54667AE60646C02CDB210"
             {
-            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\obj\\Debug\\mavc-target-ui-win.exe"
+            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\obj\\Release\\mavc-target-ui-win.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
