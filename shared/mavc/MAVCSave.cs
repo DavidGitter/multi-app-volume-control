@@ -30,7 +30,7 @@ class MAVCSave
         darkMode = false;
         enableDebugMode = false;
         minimizeOnClose = false;
-        startMinimized = false;
+        startMinimized = true;
     }
 
 	// volume 1 mappings
