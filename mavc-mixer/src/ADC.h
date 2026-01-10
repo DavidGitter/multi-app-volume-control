@@ -1,20 +1,19 @@
+#pragma once
 #include <Arduino.h>
-#include <vector>
 
-#ifndef ADC_MAX_VAL
-    #define ADC_MAX_VAL 4095
-#endif
+#define ADC_MAX_VAL 4095 // 12-bit ESP32
 
 class ADC {
 public:
-    ADC(int portPin, int map_max=ADC_MAX_VAL, int map_min=0);
+    ADC(int portPin, int map_max = 100, int map_min = 0);
 
-    int getValue();
+    int getValue(); // filtered + hysteresis
     int getRawValue();
-    int getMaxValue(int sampleRate);
+    int getRawAvgValue(int sampleRate);
     int getAvgValue(int sampleRate);
     int getRawMaxValue(int sampleRate);
-    int getRawAvgValue(int sampleRate);
+    int getMaxValue(int sampleRate);
+
     int getThreshAvgValue(int sampleRate, float threshold);
     int getUpperThreshAvgValue(int sampleRate, float threshold);
 
@@ -23,9 +22,13 @@ public:
     int getMappingMin();
 
 private:
-    int portPin, map_min, map_max, lastVal;
+    int mapInternal(int val); // renamed to avoid confusion
+    int maxInternal(int v1, int v2);
 
-    int map(int val);
-    int max(int v1, int v2);
+    int portPin;
+    int map_min;
+    int map_max;
+
+    int lastVal;   // last *mapped* value used
+    float filtVal; // filtered raw value [0..4095]
 };
-
