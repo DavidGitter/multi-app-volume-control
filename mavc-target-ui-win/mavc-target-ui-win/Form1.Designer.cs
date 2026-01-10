@@ -64,13 +64,14 @@
             this.toolStripMenuItemOverlay = new System.Windows.Forms.ToolStripMenuItem();
             this.autoHideToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.activeAutoHideToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.autoHideAfterSectoolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
+            this.toolStripTextBox1 = new System.Windows.Forms.ToolStripTextBox();
             this.additionalBox = new System.Windows.Forms.GroupBox();
             this.closeActionToggle = new System.Windows.Forms.CheckBox();
             this.enableDebugBox = new System.Windows.Forms.CheckBox();
             this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
             this.versionText = new System.Windows.Forms.TextBox();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+            this.autoHideAfterSectoolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -394,6 +395,7 @@
             // 
             this.autoHideToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.activeAutoHideToolStripMenuItem,
+            this.toolStripTextBox1,
             this.autoHideAfterSectoolStripTextBox});
             this.autoHideToolStripMenuItem.Name = "autoHideToolStripMenuItem";
             this.autoHideToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
@@ -403,18 +405,17 @@
             // 
             this.activeAutoHideToolStripMenuItem.CheckOnClick = true;
             this.activeAutoHideToolStripMenuItem.Name = "activeAutoHideToolStripMenuItem";
-            this.activeAutoHideToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.activeAutoHideToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.activeAutoHideToolStripMenuItem.Text = "Active";
             this.activeAutoHideToolStripMenuItem.Click += new System.EventHandler(this.activeAutoHideToolStripMenuItem_Click);
             // 
-            // autoHideAfterSectoolStripTextBox
+            // toolStripTextBox1
             // 
-            this.autoHideAfterSectoolStripTextBox.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.autoHideAfterSectoolStripTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.autoHideAfterSectoolStripTextBox.MaxLength = 255;
-            this.autoHideAfterSectoolStripTextBox.Name = "autoHideAfterSectoolStripTextBox";
-            this.autoHideAfterSectoolStripTextBox.Size = new System.Drawing.Size(140, 23);
-            this.autoHideAfterSectoolStripTextBox.Text = "After Seconds: ";
+            this.toolStripTextBox1.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.toolStripTextBox1.Name = "toolStripTextBox1";
+            this.toolStripTextBox1.ReadOnly = true;
+            this.toolStripTextBox1.Size = new System.Drawing.Size(100, 23);
+            this.toolStripTextBox1.Text = "Hide after (sec):";
             // 
             // additionalBox
             // 
@@ -476,6 +477,12 @@
             // 
             this.notifyIcon1.Text = "notifyIcon1";
             this.notifyIcon1.Visible = true;
+            // 
+            // autoHideAfterSectoolStripTextBox
+            // 
+            this.autoHideAfterSectoolStripTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.autoHideAfterSectoolStripTextBox.Name = "autoHideAfterSectoolStripTextBox";
+            this.autoHideAfterSectoolStripTextBox.Size = new System.Drawing.Size(100, 23);
             // 
             // Form1
             // 
@@ -555,6 +562,7 @@
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemOverlay;
         private System.Windows.Forms.ToolStripMenuItem autoHideToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem activeAutoHideToolStripMenuItem;
+        private System.Windows.Forms.ToolStripTextBox toolStripTextBox1;
         private System.Windows.Forms.ToolStripTextBox autoHideAfterSectoolStripTextBox;
     }
 }

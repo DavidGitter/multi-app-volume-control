@@ -2,6 +2,7 @@
 using Octokit;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -75,11 +76,6 @@ namespace mavc_target_ui_win
                 // Auto Check for update
                 checkForUpdate();
 
-                autoHideAfterSectoolStripTextBox.Leave += (s, e) =>
-                {
-                    if(autoHideAfterSectoolStripTextBox.Text.All(char.IsDigit))
-                        mavcSave.autoHideAfterSec = int.Parse(autoHideAfterSectoolStripTextBox.Text);
-                };
 
                 this.Text = "MAVC";
                 this.versionText.Text = CURRENT_VERSION;
@@ -116,6 +112,29 @@ namespace mavc_target_ui_win
                 updateTimer.Interval = 3000;   // milliseconds
                 updateTimer.Tick += updateTimer_Tick;  // set handler
                 updateTimer.Start();
+
+                autoHideAfterSectoolStripTextBox.KeyDown += (s, e) =>
+                {
+                    try
+                    {
+                        if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Tab)
+                        {
+                            if (!autoHideAfterSectoolStripTextBox.Text.All(char.IsDigit))
+                            {
+                                MessageBox.Show("Input not a number.");
+                                e.SuppressKeyPress = true;
+                                return;
+                            }
+
+                            Debug.WriteLine("autohideafter: " + autoHideAfterSectoolStripTextBox.Text);
+                            mavcSave.autoHideAfterSec =
+                                int.Parse(autoHideAfterSectoolStripTextBox.Text);
+                        }
+                    }
+                    catch(Exception) {
+                        Debug.WriteLine(e);
+                    }
+                };
 
                 // Start the agent process
                 StartAgentProcess();
@@ -1237,5 +1256,7 @@ namespace mavc_target_ui_win
         {
             mavcSave.activateAutoHide = activeAutoHideToolStripMenuItem.Checked;
         }
+
+        
     }
 }

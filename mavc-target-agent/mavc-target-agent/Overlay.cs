@@ -2,6 +2,7 @@
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Drawing.Text;
+using System.Diagnostics;
 
 public class Overlay : Form
 {
@@ -23,6 +24,8 @@ public class Overlay : Form
 
     public Overlay(int autoHideAfterSecs)
     {
+        autoHideAfterSec = autoHideAfterSecs;
+
         // window properties
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar = false;
@@ -57,13 +60,19 @@ public class Overlay : Form
 
     private async void AutoHideAsync(int sec)
     {
-        hideIsActive = true;
-        await Task.Delay(sec * 1000);
-        this.Invoke((Action)(() =>
+        try
         {
-            this.Hide();
-            hideIsActive = false;
-        }));
+            hideIsActive = true;
+            await Task.Delay(sec * 1000);
+            this.Invoke((Action)(() =>
+            {
+                this.Hide();
+                hideIsActive = false;
+            }));
+        }catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+        }
     }
 
     public void setUpdatedVolume(String name,  int volume)
@@ -78,7 +87,7 @@ public class Overlay : Form
             this.Update();
         }));
 
-        if(!hideIsActive)
+        if (autoHideActive && !hideIsActive)
             AutoHideAsync(autoHideAfterSec);
     }
 
