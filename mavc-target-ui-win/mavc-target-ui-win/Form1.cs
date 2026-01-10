@@ -22,12 +22,13 @@ namespace mavc_target_ui_win
         private string CURRENT_VERSION = "1.2.0";
 
         private AudioController audioController;
-        private string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
-        private string configFileName = "config.json";
-        private string configFilePath;
+        public static string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
+        public static string configFileName = "config.json";
+        public static string configFilePath = Path.Combine(configSavePath, configFileName);
+        public static string selectedFilePath = configSavePath;
 
         private List<AudioOutput> availableOutputs;
-        private MAVCSave mavcSave;
+        private static MAVCSave mavcSave;
 
         // general purpose timer for updating etc.
         Timer updateTimer = new Timer();
@@ -56,22 +57,9 @@ namespace mavc_target_ui_win
             DwmSetWindowAttribute(this.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
         }
 
-        protected override void OnLoad(EventArgs e)
+        public static MAVCSave GetMavcSave()
         {
-            base.OnLoad(e);
-            
-            // Check if we should start minimized
-            if (mavcSave != null && mavcSave.startMinimized)
-            {
-                this.WindowState = FormWindowState.Minimized;
-                this.ShowInTaskbar = false;
-                
-                // Immediately hide the form
-                this.BeginInvoke(new System.Action(() =>
-                {
-                    this.Hide();
-                }));
-            }
+            return mavcSave;
         }
 
         public Form1()
@@ -87,6 +75,12 @@ namespace mavc_target_ui_win
                 // Auto Check for update
                 checkForUpdate();
 
+                autoHideAfterSectoolStripTextBox.Leave += (s, e) =>
+                {
+                    if(autoHideAfterSectoolStripTextBox.Text.All(char.IsDigit))
+                        mavcSave.autoHideAfterSec = int.Parse(autoHideAfterSectoolStripTextBox.Text);
+                };
+
                 this.Text = "MAVC";
                 this.versionText.Text = CURRENT_VERSION;
 
@@ -101,7 +95,6 @@ namespace mavc_target_ui_win
 
                 mavcSave = new MAVCSave();
                 audioController = new AudioController();
-                configFilePath = Path.Combine(configSavePath, configFileName);
 
                 loadConfig(configSavePath, configFileName);
 
@@ -284,7 +277,7 @@ namespace mavc_target_ui_win
                         }
                     }
                     
-                    // Give a moment to all processes to fully terminate
+                    // Give a moment for all processes to fully terminate
                     System.Threading.Thread.Sleep(500);
                     Debug.WriteLine("All existing agent processes terminated.");
                 }
@@ -851,13 +844,20 @@ namespace mavc_target_ui_win
                 // load minimize on close setting
                 closeActionToggle.Checked = mavcSave.minimizeOnClose;
 
-                // load start minimized setting
-                startMinimized.Checked = mavcSave.startMinimized;
-
                 // update enable debug mode
                 enableDebugBox.Checked = mavcSave.enableDebugMode;
 
-            }catch(Exception e){
+                // update box for screen overlay
+                toolStripMenuItemOverlay.Checked = mavcSave.enableScreenOverlay;
+
+                // update auto hide active checkbox item
+                activeAutoHideToolStripMenuItem.Checked = mavcSave.activateAutoHide;
+
+                // update auto hide after seconds textbox
+                autoHideAfterSectoolStripTextBox.Text = mavcSave.autoHideAfterSec.ToString(); 
+
+            }
+            catch(Exception e){
                 Console.WriteLine(e.Message + "\n" + e.StackTrace);
                 Console.WriteLine("Config file cannot be opened or is invalid - creating new one...");
 
@@ -991,18 +991,19 @@ namespace mavc_target_ui_win
          */
         private void loadConfig(string configFileFolder, string configFileName)
         {
-            string configFilePath = Path.Combine(configFileFolder, configFileName);
-            if (System.IO.File.Exists(configFilePath))
+            try
             {
-                string json = System.IO.File.ReadAllText(configFilePath);
-                mavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
-                loadFromMavcSave();
+                string configFilePath = Path.Combine(configFileFolder, configFileName);
+                mavcSave = MAVCSave.LoadConfigFromFile(configFilePath, configSavePath);
             }
-            else
-            {
+            catch {
+                Console.WriteLine("Config file " + configFilePath + " propably not existing, creating new one...");
+                logger.Warning("Config file " + configFilePath + " propably not existing, creating new one...");
                 save(configSavePath, configFileName);
+                
             }
 
+            loadFromMavcSave();
             availableOutputs = audioController.GetAllAudioOutputs();
             initAvailableOutputs(availableOutputs.ToArray());
         }
@@ -1212,9 +1213,16 @@ namespace mavc_target_ui_win
             mavcSave.minimizeOnClose = closeActionToggle.Checked;
         }
 
-        private void startMinimized_CheckedChanged(object sender, EventArgs e)
+        private void toolStripMenuItemOverlay_Click(object sender, EventArgs e)
         {
-            mavcSave.startMinimized = startMinimized.Checked;
+            mavcSave.enableScreenOverlay = toolStripMenuItemOverlay.Checked;
+            save(configSavePath, configFileName);
+            Debug.WriteLine("checked: " + mavcSave.enableScreenOverlay);
+        }
+
+        private void activeAutoHideToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            mavcSave.activateAutoHide = activeAutoHideToolStripMenuItem.Checked;
         }
     }
 }

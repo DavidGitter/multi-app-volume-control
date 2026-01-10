@@ -60,8 +60,12 @@
             this.refreshToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.darkModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItemOverlay = new System.Windows.Forms.ToolStripMenuItem();
+            this.autoHideToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.activeAutoHideToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.autoHideAfterSectoolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
             this.additionalBox = new System.Windows.Forms.GroupBox();
-            this.startMinimized = new System.Windows.Forms.CheckBox();
             this.closeActionToggle = new System.Windows.Forms.CheckBox();
             this.enableDebugBox = new System.Windows.Forms.CheckBox();
             this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
@@ -356,7 +360,8 @@
             // viewToolStripMenuItem
             // 
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.darkModeToolStripMenuItem});
+            this.darkModeToolStripMenuItem,
+            this.toolStripMenuItem2});
             this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.viewToolStripMenuItem.Text = "View";
@@ -364,13 +369,55 @@
             // darkModeToolStripMenuItem
             // 
             this.darkModeToolStripMenuItem.Name = "darkModeToolStripMenuItem";
-            this.darkModeToolStripMenuItem.Size = new System.Drawing.Size(132, 22);
+            this.darkModeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.darkModeToolStripMenuItem.Text = "Dark Mode";
             this.darkModeToolStripMenuItem.Click += new System.EventHandler(this.darkModeToolStripMenuItem_Click);
             // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemOverlay,
+            this.autoHideToolStripMenuItem});
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem2.Text = "Overlay";
+            // 
+            // toolStripMenuItemOverlay
+            // 
+            this.toolStripMenuItemOverlay.CheckOnClick = true;
+            this.toolStripMenuItemOverlay.Name = "toolStripMenuItemOverlay";
+            this.toolStripMenuItemOverlay.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItemOverlay.Text = "Show Overlay";
+            this.toolStripMenuItemOverlay.Click += new System.EventHandler(this.toolStripMenuItemOverlay_Click);
+            // 
+            // autoHideToolStripMenuItem
+            // 
+            this.autoHideToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.activeAutoHideToolStripMenuItem,
+            this.autoHideAfterSectoolStripTextBox});
+            this.autoHideToolStripMenuItem.Name = "autoHideToolStripMenuItem";
+            this.autoHideToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.autoHideToolStripMenuItem.Text = "Auto Hide";
+            // 
+            // activeAutoHideToolStripMenuItem
+            // 
+            this.activeAutoHideToolStripMenuItem.CheckOnClick = true;
+            this.activeAutoHideToolStripMenuItem.Name = "activeAutoHideToolStripMenuItem";
+            this.activeAutoHideToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.activeAutoHideToolStripMenuItem.Text = "Active";
+            this.activeAutoHideToolStripMenuItem.Click += new System.EventHandler(this.activeAutoHideToolStripMenuItem_Click);
+            // 
+            // autoHideAfterSectoolStripTextBox
+            // 
+            this.autoHideAfterSectoolStripTextBox.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.autoHideAfterSectoolStripTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.autoHideAfterSectoolStripTextBox.MaxLength = 255;
+            this.autoHideAfterSectoolStripTextBox.Name = "autoHideAfterSectoolStripTextBox";
+            this.autoHideAfterSectoolStripTextBox.Size = new System.Drawing.Size(140, 23);
+            this.autoHideAfterSectoolStripTextBox.Text = "After Seconds: ";
+            // 
             // additionalBox
             // 
-            this.additionalBox.Controls.Add(this.startMinimized);
             this.additionalBox.Controls.Add(this.closeActionToggle);
             this.additionalBox.Controls.Add(this.enableDebugBox);
             this.additionalBox.Controls.Add(this.reverseKnobsCheckbox);
@@ -380,23 +427,12 @@
             this.additionalBox.TabIndex = 13;
             this.additionalBox.TabStop = false;
             this.additionalBox.Text = "Settings";
-            //
-            // startMinimized
-            // 
-            this.startMinimized.AutoSize = true;
-            this.startMinimized.Location = new System.Drawing.Point(6, 88);
-            this.startMinimized.Name = "startMinimizedBox";
-            this.startMinimized.Size = new System.Drawing.Size(162, 17);
-            this.startMinimized.TabIndex = 14;
-            this.startMinimized.Text = "Start minimized to Systemtray";
-            this.startMinimized.UseVisualStyleBackColor = true;
-            this.startMinimized.CheckedChanged += new System.EventHandler(this.startMinimized_CheckedChanged);
             // 
             // closeActionToggle
             // 
             this.closeActionToggle.AutoSize = true;
             this.closeActionToggle.Location = new System.Drawing.Point(6, 65);
-            this.closeActionToggle.Name = "closeActionToggleBox";
+            this.closeActionToggle.Name = "closeActionToggle";
             this.closeActionToggle.Size = new System.Drawing.Size(109, 17);
             this.closeActionToggle.TabIndex = 13;
             this.closeActionToggle.Text = "Minimize on close";
@@ -514,8 +550,12 @@
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem darkModeToolStripMenuItem;
         private System.Windows.Forms.CheckBox enableDebugBox;
-        private System.Windows.Forms.NotifyIcon notifyIcon1; 
-        private System.Windows.Forms.CheckBox startMinimized;
+        private System.Windows.Forms.NotifyIcon notifyIcon1;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemOverlay;
+        private System.Windows.Forms.ToolStripMenuItem autoHideToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem activeAutoHideToolStripMenuItem;
+        private System.Windows.Forms.ToolStripTextBox autoHideAfterSectoolStripTextBox;
     }
 }
 

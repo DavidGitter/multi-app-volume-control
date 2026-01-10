@@ -1,10 +1,12 @@
+using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.IO;
 
 /**
  * The file that represents the config for the mavc and that can be serialized to store the config on the disk
  */
 [System.Serializable]
-class MAVCSave
+public class MAVCSave
 {
     public class AudioOutput
     {
@@ -30,7 +32,7 @@ class MAVCSave
         darkMode = false;
         enableDebugMode = false;
         minimizeOnClose = false;
-        startMinimized = false;
+        enableScreenOverlay = false;
     }
 
 	// volume 1 mappings
@@ -69,6 +71,36 @@ class MAVCSave
     // minimize to tray on close
     public bool minimizeOnClose;
 
-    // start application minimized to tray
-    public bool startMinimized;
+    // enable the screen overlay
+    public bool enableScreenOverlay;
+
+    // enable the auto hide for the overlay
+    public bool activateAutoHide;
+
+    // defines the seconds the auto hide waits until it hides
+    public int autoHideAfterSec;
+
+    public static MAVCSave LoadConfigFromFile(string configLoadPath, string configSavePath)
+    {
+        try
+        {
+            if (System.IO.File.Exists(configLoadPath))
+            {
+                // load from config file
+                string json = System.IO.File.ReadAllText(configLoadPath);
+                MAVCSave loadedMavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
+                if(loadedMavcSave != null)
+                    return loadedMavcSave;
+                throw new FileLoadException("Could not load config file " + configLoadPath);
+            }
+            else
+            {
+                throw new FileLoadException("File " + configLoadPath + " not exisiting.");
+            }
+        }
+        catch
+        {
+            throw new FileLoadException("Could not load or create config file " + configLoadPath);
+        }
+    }
 }
