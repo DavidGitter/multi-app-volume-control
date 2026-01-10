@@ -33,7 +33,6 @@ public class MAVCSave
         enableDebugMode = false;
         minimizeOnClose = false;
         enableScreenOverlay = false;
-        startMinimized = false;
     }
 
 	// volume 1 mappings
@@ -104,6 +103,4 @@ public class MAVCSave
             throw new FileLoadException("Could not load or create config file " + configLoadPath);
         }
     }
-    // start application minimized to tray
-    public bool startMinimized;
 }
