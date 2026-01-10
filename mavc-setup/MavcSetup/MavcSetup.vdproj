@@ -45,12 +45,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_5191A4F39E7B435F904143359D994DD7"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_54ACE4623558674161A52D3BC7316113"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
         "MsmSig" = "8:_UNDEFINED"
@@ -576,26 +570,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5191A4F39E7B435F904143359D994DD7"
-            {
-            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\bin\\Release\\net6.0-windows\\mavc-target-agent.exe"
-            "TargetName" = "8:mavc-target-agent"
-            "Tag" = "8:"
-            "Folder" = "8:_EDC69BB43DC2482F9291E6543ECE2C90"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_54ACE4623558674161A52D3BC7316113"
@@ -1362,7 +1336,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_79DD7803C3194D299A27CE7C2B55E3A6"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Fertig"
+                    "DisplayName" = "8:Finished"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdFinishedDlg.wid"
@@ -1412,7 +1386,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_5A3EE746E1DF4CE7ABE063467297659D"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Status"
+                    "DisplayName" = "8:Progress"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminProgressDlg.wid"
@@ -1456,7 +1430,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_2F8DA46D5E874794BC66552283EEE3C9"
                     {
                     "Sequence" = "3:300"
-                    "DisplayName" = "8:Installation bestätigen"
+                    "DisplayName" = "8:Confirm Installation"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdConfirmDlg.wid"
@@ -1478,7 +1452,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_C907418CECC34D4289831FA7FDFE1190"
                     {
                     "Sequence" = "3:200"
-                    "DisplayName" = "8:Installationsordner"
+                    "DisplayName" = "8:Installation Folder"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdFolderDlg.wid"
@@ -1513,7 +1487,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_EBADE353E4494A94B195B21B766C6AC8"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Willkommen"
+                    "DisplayName" = "8:Welcome"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdWelcomeDlg.wid"
@@ -1570,7 +1544,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_D38BF9F4506745A4A975DF4CAA0DC5EE"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Status"
+                    "DisplayName" = "8:Progress"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdProgressDlg.wid"
@@ -1620,7 +1594,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_D510AF599ED44B49B9A7CAE76783492D"
                     {
                     "Sequence" = "3:200"
-                    "DisplayName" = "8:Installationsordner"
+                    "DisplayName" = "8:Installation Folder"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminFolderDlg.wid"
@@ -1642,7 +1616,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_EC04404F24FB48959C9767608019A4F5"
                     {
                     "Sequence" = "3:300"
-                    "DisplayName" = "8:Installation bestätigen"
+                    "DisplayName" = "8:Confirm Installation"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminConfirmDlg.wid"
@@ -1664,7 +1638,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_EFA74673525E4474AB15D3F008891786"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Willkommen"
+                    "DisplayName" = "8:Welcome"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminWelcomeDlg.wid"
@@ -1721,7 +1695,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_AF6BC1A49074456BBC4FD591282A5168"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Fertig"
+                    "DisplayName" = "8:Finished"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminFinishedDlg.wid"
@@ -1750,7 +1724,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_13A642BE88B34A7F962041AFA57EF573"
             {
-            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\obj\\Debug\\net6.0-windows\\apphost.exe"
+            "SourcePath" = "8:..\\..\\mavc-target-agent\\mavc-target-agent\\obj\\Release\\net6.0-windows\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_9194BC932B8F473591A9A10405E3BB8A"
