@@ -33,6 +33,7 @@ public class MAVCSave
         enableDebugMode = false;
         minimizeOnClose = false;
         enableScreenOverlay = false;
+        startMinimized = true;
     }
 
 	// volume 1 mappings
