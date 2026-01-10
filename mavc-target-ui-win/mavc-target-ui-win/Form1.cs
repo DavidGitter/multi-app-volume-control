@@ -731,18 +731,24 @@ namespace mavc_target_ui_win
 
             try
             {
-                Task t1 = Task.Run(() =>
+                Task t1;
+                Task t2;
+                Task t3;
+                Task t4;
+
+                var foundAudioOutputs1 = new List<AudioOutput>();
+                t1 = Task.Run(() =>
                 {
                     foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol1)
                         try
                         {
                             if (!mavc_ao.type.Equals("Function"))
-                                VolList1.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                                foundAudioOutputs1.Add(audioController.GetOutputByName(mavc_ao.name));
                             else
                                 if (mavc_ao.name.Equals("Focused"))
-                                VolList1.Items.Add(new AudioFocused(audioController));
+                                foundAudioOutputs1.Add(new AudioFocused(audioController));
                             else if (mavc_ao.name.Equals("Other Apps"))
-                                VolList1.Items.Add(new AudioOtherApps(audioController, mavcSave));
+                                foundAudioOutputs1.Add(new AudioOtherApps(audioController, mavcSave));
                             else
                                 throw new NotImplementedException();
                         }
@@ -750,22 +756,23 @@ namespace mavc_target_ui_win
                         {
                             // Add Log / Debug
                             Console.WriteLine("AudioOutput " + mavc_ao.name + " of mavc save not found");
-                            VolList1.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                            foundAudioOutputs1.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
-
-                Task t2 = Task.Run(() =>
+                    
+                var foundAudioOutputs2 = new List<AudioOutput>();
+                t2 = Task.Run(() =>
                 {
                     foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol2)
                         try
                         {
                             if (!mavc_ao.type.Equals("Function"))
-                                VolList2.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                                foundAudioOutputs2.Add(audioController.GetOutputByName(mavc_ao.name));
                             else
                                 if (mavc_ao.name.Equals("Focused"))
-                                VolList2.Items.Add(new AudioFocused(audioController));
+                                foundAudioOutputs2.Add(new AudioFocused(audioController));
                             else if (mavc_ao.name.Equals("Other Apps"))
-                                VolList2.Items.Add(new AudioOtherApps(audioController, mavcSave));
+                                foundAudioOutputs2.Add(new AudioOtherApps(audioController, mavcSave));
                             else
                                 throw new NotImplementedException();
                         }
@@ -773,22 +780,25 @@ namespace mavc_target_ui_win
                         {
                             // Add Log / Debug
                             Console.WriteLine("AudioOutput " + mavc_ao.name + " of mavc save not found");
-                            VolList2.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                            foundAudioOutputs2.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
+                   
+             
 
-                Task t3 = Task.Run(() =>
+                var foundAudioOutputs3 = new List<AudioOutput>();
+                t3 = Task.Run(() =>
                 {
                     foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol3)
                         try
                         {
                             if (!mavc_ao.type.Equals("Function"))
-                                VolList3.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                                foundAudioOutputs3.Add(audioController.GetOutputByName(mavc_ao.name));
                             else
                                 if (mavc_ao.name.Equals("Focused"))
-                                VolList3.Items.Add(new AudioFocused(audioController));
+                                foundAudioOutputs3.Add(new AudioFocused(audioController));
                             else if (mavc_ao.name.Equals("Other Apps"))
-                                VolList3.Items.Add(new AudioOtherApps(audioController, mavcSave));
+                                foundAudioOutputs3.Add(new AudioOtherApps(audioController, mavcSave));
                             else
                                 throw new NotImplementedException();
                         }
@@ -796,22 +806,24 @@ namespace mavc_target_ui_win
                         {
                             // Add Log / Debug
                             Console.WriteLine("AudioOutput " + mavc_ao + " of mavc save not found");
-                            VolList3.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                            foundAudioOutputs3.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
 
-                Task t4 = Task.Run(() =>
+
+                var foundAudioOutputs4 = new List<AudioOutput>();   
+                t4 = Task.Run(() =>
                 {
                     foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
                         try
                         {
                             if (!mavc_ao.type.Equals("Function"))
-                                VolList4.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                                foundAudioOutputs4.Add(audioController.GetOutputByName(mavc_ao.name));
                             else
                                 if (mavc_ao.name.Equals("Focused"))
-                                VolList4.Items.Add(new AudioFocused(audioController));
+                                foundAudioOutputs4.Add(new AudioFocused(audioController));
                             else if (mavc_ao.name.Equals("Other Apps"))
-                                VolList4.Items.Add(new AudioOtherApps(audioController, mavcSave));
+                                foundAudioOutputs4.Add(new AudioOtherApps(audioController, mavcSave));
                             else
                                 throw new NotImplementedException();
                         }
@@ -819,14 +831,15 @@ namespace mavc_target_ui_win
                         {
                             // Add Log / Debug
                             Console.WriteLine("AudioOutput " + mavc_ao + " of mavc save not found");
-                            VolList4.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                            foundAudioOutputs4.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
 
-                t1.Wait();
-                t2.Wait();
-                t3.Wait();
-                t4.Wait();
+                Task.WaitAll(t1, t2, t3 ,t4);
+                VolList1.Items.AddRange(foundAudioOutputs1.ToArray());
+                VolList2.Items.AddRange(foundAudioOutputs2.ToArray());
+                VolList3.Items.AddRange(foundAudioOutputs3.ToArray());
+                VolList4.Items.AddRange(foundAudioOutputs4.ToArray());
 
                 // update knob-reversed checkboxes
                 reverseCheckbox1.Checked = mavcSave.reverseKnob1;
