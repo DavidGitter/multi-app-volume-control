@@ -72,6 +72,9 @@ public class MAVCSave
     // minimize to tray on close
     public bool minimizeOnClose;
 
+    // start the ui minimized
+    public bool startMinimized;
+
     // enable the screen overlay
     public bool enableScreenOverlay;
 
