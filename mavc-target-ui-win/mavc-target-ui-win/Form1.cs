@@ -1162,11 +1162,6 @@ namespace mavc_target_ui_win
             mavcSave.activateAutoHide = activeAutoHideToolStripMenuItem.Checked;
         }
 
-        private void closeActionToggle_CheckedChanged(object sender, EventArgs e)
-        {
-            mavcSave.minimizeOnClose = closeActionToggle.Checked;
-        }
-
         private void startMinimized_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.startMinimized = startMinimized.Checked;
