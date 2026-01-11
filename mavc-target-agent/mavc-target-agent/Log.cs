@@ -37,9 +37,4 @@ class Log
     {
         write(DateTime.Now + " | Error: " + content);
     }
-
-    public string GetLogPath()
-    {
-        return logFilePath;
-    }
 }
