@@ -428,7 +428,6 @@ class MavcAgent
 
         while (true)
         {
-
             try
             {
                 if (comServer == null || !comServer.IsOpen())
