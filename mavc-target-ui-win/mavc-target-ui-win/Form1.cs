@@ -37,7 +37,7 @@ namespace mavc_target_ui_win
         // for notifying if there is a ui update
         ThreadSafeBool updateUIFlag = new ThreadSafeBool();
 
-        Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"MAVC", "ui-log.txt"));
+        Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC", "ui-log.txt"));
 
         // System tray components
         private NotifyIcon trayIcon;
@@ -64,7 +64,7 @@ namespace mavc_target_ui_win
             {
                 this.WindowState = FormWindowState.Minimized;
                 this.ShowInTaskbar = false;
-                
+
                 // Immediately hide the form
                 this.BeginInvoke(new System.Action(() =>
                 {
@@ -141,7 +141,8 @@ namespace mavc_target_ui_win
                                 int.Parse(autoHideAfterSectoolStripTextBox.Text);
                         }
                     }
-                    catch(Exception) {
+                    catch (Exception)
+                    {
                         Debug.WriteLine(e);
                     }
                 };
@@ -149,7 +150,8 @@ namespace mavc_target_ui_win
                 // Start the agent process
                 StartAgentProcess();
             }
-            catch (Exception e){
+            catch (Exception e)
+            {
                 logger.Error(e.ToString());
             }
         }
@@ -167,7 +169,7 @@ namespace mavc_target_ui_win
                 // Look for the agent executable in multiple locations
                 // Priority depends on whether we're debugging or running in production
                 string[] possiblePaths;
-                
+
 #if DEBUG
                 // When debugging, prioritize development build location
                 possiblePaths = new string[]
@@ -195,16 +197,16 @@ namespace mavc_target_ui_win
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe")
                 };
 #endif
-                
+
                 agentExecutablePath = null;
-                
+
                 foreach (string path in possiblePaths)
                 {
                     try
                     {
                         string fullPath = Path.GetFullPath(path);
                         Debug.WriteLine($"Checking for agent at: {fullPath}");
-                        
+
                         if (File.Exists(fullPath))
                         {
                             agentExecutablePath = fullPath;
@@ -227,7 +229,7 @@ namespace mavc_target_ui_win
                                         $"3. Development build folder\n" +
                                         $"4. UI directory\\agent\\\n\n" +
                                         $"Please ensure MAVC is installed or build the mavc-target-agent project.";
-                    
+
                     Debug.WriteLine("Agent executable not found in any location.");
                     MessageBox.Show(errorMessage, "Agent Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
@@ -238,7 +240,7 @@ namespace mavc_target_ui_win
                 agentProcess.StartInfo.UseShellExecute = false;
                 agentProcess.StartInfo.CreateNoWindow = true;
                 agentProcess.EnableRaisingEvents = true;
-                
+
                 agentProcess.Exited += (sender, e) =>
                 {
                     Debug.WriteLine("Agent process exited unexpectedly.");
@@ -246,7 +248,7 @@ namespace mavc_target_ui_win
 
                 agentProcess.Start();
                 Debug.WriteLine($"Agent process started successfully from: {agentExecutablePath}");
-                
+
                 // Show success notification
                 trayIcon.ShowBalloonTip(2000, "MAVC", "Agent started successfully", ToolTipIcon.Info);
             }
@@ -267,11 +269,11 @@ namespace mavc_target_ui_win
             try
             {
                 Process[] existingProcesses = Process.GetProcessesByName("mavc-target-agent");
-                
+
                 if (existingProcesses.Length > 0)
                 {
                     Debug.WriteLine($"Found {existingProcesses.Length} existing agent process(es). Terminating...");
-                    
+
                     foreach (Process proc in existingProcesses)
                     {
                         try
@@ -283,14 +285,14 @@ namespace mavc_target_ui_win
                                 proc.Dispose();
                                 continue;
                             }
-                            
+
                             int processId = proc.Id; // Store PID before killing
                             Debug.WriteLine($"Killing agent process with PID: {processId}");
-                            
+
                             proc.Kill();
                             proc.WaitForExit(2000); // Wait up to 2 seconds for each process
                             proc.Dispose();
-                            
+
                             Debug.WriteLine($"Successfully terminated agent process with PID: {processId}");
                         }
                         catch (InvalidOperationException)
@@ -305,7 +307,7 @@ namespace mavc_target_ui_win
                             try { proc.Dispose(); } catch { }
                         }
                     }
-                    
+
                     // wait for all processes to fully terminate
                     System.Threading.Thread.Sleep(500);
                     Debug.WriteLine("All existing agent processes terminated.");
@@ -350,13 +352,13 @@ namespace mavc_target_ui_win
         private void RestartAgentProcess()
         {
             Debug.WriteLine("Restarting agent process...");
-            
+
             // Stop our tracked agent process
             StopAgentProcess();
-            
+
             // Also kill any other agent processes that might be running
             KillExistingAgentProcesses();
-            
+
             System.Threading.Thread.Sleep(500); // Give it a moment to fully terminate
             StartAgentProcess();
         }
@@ -368,7 +370,7 @@ namespace mavc_target_ui_win
         {
             // Create the tray icon
             trayIcon = new NotifyIcon();
-            
+
             try
             {
                 trayIcon.Icon = new System.Drawing.Icon("./icon.ico");
@@ -378,13 +380,13 @@ namespace mavc_target_ui_win
                 trayIcon.Icon = this.Icon;
                 logger.Warning("Tray icon not found, using default!");
             }
-            
+
             trayIcon.Text = "MAVC - Multi-App Volume Control";
             trayIcon.Visible = true;
 
             // Create the context menu
             trayMenu = new ContextMenuStrip();
-            
+
             ToolStripMenuItem openUIItem = new ToolStripMenuItem("Open UI", null, OnOpenUI);
             ToolStripMenuItem restartAgentItem = new ToolStripMenuItem("Restart Agent", null, OnRestartAgent);
             ToolStripSeparator separator = new ToolStripSeparator();
@@ -418,7 +420,7 @@ namespace mavc_target_ui_win
             try
             {
                 RestartAgentProcess();
-                
+
                 // Show notification
                 trayIcon.ShowBalloonTip(2000, "MAVC", "Agent restarted successfully", ToolTipIcon.Info);
             }
@@ -436,18 +438,18 @@ namespace mavc_target_ui_win
         {
             // Confirm exit
             DialogResult result = MessageBox.Show(
-                "Are you sure you want to exit MAVC? The agent will stop running.", 
-                "Exit MAVC", 
-                MessageBoxButtons.YesNo, 
+                "Are you sure you want to exit MAVC? The agent will stop running.",
+                "Exit MAVC",
+                MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
                 logger.Info("Exiting application");
-                
+
                 // Stop the agent process
                 StopAgentProcess();
-                
+
                 trayIcon.Visible = false;
                 updateTimer.Stop();
                 System.Windows.Forms.Application.Exit();
@@ -459,9 +461,9 @@ namespace mavc_target_ui_win
         /// </summary>
         private void ShowUI()
         {
+            this.ShowInTaskbar = true; // before showing the windowto prevent default icon
             this.Show();
             this.WindowState = FormWindowState.Normal;
-            this.ShowInTaskbar = true;
             this.BringToFront();
             this.Activate();
 
@@ -483,7 +485,7 @@ namespace mavc_target_ui_win
                 e.Cancel = true;
                 this.Hide();
                 this.ShowInTaskbar = false;
-                
+
                 // Show notification first time
                 if (trayIcon.Tag == null)
                 {
@@ -571,7 +573,7 @@ namespace mavc_target_ui_win
                     this.Close();
                     process.Start();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     logger.Error(ex.ToString());
                 }
@@ -599,7 +601,7 @@ namespace mavc_target_ui_win
          */
         private void initAvailableOutputs(AudioOutput[] availableOutputs)
         {
-            foreach(var output in availableOutputs)
+            foreach (var output in availableOutputs)
             {
                 if (!confHasAudioOutput(output))
                 {
@@ -642,7 +644,7 @@ namespace mavc_target_ui_win
          */
         private void removeAvailableOutput(AudioOutput output)
         {
-            
+
             AddVol1.Items.Remove(output);
             AddVol2.Items.Remove(output);
             AddVol3.Items.Remove(output);
@@ -794,7 +796,7 @@ namespace mavc_target_ui_win
                             foundAudioOutputs1.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
-                    
+
                 var foundAudioOutputs2 = new List<AudioOutput>();
                 t2 = Task.Run(() =>
                 {
@@ -818,8 +820,8 @@ namespace mavc_target_ui_win
                             foundAudioOutputs2.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
-                   
-             
+
+
 
                 var foundAudioOutputs3 = new List<AudioOutput>();
                 t3 = Task.Run(() =>
@@ -846,7 +848,7 @@ namespace mavc_target_ui_win
                 });
 
 
-                var foundAudioOutputs4 = new List<AudioOutput>();   
+                var foundAudioOutputs4 = new List<AudioOutput>();
                 t4 = Task.Run(() =>
                 {
                     foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
@@ -870,7 +872,7 @@ namespace mavc_target_ui_win
                         }
                 });
 
-                Task.WaitAll(t1, t2, t3 ,t4);
+                Task.WaitAll(t1, t2, t3, t4);
                 VolList1.Items.AddRange(foundAudioOutputs1.ToArray());
                 VolList2.Items.AddRange(foundAudioOutputs2.ToArray());
                 VolList3.Items.AddRange(foundAudioOutputs3.ToArray());
@@ -905,10 +907,11 @@ namespace mavc_target_ui_win
                 activeAutoHideToolStripMenuItem.Checked = mavcSave.activateAutoHide;
 
                 // update auto hide after seconds textbox
-                autoHideAfterSectoolStripTextBox.Text = mavcSave.autoHideAfterSec.ToString(); 
+                autoHideAfterSectoolStripTextBox.Text = mavcSave.autoHideAfterSec.ToString();
 
             }
-            catch(Exception e){
+            catch (Exception e)
+            {
                 Console.WriteLine(e.Message + "\n" + e.StackTrace);
                 Console.WriteLine("Config file cannot be opened or is invalid - creating new one...");
 
@@ -924,7 +927,7 @@ namespace mavc_target_ui_win
         {
             List<AudioOutput> selectedItems = new List<AudioOutput>();
 
-            foreach(AudioOutput ao in VolList1.SelectedItems)
+            foreach (AudioOutput ao in VolList1.SelectedItems)
                 selectedItems.Add(ao);
             foreach (AudioOutput ao in VolList2.SelectedItems)
                 selectedItems.Add(ao);
@@ -933,7 +936,8 @@ namespace mavc_target_ui_win
             foreach (AudioOutput ao in VolList4.SelectedItems)
                 selectedItems.Add(ao);
 
-            foreach (AudioOutput ao in selectedItems) {
+            foreach (AudioOutput ao in selectedItems)
+            {
                 VolList1.Items.Remove(ao);
                 VolList2.Items.Remove(ao);
                 VolList3.Items.Remove(ao);
@@ -988,7 +992,7 @@ namespace mavc_target_ui_win
          */
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(configSavePath == null)
+            if (configSavePath == null)
             {
                 saveTo();
             }
@@ -1047,11 +1051,12 @@ namespace mavc_target_ui_win
                 string configFilePath = Path.Combine(configFileFolder, configFileName);
                 mavcSave = MAVCSave.LoadConfigFromFile(configFilePath, configSavePath);
             }
-            catch {
+            catch
+            {
                 Console.WriteLine("Config file " + configFilePath + " propably not existing, creating new one...");
                 logger.Warning("Config file " + configFilePath + " propably not existing, creating new one...");
                 save(configSavePath, configFileName);
-                
+
             }
 
             loadFromMavcSave();
@@ -1131,7 +1136,7 @@ namespace mavc_target_ui_win
             ApplyTheme(mavcSave.darkMode);          // refresh
             save(configSavePath, configFileName);   // save
         }
-        
+
         private void ApplyTheme(bool isDark)
         {
             ThemeColors.ApplyTheme(this, isDark);
