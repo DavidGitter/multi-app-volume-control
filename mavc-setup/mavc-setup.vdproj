@@ -177,6 +177,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_7EFC49118757468E94A193CB6EDF7306"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_943858A59FEA8A99EB1592FEF4856D73"
         "OwnerKey" = "8:_484D4616FC844834A420F42CF0FC9F73"
         "MsmSig" = "8:_UNDEFINED"
@@ -197,12 +203,6 @@
         {
         "MsmKey" = "8:_B20607D1B29DA7353B608F02A93387AF"
         "OwnerKey" = "8:_484D4616FC844834A420F42CF0FC9F73"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_DEA581A82A8C43FB8F43C5105392BAD2"
-        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -368,6 +368,14 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
             }
         }
         "Release"
@@ -1128,7 +1136,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Mavc"
         "ProductCode" = "8:{4CFD12F3-E674-4CCA-BCF8-4A27432914A1}"
-        "PackageCode" = "8:{DF418C12-E775-45A2-A5EC-213671431469}"
+        "PackageCode" = "8:{CD796D3E-E59F-4434-8857-A95809FB67AA}"
         "UpgradeCode" = "8:{C39FEACA-A93D-4733-B970-868AA86214F7}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -1703,7 +1711,7 @@
                 {
                 }
             }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_DEA581A82A8C43FB8F43C5105392BAD2"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_7EFC49118757468E94A193CB6EDF7306"
             {
             "SourcePath" = "8:..\\mavc-target-agent\\mavc-target-agent\\obj\\Release\\net6.0-windows\\apphost.exe"
             "TargetName" = "8:"
@@ -1723,9 +1731,9 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:Release|Any CPU"
+            "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:PublishItems"
-            "OutputProjectGuid" = "8:{BAD56109-87A2-4962-B57D-9879DBFACA80}"
+            "OutputProjectGuid" = "8:{A3792127-162D-4CC1-9895-0533388AAACB}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {
