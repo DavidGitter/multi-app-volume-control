@@ -577,7 +577,7 @@
         private System.Windows.Forms.ToolStripMenuItem autoHideToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem activeAutoHideToolStripMenuItem;
         private System.Windows.Forms.ToolStripTextBox toolStripTextBox1;
-        private System.Windows.Forms.ToolStripTextBox autoHideAfterSectoolStripTextBox;
+        private System.Windows.Forms.ToolStripTextBox autoHideAfterSectoolStripTextBox; 
     }
 }
 

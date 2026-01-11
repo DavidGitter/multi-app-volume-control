@@ -60,8 +60,6 @@ namespace mavc_target_ui_win
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            
-            // Check if we should start minimized
             if (mavcSave != null && mavcSave.startMinimized)
             {
                 this.WindowState = FormWindowState.Minimized;
@@ -894,11 +892,11 @@ namespace mavc_target_ui_win
                 // load minimize on close setting
                 closeActionToggle.Checked = mavcSave.minimizeOnClose;
 
-                // load start minimized setting
-                startMinimized.Checked = mavcSave.startMinimized;
-
                 // update enable debug mode
                 enableDebugBox.Checked = mavcSave.enableDebugMode;
+
+                // load start minimized setting
+                startMinimized.Checked = mavcSave.startMinimized;
 
                 // update box for screen overlay
                 toolStripMenuItemOverlay.Checked = mavcSave.enableScreenOverlay;
@@ -1150,6 +1148,11 @@ namespace mavc_target_ui_win
             mavcSave.minimizeOnClose = closeActionToggle.Checked;
         }
 
+        private void startMinimized_CheckedChanged(object sender, EventArgs e)
+        {
+            mavcSave.startMinimized = startMinimized.Checked;
+        }
+
         private void toolStripMenuItemOverlay_Click(object sender, EventArgs e)
         {
             mavcSave.enableScreenOverlay = toolStripMenuItemOverlay.Checked;
@@ -1160,11 +1163,6 @@ namespace mavc_target_ui_win
         private void activeAutoHideToolStripMenuItem_Click(object sender, EventArgs e)
         {
             mavcSave.activateAutoHide = activeAutoHideToolStripMenuItem.Checked;
-        }
-
-        private void startMinimized_CheckedChanged(object sender, EventArgs e)
-        {
-            mavcSave.startMinimized = startMinimized.Checked;
         }
     }
 }
