@@ -172,6 +172,12 @@
         "Entry"
         {
         "MsmKey" = "8:_A45C2D4AAF4E3950CDE1A9396EF6707B"
+        "OwnerKey" = "8:_06C57725FA4746679C8C0DD256CDCF5F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A45C2D4AAF4E3950CDE1A9396EF6707B"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -197,6 +203,12 @@
         {
         "MsmKey" = "8:_CD040FE49511701607FC43FB54F7C428"
         "OwnerKey" = "8:_54BAEAAFC0A54667AE60646C02CDB210"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D649E0481B42EE00FBB21903F680F2B4"
+        "OwnerKey" = "8:_06C57725FA4746679C8C0DD256CDCF5F"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1779,7 +1791,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_54BAEAAFC0A54667AE60646C02CDB210"
             {
-            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\obj\\Debug\\mavc-target-ui-win.exe"
+            "SourcePath" = "8:..\\..\\mavc-target-ui-win\\mavc-target-ui-win\\obj\\Release\\mavc-target-ui-win.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_D0C4871363C64F6E839ECA251272DC0A"
