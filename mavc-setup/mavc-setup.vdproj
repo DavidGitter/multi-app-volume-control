@@ -262,12 +262,6 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_7C7B710C7D65E8661F07E3446E2E247F"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_F10827A882A24157BCD2575ACC98C36B"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -341,6 +335,12 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_7E438B24C0C97B36D1147432E29B0E74"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_7C7B710C7D65E8661F07E3446E2E247F"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -681,7 +681,7 @@
             "SourcePath" = "8:System.Net.Http.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
-            "Folder" = "8:_02AA498CED6B40378E5744FA1EDB61BC"
+            "Folder" = "8:_A8F91CA6F65544788E50D445DD4B3267"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -774,7 +774,7 @@
             "SourcePath" = "8:System.IO.Compression.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
-            "Folder" = "8:_02AA498CED6B40378E5744FA1EDB61BC"
+            "Folder" = "8:_A8F91CA6F65544788E50D445DD4B3267"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1074,6 +1074,17 @@
                 {
                 }
             }
+            "{1525181F-901A-416C-8A58-119130FE478E}:_2BB0FC10D2FB4588BE5291A1468C096B"
+            {
+            "Name" = "8:#1928"
+            "AlwaysCreate" = "11:FALSE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Property" = "8:StartupFolder"
+                "Folders"
+                {
+                }
+            }
             "{1525181F-901A-416C-8A58-119130FE478E}:_48D9BF673C754696A4030761192583B0"
             {
             "Name" = "8:#1919"
@@ -1256,20 +1267,6 @@
         }
         "Shortcut"
         {
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_4077C81FA4424A8DBD80D7D31A42B1FE"
-            {
-            "Name" = "8:Mavc"
-            "Arguments" = "8:"
-            "Description" = "8:"
-            "ShowCmd" = "3:1"
-            "IconIndex" = "3:0"
-            "Transitive" = "11:FALSE"
-            "Target" = "8:_F10827A882A24157BCD2575ACC98C36B"
-            "Folder" = "8:_B3A3F6FC2D104B10935DFFCDCBD71E2F"
-            "WorkingFolder" = "8:_A8F91CA6F65544788E50D445DD4B3267"
-            "Icon" = "8:_A4C432B4524848DA8D00146F6CB2681E"
-            "Feature" = "8:"
-            }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_6FFB4042FF754B39903B495C582682E6"
             {
             "Name" = "8:Mavc"
@@ -1282,6 +1279,34 @@
             "Folder" = "8:_12044C4EDC834B1599666DEF9D167004"
             "WorkingFolder" = "8:_A8F91CA6F65544788E50D445DD4B3267"
             "Icon" = "8:_A4C432B4524848DA8D00146F6CB2681E"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_A0BABBAB539547EEAEDEDAF4F4D8D49D"
+            {
+            "Name" = "8:Mavc"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_F10827A882A24157BCD2575ACC98C36B"
+            "Folder" = "8:_2BB0FC10D2FB4588BE5291A1468C096B"
+            "WorkingFolder" = "8:_A8F91CA6F65544788E50D445DD4B3267"
+            "Icon" = "8:"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_A45E3BDADFBC4C0C8BD477077E740841"
+            {
+            "Name" = "8:Mavc"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_F10827A882A24157BCD2575ACC98C36B"
+            "Folder" = "8:_B3A3F6FC2D104B10935DFFCDCBD71E2F"
+            "WorkingFolder" = "8:_A8F91CA6F65544788E50D445DD4B3267"
+            "Icon" = "8:"
             "Feature" = "8:"
             }
         }
