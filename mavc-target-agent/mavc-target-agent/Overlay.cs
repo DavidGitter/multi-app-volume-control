@@ -97,7 +97,7 @@ public class Overlay : Form
         }
     }
 
-    public void setUpdatedVolume(String name,  int volume)
+    public void setUpdatedVolume(String name, int volume)
     {
         if (needsOverlayUpdateToggler)
         {
@@ -111,12 +111,13 @@ public class Overlay : Form
                 this.Update();
             }));
 
-        if (autoHideActive)
-        {
-            // Cancel any previous auto-hide timer
-            autoHideCancellation?.Cancel();
-            autoHideCancellation = new CancellationTokenSource();
-            AutoHideAsync(autoHideAfterSec, autoHideCancellation.Token);
+            if (autoHideActive)
+            {
+                // Cancel any previous auto-hide timer
+                autoHideCancellation?.Cancel();
+                autoHideCancellation = new CancellationTokenSource();
+                AutoHideAsync(autoHideAfterSec, autoHideCancellation.Token);
+            }
         }
     }
 
@@ -221,15 +222,15 @@ public class Overlay : Form
     static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
         int X, int Y, int cx, int cy, uint uFlags);
 
-        static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
-        const uint SWP_NOSIZE = 0x0001;
-        const uint SWP_NOMOVE = 0x0002;
-        const uint SWP_NOACTIVATE = 0x0010;
+    static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+    const uint SWP_NOSIZE = 0x0001;
+    const uint SWP_NOMOVE = 0x0002;
+    const uint SWP_NOACTIVATE = 0x0010;
 
-        protected override void OnShown(EventArgs e)
-        {
-            base.OnShown(e);
-            // Overlay dauerhaft oben halten
-            SetWindowPos(this.Handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        }
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+        // Overlay dauerhaft oben halten
+        SetWindowPos(this.Handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     }
+}
