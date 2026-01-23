@@ -42,7 +42,7 @@ namespace mavc_target_ui_win
         private static Mutex appRunningMutex;
 
         /// <summary>
-        /// Der Haupteinstiegspunkt für die Anwendung.
+        /// Entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
