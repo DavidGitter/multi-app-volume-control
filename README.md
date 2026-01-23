@@ -173,6 +173,8 @@ In no event shall the authors or copyright holders be liable for any claim, dama
 ## Contact
 -   Silas Jung
     GitHub: https://github.com/DavidGitter
+-   Thomas Klug
+    GitHub: https://github.com/Drolt
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

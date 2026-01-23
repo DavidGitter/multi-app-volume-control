@@ -24,6 +24,10 @@ public class Overlay : Form
     private bool hideIsActive = false;
     private CancellationTokenSource autoHideCancellation;
 
+    private static int updateOverlayAfterMS = 100;
+    private static System.Timers.Timer checkForOverlayUpdate = new System.Timers.Timer(updateOverlayAfterMS);
+    private static bool needsOverlayUpdateToggler = true;
+
     public Overlay(int autoHideAfterSecs)
     {
         autoHideAfterSec = autoHideAfterSecs;
@@ -53,6 +57,13 @@ public class Overlay : Form
         screenY = (screen.Height - barHeight) / 2; ;
 
         barArea = new Rectangle(screenX, screenY, barWidth, barHeight);
+
+        checkForOverlayUpdate.Elapsed += (sender, e) =>
+        {
+            needsOverlayUpdateToggler = true;
+        };
+
+        checkForOverlayUpdate.Start();
     }
 
     public void SetAutoHideActive(bool autoHideActive)
@@ -88,15 +99,17 @@ public class Overlay : Form
 
     public void setUpdatedVolume(String name,  int volume)
     {
-        volName = name;
-        volValue = volume;
-        this.Invalidate();
-
-        this.Invoke((Action)(() =>
+        if (needsOverlayUpdateToggler)
         {
-            this.Show();
-            this.Update();
-        }));
+            volName = name;
+            volValue = volume;
+            this.Invalidate();
+
+            this.Invoke((Action)(() =>
+            {
+                this.Show();
+                this.Update();
+            }));
 
         if (autoHideActive)
         {
@@ -136,7 +149,6 @@ public class Overlay : Form
     // Zeichnen
     protected override void OnPaint(PaintEventArgs e)
     {
-
         // Text-based Overlay
         e.Graphics.TextRenderingHint =
         TextRenderingHint.SingleBitPerPixelGridFit;
