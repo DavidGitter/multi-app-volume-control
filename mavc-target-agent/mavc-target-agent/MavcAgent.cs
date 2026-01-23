@@ -4,6 +4,8 @@ using System.IO.Ports;
 using System.Runtime.InteropServices;
 using System.Text;
 
+using System.Threading.Tasks;
+using System.Windows.Forms;
 /**
  * Test enviroment of the target service/agent
  */
@@ -67,6 +69,9 @@ class MavcAgent
     private static Stream stdOut = null;
     private static StreamWriter writer = null;
 
+    private static bool screenOverlayEnabled = false;
+    private static Overlay overlay = null;
+
     private static int mappingsVersion = 0;
     private static int list1Version = -1;
     private static int list2Version = -1;
@@ -107,14 +112,16 @@ class MavcAgent
                     else
                         argNum = argNum > 0 ? argNum / 100f : 0;
                     Console.WriteLine("Set Volume 1: " + argNum);
-                    //lock (aoList1Lock)
-                    //{
-                        foreach (AudioOutput ao in aoListVol1)
-                        {
-                            if (ao != null)
-                                ao.SetVolume(argNum);
-                        }
-                    //}
+
+                    foreach (AudioOutput ao in aoListVol1)
+                    {
+                        if (ao != null)
+                            ao.SetVolume(argNum);
+                    }
+
+                    if (screenOverlayEnabled)
+                        overlay.setUpdatedVolume("Volume 1", (int)(argNum * 100));
+
                     break;
                 }
             case 'B':
@@ -125,14 +132,16 @@ class MavcAgent
                     else
                         argNum = argNum > 0 ? argNum / 100f : 0;
                     Console.WriteLine("Set Volume 2: " + argNum);
-                    //lock (aoList2Lock)
-                    //{
-                        foreach (AudioOutput ao in aoListVol2)
-                        {
-                            if (ao != null)
-                                ao.SetVolume(argNum);
-                        }
-                    //}
+
+                    foreach (AudioOutput ao in aoListVol2)
+                    {
+                        if (ao != null)
+                            ao.SetVolume(argNum);
+                    }
+
+                    if (screenOverlayEnabled)
+                        overlay.setUpdatedVolume("Volume 2", (int)(argNum * 100));
+
                     break;
                 }
             case 'C':
@@ -143,14 +152,16 @@ class MavcAgent
                     else
                         argNum = argNum > 0 ? argNum / 100f : 0;
                     Console.WriteLine("Set Volume 3: " + argNum);
-                    //lock (aoList3Lock)
-                    //{
-                        foreach (AudioOutput ao in aoListVol3)
-                        {
-                            if (ao != null)
-                                ao.SetVolume(argNum);
-                        }
-                    //}
+
+                    foreach (AudioOutput ao in aoListVol3)
+                    {
+                        if (ao != null)
+                            ao.SetVolume(argNum);
+                    }
+
+                    if (screenOverlayEnabled)
+                        overlay.setUpdatedVolume("Volume 3", (int)(argNum*100));
+
                     break;
                 }
             case 'D':
@@ -161,14 +172,16 @@ class MavcAgent
                     else
                         argNum = argNum > 0 ? argNum / 100f : 0;
                     Console.WriteLine("Set Volume 4: " + argNum);
-                    //lock (aoList4Lock)
-                    //{
-                        foreach (AudioOutput ao in aoListVol4)
-                        {
-                            if (ao != null)
-                                ao.SetVolume(argNum);
-                        }
-                    //}
+
+                    foreach (AudioOutput ao in aoListVol4)
+                    {
+                        if (ao != null)
+                            ao.SetVolume(argNum);
+                    }
+
+                    if (screenOverlayEnabled)
+                        overlay.setUpdatedVolume("Volume 4", (int)(argNum * 100));
+
                     break;
                 }
             default:
@@ -364,7 +377,6 @@ class MavcAgent
     }
 
 
-
     static void Main(string[] args)
     {
 
@@ -429,13 +441,33 @@ class MavcAgent
 
         }
 
+        screenOverlayEnabled = mavcSave.enableScreenOverlay;
+        Console.WriteLine("overlay enabled: " + screenOverlayEnabled);
+
+        if (screenOverlayEnabled)   // Start Overlay UI if activated by conf
+        {
+            Task UI = new Task(() =>
+            {
+
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+
+                overlay = new Overlay(mavcSave.autoHideAfterSec);
+                overlay.SetAutoHideActive(true);
+                Application.Run(overlay);
+            });
+            UI.Start();
+        }
+
+
         while (true)
         {
-            Console.WriteLine("Waiting for hardware to connect (COM3, 9600).");
+
             try
             {
                 if (comServer == null || !comServer.IsOpen())
                 {
+                    Console.WriteLine("Waiting for hardware to connect (COM3, 9600).");
                     comServer = new COM("COM3", 9600);
                     Console.WriteLine("Hardware connected.");
                     comServer.OnWordStreamReceive(MavcAgent.interpretWord);

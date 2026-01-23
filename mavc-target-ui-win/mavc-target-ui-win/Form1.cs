@@ -2,6 +2,7 @@
 using Octokit;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -19,15 +20,16 @@ namespace mavc_target_ui_win
 {
     public partial class Form1 : Form
     {
-        private string CURRENT_VERSION = "1.2.0";
+        private string CURRENT_VERSION = "1.3.1";
 
         private AudioController audioController;
-        private string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
-        private string configFileName = "config.json";
-        private string configFilePath;
+        public static string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
+        public static string configFileName = "config.json";
+        public static string configFilePath = Path.Combine(configSavePath, configFileName);
+        public static string selectedFilePath = configSavePath;
 
         private List<AudioOutput> availableOutputs;
-        private MAVCSave mavcSave;
+        private static MAVCSave mavcSave;
 
         // general purpose timer for updating etc.
         Timer updateTimer = new Timer();
@@ -45,22 +47,19 @@ namespace mavc_target_ui_win
         private Process agentProcess;
         private string agentExecutablePath;
 
-        [DllImport("dwmapi.dll")]
-        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
-
-        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
-
         private void SetTitleBarTheme(bool isDark)
         {
-            int darkMode = isDark ? 1 : 0;
-            DwmSetWindowAttribute(this.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+            ThemeColors.SetTitleBarTheme(this.Handle, isDark);
+        }
+
+        public static MAVCSave GetMavcSave()
+        {
+            return mavcSave;
         }
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            
-            // Check if we should start minimized
             if (mavcSave != null && mavcSave.startMinimized)
             {
                 this.WindowState = FormWindowState.Minimized;
@@ -87,6 +86,7 @@ namespace mavc_target_ui_win
                 // Auto Check for update
                 checkForUpdate();
 
+
                 this.Text = "MAVC";
                 this.versionText.Text = CURRENT_VERSION;
 
@@ -101,7 +101,6 @@ namespace mavc_target_ui_win
 
                 mavcSave = new MAVCSave();
                 audioController = new AudioController();
-                configFilePath = Path.Combine(configSavePath, configFileName);
 
                 loadConfig(configSavePath, configFileName);
 
@@ -123,6 +122,29 @@ namespace mavc_target_ui_win
                 updateTimer.Interval = 3000;   // milliseconds
                 updateTimer.Tick += updateTimer_Tick;  // set handler
                 updateTimer.Start();
+
+                autoHideAfterSectoolStripTextBox.KeyDown += (s, e) =>
+                {
+                    try
+                    {
+                        if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Tab)
+                        {
+                            if (!autoHideAfterSectoolStripTextBox.Text.All(char.IsDigit))
+                            {
+                                MessageBox.Show("Input not a number.");
+                                e.SuppressKeyPress = true;
+                                return;
+                            }
+
+                            Debug.WriteLine("autohideafter: " + autoHideAfterSectoolStripTextBox.Text);
+                            mavcSave.autoHideAfterSec =
+                                int.Parse(autoHideAfterSectoolStripTextBox.Text);
+                        }
+                    }
+                    catch(Exception) {
+                        Debug.WriteLine(e);
+                    }
+                };
 
                 // Start the agent process
                 StartAgentProcess();
@@ -284,7 +306,7 @@ namespace mavc_target_ui_win
                         }
                     }
                     
-                    // Give a moment to all processes to fully terminate
+                    // wait for all processes to fully terminate
                     System.Threading.Thread.Sleep(500);
                     Debug.WriteLine("All existing agent processes terminated.");
                 }
@@ -442,6 +464,12 @@ namespace mavc_target_ui_win
             this.ShowInTaskbar = true;
             this.BringToFront();
             this.Activate();
+
+            // Reapply title bar theme when showing from tray
+            if (mavcSave != null)
+            {
+                SetTitleBarTheme(mavcSave.darkMode);
+            }
         }
 
         /// <summary>
@@ -738,18 +766,24 @@ namespace mavc_target_ui_win
 
             try
             {
-                Task t1 = Task.Run(() =>
+                Task t1;
+                Task t2;
+                Task t3;
+                Task t4;
+
+                var foundAudioOutputs1 = new List<AudioOutput>();
+                t1 = Task.Run(() =>
                 {
                     foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol1)
                         try
                         {
                             if (!mavc_ao.type.Equals("Function"))
-                                VolList1.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                                foundAudioOutputs1.Add(audioController.GetOutputByName(mavc_ao.name));
                             else
                                 if (mavc_ao.name.Equals("Focused"))
-                                VolList1.Items.Add(new AudioFocused(audioController));
+                                foundAudioOutputs1.Add(new AudioFocused(audioController));
                             else if (mavc_ao.name.Equals("Other Apps"))
-                                VolList1.Items.Add(new AudioOtherApps(audioController, mavcSave));
+                                foundAudioOutputs1.Add(new AudioOtherApps(audioController, mavcSave));
                             else
                                 throw new NotImplementedException();
                         }
@@ -757,22 +791,23 @@ namespace mavc_target_ui_win
                         {
                             // Add Log / Debug
                             Console.WriteLine("AudioOutput " + mavc_ao.name + " of mavc save not found");
-                            VolList1.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                            foundAudioOutputs1.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
-
-                Task t2 = Task.Run(() =>
+                    
+                var foundAudioOutputs2 = new List<AudioOutput>();
+                t2 = Task.Run(() =>
                 {
                     foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol2)
                         try
                         {
                             if (!mavc_ao.type.Equals("Function"))
-                                VolList2.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                                foundAudioOutputs2.Add(audioController.GetOutputByName(mavc_ao.name));
                             else
                                 if (mavc_ao.name.Equals("Focused"))
-                                VolList2.Items.Add(new AudioFocused(audioController));
+                                foundAudioOutputs2.Add(new AudioFocused(audioController));
                             else if (mavc_ao.name.Equals("Other Apps"))
-                                VolList2.Items.Add(new AudioOtherApps(audioController, mavcSave));
+                                foundAudioOutputs2.Add(new AudioOtherApps(audioController, mavcSave));
                             else
                                 throw new NotImplementedException();
                         }
@@ -780,22 +815,25 @@ namespace mavc_target_ui_win
                         {
                             // Add Log / Debug
                             Console.WriteLine("AudioOutput " + mavc_ao.name + " of mavc save not found");
-                            VolList2.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                            foundAudioOutputs2.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
+                   
+             
 
-                Task t3 = Task.Run(() =>
+                var foundAudioOutputs3 = new List<AudioOutput>();
+                t3 = Task.Run(() =>
                 {
                     foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol3)
                         try
                         {
                             if (!mavc_ao.type.Equals("Function"))
-                                VolList3.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                                foundAudioOutputs3.Add(audioController.GetOutputByName(mavc_ao.name));
                             else
                                 if (mavc_ao.name.Equals("Focused"))
-                                VolList3.Items.Add(new AudioFocused(audioController));
+                                foundAudioOutputs3.Add(new AudioFocused(audioController));
                             else if (mavc_ao.name.Equals("Other Apps"))
-                                VolList3.Items.Add(new AudioOtherApps(audioController, mavcSave));
+                                foundAudioOutputs3.Add(new AudioOtherApps(audioController, mavcSave));
                             else
                                 throw new NotImplementedException();
                         }
@@ -803,22 +841,24 @@ namespace mavc_target_ui_win
                         {
                             // Add Log / Debug
                             Console.WriteLine("AudioOutput " + mavc_ao + " of mavc save not found");
-                            VolList3.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                            foundAudioOutputs3.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
 
-                Task t4 = Task.Run(() =>
+
+                var foundAudioOutputs4 = new List<AudioOutput>();   
+                t4 = Task.Run(() =>
                 {
                     foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
                         try
                         {
                             if (!mavc_ao.type.Equals("Function"))
-                                VolList4.Items.Add(audioController.GetOutputByName(mavc_ao.name));
+                                foundAudioOutputs4.Add(audioController.GetOutputByName(mavc_ao.name));
                             else
                                 if (mavc_ao.name.Equals("Focused"))
-                                VolList4.Items.Add(new AudioFocused(audioController));
+                                foundAudioOutputs4.Add(new AudioFocused(audioController));
                             else if (mavc_ao.name.Equals("Other Apps"))
-                                VolList4.Items.Add(new AudioOtherApps(audioController, mavcSave));
+                                foundAudioOutputs4.Add(new AudioOtherApps(audioController, mavcSave));
                             else
                                 throw new NotImplementedException();
                         }
@@ -826,14 +866,15 @@ namespace mavc_target_ui_win
                         {
                             // Add Log / Debug
                             Console.WriteLine("AudioOutput " + mavc_ao + " of mavc save not found");
-                            VolList4.Items.Add(new AudioOutputOffline(mavc_ao.name));
+                            foundAudioOutputs4.Add(new AudioOutputOffline(mavc_ao.name));
                         }
                 });
 
-                t1.Wait();
-                t2.Wait();
-                t3.Wait();
-                t4.Wait();
+                Task.WaitAll(t1, t2, t3 ,t4);
+                VolList1.Items.AddRange(foundAudioOutputs1.ToArray());
+                VolList2.Items.AddRange(foundAudioOutputs2.ToArray());
+                VolList3.Items.AddRange(foundAudioOutputs3.ToArray());
+                VolList4.Items.AddRange(foundAudioOutputs4.ToArray());
 
                 // update knob-reversed checkboxes
                 reverseCheckbox1.Checked = mavcSave.reverseKnob1;
@@ -851,13 +892,23 @@ namespace mavc_target_ui_win
                 // load minimize on close setting
                 closeActionToggle.Checked = mavcSave.minimizeOnClose;
 
-                // load start minimized setting
-                startMinimized.Checked = mavcSave.startMinimized;
-
                 // update enable debug mode
                 enableDebugBox.Checked = mavcSave.enableDebugMode;
 
-            }catch(Exception e){
+                // load start minimized setting
+                startMinimized.Checked = mavcSave.startMinimized;
+
+                // update box for screen overlay
+                toolStripMenuItemOverlay.Checked = mavcSave.enableScreenOverlay;
+
+                // update auto hide active checkbox item
+                activeAutoHideToolStripMenuItem.Checked = mavcSave.activateAutoHide;
+
+                // update auto hide after seconds textbox
+                autoHideAfterSectoolStripTextBox.Text = mavcSave.autoHideAfterSec.ToString(); 
+
+            }
+            catch(Exception e){
                 Console.WriteLine(e.Message + "\n" + e.StackTrace);
                 Console.WriteLine("Config file cannot be opened or is invalid - creating new one...");
 
@@ -991,18 +1042,19 @@ namespace mavc_target_ui_win
          */
         private void loadConfig(string configFileFolder, string configFileName)
         {
-            string configFilePath = Path.Combine(configFileFolder, configFileName);
-            if (System.IO.File.Exists(configFilePath))
+            try
             {
-                string json = System.IO.File.ReadAllText(configFilePath);
-                mavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
-                loadFromMavcSave();
+                string configFilePath = Path.Combine(configFileFolder, configFileName);
+                mavcSave = MAVCSave.LoadConfigFromFile(configFilePath, configSavePath);
             }
-            else
-            {
+            catch {
+                Console.WriteLine("Config file " + configFilePath + " propably not existing, creating new one...");
+                logger.Warning("Config file " + configFilePath + " propably not existing, creating new one...");
                 save(configSavePath, configFileName);
+                
             }
 
+            loadFromMavcSave();
             availableOutputs = audioController.GetAllAudioOutputs();
             initAvailableOutputs(availableOutputs.ToArray());
         }
@@ -1082,126 +1134,10 @@ namespace mavc_target_ui_win
         
         private void ApplyTheme(bool isDark)
         {
-            Color backColor = ThemeColors.GetBgPrimary(isDark);
-            Color textColor = ThemeColors.GetTextPrimary(isDark);
-            Color borderColor = ThemeColors.GetBorderPrimary(isDark);
-
-            SetTitleBarTheme(isDark);
-
-            this.BackColor = backColor;
-            
-            foreach (Control topControl in this.Controls)
-            {
-                if (topControl is MenuStrip menuStrip)
-                {
-                    menuStrip.BackColor = backColor;
-                    menuStrip.ForeColor = textColor;
-                    menuStrip.Renderer = new ToolStripProfessionalRenderer(new DarkModeColorTable(isDark));
-                    foreach (ToolStripMenuItem menuItem in menuStrip.Items)
-                    {
-                        ApplyThemeToMenuItem(menuItem, backColor, textColor);
-                    }
-                }
-            }
-            
-            UpdateControlTheme(this, backColor, textColor, borderColor, isDark);
-
+            ThemeColors.ApplyTheme(this, isDark);
             darkModeToolStripMenuItem.Checked = isDark;
         }
 
-        private void ApplyThemeToMenuItem(ToolStripMenuItem item, Color backColor, Color textColor)
-        {
-            item.BackColor = backColor;
-            item.ForeColor = textColor;
-            foreach (ToolStripItem subItem in item.DropDownItems)
-            {
-                subItem.BackColor = backColor;
-                subItem.ForeColor = textColor;
-                if (subItem is ToolStripMenuItem subMenuItem)
-                {
-                    ApplyThemeToMenuItem(subMenuItem, backColor, textColor);
-                }
-            }
-        }
-
-        private void UpdateControlTheme(Control parent, Color back, Color text, Color border, bool isDark)
-        {
-            Color groupBoxBorderColor = ThemeColors.GetBorderPrimary(isDark);
-            
-            foreach (Control c in parent.Controls)
-            {
-                if (c is MenuStrip)
-                {
-                    continue;
-                }
-                else if (c is ComboBox combo)
-                {
-                    combo.BackColor = back;
-                    combo.ForeColor = text;
-                    combo.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
-                }
-                else if (c is ListBox)
-                {
-                    c.BackColor = back;
-                    c.ForeColor = text;
-                }
-                else if (c is TextBox txt)
-                {
-                    txt.BackColor = back;
-                    txt.ForeColor = text;
-                    txt.BorderStyle = BorderStyle.FixedSingle;
-                }
-                else if (c is Button btn)
-                {
-                    btn.BackColor = back;
-                    btn.ForeColor = text;
-                    btn.FlatStyle = FlatStyle.Flat;
-                    btn.FlatAppearance.BorderSize = 1;
-                    btn.FlatAppearance.BorderColor = border;
-                }
-                else if (c is CheckBox chk)
-                {
-                    chk.ForeColor = text;
-                    chk.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
-                }
-                else if (c is System.Windows.Forms.Label)
-                {
-                    c.ForeColor = text;
-                }
-                else if (c is GroupBox gb)
-                {
-                    gb.ForeColor = groupBoxBorderColor;
-                    gb.FlatStyle = FlatStyle.Flat;
-                }
-                else if (c is Panel || c is TabControl || c is TabPage)
-                {
-                    c.BackColor = back;
-                    c.ForeColor = text;
-                }
-
-                if (c.HasChildren) UpdateControlTheme(c, back, text, border, isDark);
-            }
-        }
-
-        private class DarkModeColorTable : ProfessionalColorTable
-        {
-            private readonly bool _isDark;
-
-            public DarkModeColorTable(bool isDark) => _isDark = isDark;
-
-            public override Color MenuItemSelected => ThemeColors.GetInteractivePrimary(_isDark);
-            public override Color MenuItemSelectedGradientBegin => ThemeColors.GetInteractivePrimary(_isDark);
-            public override Color MenuItemSelectedGradientEnd => ThemeColors.GetInteractivePrimary(_isDark);
-            public override Color MenuItemBorder => ThemeColors.GetBorderPrimary(_isDark);
-            public override Color MenuBorder => ThemeColors.GetBorderPrimary(_isDark);
-            public override Color MenuItemPressedGradientBegin => ThemeColors.GetBgPrimary(_isDark);
-            public override Color MenuItemPressedGradientEnd => ThemeColors.GetBgPrimary(_isDark);
-            public override Color ImageMarginGradientBegin => ThemeColors.GetBgPrimary(_isDark);
-            public override Color ImageMarginGradientMiddle => ThemeColors.GetBgPrimary(_isDark);
-            public override Color ImageMarginGradientEnd => ThemeColors.GetBgPrimary(_isDark);
-            public override Color ToolStripDropDownBackground => ThemeColors.GetBgPrimary(_isDark);
-        }
-        
         private void enableDebugBox_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.enableDebugMode = enableDebugBox.Checked;
@@ -1215,6 +1151,18 @@ namespace mavc_target_ui_win
         private void startMinimized_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.startMinimized = startMinimized.Checked;
+        }
+
+        private void toolStripMenuItemOverlay_Click(object sender, EventArgs e)
+        {
+            mavcSave.enableScreenOverlay = toolStripMenuItemOverlay.Checked;
+            save(configSavePath, configFileName);
+            Debug.WriteLine("checked: " + mavcSave.enableScreenOverlay);
+        }
+
+        private void activeAutoHideToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            mavcSave.activateAutoHide = activeAutoHideToolStripMenuItem.Checked;
         }
     }
 }
