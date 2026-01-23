@@ -3,6 +3,8 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Drawing.Text;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 public class Overlay : Form
 {
@@ -18,9 +20,9 @@ public class Overlay : Form
     private int volValue = 0;
 
     private bool autoHideActive = false;
-    private static int autoHideAfterSec = 1;
-    private static bool hideIsActive = false;
-    private static bool setbackHide = false;
+    private int autoHideAfterSec = 1;
+    private bool hideIsActive = false;
+    private CancellationTokenSource autoHideCancellation;
 
     public Overlay(int autoHideAfterSecs)
     {
@@ -58,20 +60,29 @@ public class Overlay : Form
         this.autoHideActive = autoHideActive;
     }
 
-    private async void AutoHideAsync(int sec)
+    private async void AutoHideAsync(int sec, CancellationToken token)
     {
         try
         {
             hideIsActive = true;
-            await Task.Delay(sec * 1000);
+            await Task.Delay(sec * 1000, token);
             this.Invoke((Action)(() =>
             {
                 this.Hide();
                 hideIsActive = false;
             }));
-        }catch (Exception ex)
+        }
+        catch (TaskCanceledException)
+        {
+            // Auto-hide was cancelled, do nothing
+        }
+        catch (Exception ex)
         {
             Debug.WriteLine(ex);
+        }
+        finally
+        {
+            hideIsActive = false;
         }
     }
 
@@ -87,8 +98,13 @@ public class Overlay : Form
             this.Update();
         }));
 
-        if (autoHideActive && !hideIsActive)
-            AutoHideAsync(autoHideAfterSec);
+        if (autoHideActive)
+        {
+            // Cancel any previous auto-hide timer
+            autoHideCancellation?.Cancel();
+            autoHideCancellation = new CancellationTokenSource();
+            AutoHideAsync(autoHideAfterSec, autoHideCancellation.Token);
+        }
     }
 
     // activate Click-Through

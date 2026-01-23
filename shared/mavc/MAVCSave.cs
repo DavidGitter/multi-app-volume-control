@@ -34,6 +34,8 @@ public class MAVCSave
         minimizeOnClose = false;
         enableScreenOverlay = false;
         startMinimized = true;
+        autoHideAfterSec = 1;
+        activateAutoHide = true;
     }
 
 	// volume 1 mappings

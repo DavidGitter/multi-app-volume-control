@@ -425,7 +425,7 @@ class MavcAgent
                 Application.SetCompatibleTextRenderingDefault(false);
 
                 overlay = new Overlay(mavcSave.autoHideAfterSec);
-                overlay.SetAutoHideActive(true);
+                overlay.SetAutoHideActive(mavcSave.activateAutoHide);
                 Application.Run(overlay);
             });
             UI.Start();
