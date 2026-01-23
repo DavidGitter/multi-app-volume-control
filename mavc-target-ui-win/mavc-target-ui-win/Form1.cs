@@ -694,6 +694,7 @@ namespace mavc_target_ui_win
         private void saveBtn_Click(object sender, EventArgs e)
         {
             save(configSavePath, configFileName);
+            RestartAgentProcess();
         }
 
         /**
@@ -995,6 +996,7 @@ namespace mavc_target_ui_win
             else
             {
                 save(configSavePath, configFileName);
+                RestartAgentProcess();
             }
         }
 
