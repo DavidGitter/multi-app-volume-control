@@ -72,12 +72,6 @@ class MavcAgent
     private static bool screenOverlayEnabled = false;
     private static Overlay overlay = null;
 
-    private static int mappingsVersion = 0;
-    private static int list1Version = -1;
-    private static int list2Version = -1;
-    private static int list3Version = -1;
-    private static int list4Version = -1;
-
     public static void interpretWord(COM.Word word)
     {
         char action = word.action;
@@ -232,7 +226,6 @@ class MavcAgent
 
             // Deserialize the JSON back to a class instance
             mavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
-            mappingsVersion++;
         }
 
         audioContr.InvalidateCache();
@@ -246,9 +239,6 @@ class MavcAgent
     {
         lock (aoList1Lock)
         {
-            if (list1Version == mappingsVersion)
-                return;
-
             aoListVol1.Clear();
 
             // update the vol mappings with the conf
@@ -264,8 +254,6 @@ class MavcAgent
                     else
                         throw new NotImplementedException();
                 }
-
-            list1Version = mappingsVersion;
         }
     }
 
@@ -273,9 +261,6 @@ class MavcAgent
     {
         lock (aoList2Lock)
         {
-            if (list2Version == mappingsVersion)
-                return;
-
             aoListVol2.Clear();
 
             // update the vol mappings with the conf
@@ -291,8 +276,6 @@ class MavcAgent
                     else
                         throw new NotImplementedException();
                 }
-
-            list2Version = mappingsVersion;
         }
     }
 
@@ -300,9 +283,6 @@ class MavcAgent
     {
         lock (aoList3Lock)
         {
-            if (list3Version == mappingsVersion)
-                return;
-
             aoListVol3.Clear();
 
             // update the vol mappings with the conf
@@ -318,8 +298,6 @@ class MavcAgent
                     else
                         throw new NotImplementedException();
                 }
-
-            list3Version = mappingsVersion;
         }
     }
 
@@ -327,9 +305,6 @@ class MavcAgent
     {
         lock (aoList4Lock)
         {
-            if (list4Version == mappingsVersion)
-                return;
-
             aoListVol4.Clear();
 
             // update the vol mappings with the conf
@@ -345,8 +320,6 @@ class MavcAgent
                     else
                         throw new NotImplementedException();
                 }
-
-            list4Version = mappingsVersion;
         }
     }
 
@@ -391,7 +364,6 @@ class MavcAgent
             audioContr.InvalidateCache();
             lock (mavcSaveLock)
             {
-                mappingsVersion++;
                 UpdateAllAOs();
             }
             comServer?.updateVolumes();
