@@ -228,6 +228,7 @@ class MavcAgent
             mavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
         }
 
+        audioContr.InvalidateCache();
         UpdateAllAOs();
     }
 
@@ -360,12 +361,17 @@ class MavcAgent
         audioContr.onOutputAddedCallback((sender, newSession) => {
             Console.WriteLine("new audio output found!");
             logger.Info("A new output was found and added to the agent.");
-            UpdateAllAOs();
-            comServer.updateVolumes();
+            audioContr.InvalidateCache();
+            lock (mavcSaveLock)
+            {
+                UpdateAllAOs();
+            }
+            comServer?.updateVolumes();
         });
 
         //Interval Updater
-        Task intervalUpdater = new Task(() => {
+        Task intervalUpdater = new Task(() =>
+        {
             while (true)
             {
                 lock (mavcSaveLock)

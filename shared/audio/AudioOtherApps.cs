@@ -29,6 +29,7 @@ class AudioOtherApps : AudioOutput
 
     private void UpdateOtherApps()
     {
+        otherApps.Clear();
         List<AudioApp> aos = ac.GetAllAudioApps();
         foreach (AudioApp app in aos)
         {
