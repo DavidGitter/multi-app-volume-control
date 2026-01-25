@@ -9,6 +9,8 @@ using System.Windows.Forms;
 // For console debugging -> change Project > Properties > Windows Application to Console Application
 class MavcAgent
 {
+    #region Static Fields
+
     // Optional console allocation (useful when the project is built as a Windows app).
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -54,6 +56,10 @@ class MavcAgent
     private static bool screenOverlayEnabled = false;
     private static Overlay overlay = null;
 
+    #endregion
+
+    #region Public Static Methods
+
     /**
      * Function that interprets the words received from the mixer.
      *
@@ -88,6 +94,82 @@ class MavcAgent
         }
     }
 
+    // Sets up FileSystemWatcher to reload config when config.json changes.
+    private static readonly object confDebounceLock = new object();
+    private static System.Threading.Timer confDebounceTimer;
+
+    public static void SetupConfUpdater()
+    {
+        watcher = new FileSystemWatcher
+        {
+            Path = configSavePath,
+            Filter = configFileName,
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+            EnableRaisingEvents = true
+        };
+
+        watcher.Changed += (s, e) =>
+        {
+            lock (confDebounceLock)
+            {
+                confDebounceTimer?.Dispose();
+                confDebounceTimer = new System.Threading.Timer(_ =>
+                {
+                    try { UpdateMAVCSave(); }
+                    catch { /* log */ }
+                }, null, 50, Timeout.Infinite); // 50ms: tweak
+            }
+        };
+    }
+
+    // Reads config.json and refreshes audio mappings.
+    public static void UpdateMAVCSave()
+    {
+        MAVCSave loaded;
+
+        lock (mavcSaveLock)
+        {
+            string json = File.ReadAllText(configFilePath);
+            loaded = JsonConvert.DeserializeObject<MAVCSave>(json) ?? new MAVCSave();
+
+            bool onlyOverlayChanged =
+                loaded.overlayX != mavcSave.overlayX ||
+                loaded.overlayY != mavcSave.overlayY;
+
+            mavcSave = loaded;
+
+            if (onlyOverlayChanged && screenOverlayEnabled && overlay != null)
+            {
+                overlay.SetOverlayPosition(mavcSave.overlayX, mavcSave.overlayY);
+                return; // skip heavy rebuild
+            }
+        }
+
+        audioContr.InvalidateCache();
+        UpdateAllAOs();
+
+        if (screenOverlayEnabled && overlay != null)
+            overlay.SetOverlayPosition(mavcSave.overlayX, mavcSave.overlayY);
+    }
+
+
+    // Rebuild all knob->AudioOutput mappings from the current config.
+    public static void UpdateAllAOs()
+    {
+        // Lock config during rebuild to keep it consistent across all lists.
+        lock (mavcSaveLock)
+        {
+            UpdateAOsList(aoListVol1, aoList1Lock, mavcSave.AOsVol1);
+            UpdateAOsList(aoListVol2, aoList2Lock, mavcSave.AOsVol2);
+            UpdateAOsList(aoListVol3, aoList3Lock, mavcSave.AOsVol3);
+            UpdateAOsList(aoListVol4, aoList4Lock, mavcSave.AOsVol4);
+        }
+    }
+
+    #endregion
+
+    #region Private Static Methods
+
     /**
      * Converts the raw knob value into a 0..1 volume value (optionally reversed),
      * applies it to all mapped targets, and updates the overlay.
@@ -116,63 +198,6 @@ class MavcAgent
         // Best-effort overlay update (overlay object is created only if enabled at startup).
         if (screenOverlayEnabled)
             overlay.setUpdatedVolume($"Knob {knobIndex}", (int)(value * 100));
-    }
-
-    // Sets up FileSystemWatcher to reload config when config.json changes.
-    // Note: FileSystemWatcher can raise duplicate/multiple Changed events in practice.
-    public static void SetupConfUpdater()
-    {
-        watcher = new FileSystemWatcher
-        {
-            Path = configSavePath,
-            Filter = configFileName,
-            EnableRaisingEvents = true
-        };
-
-        // Subscribe to the Changed event
-        watcher.Changed += (sender, e) =>
-        {
-            try
-            {
-                // Ask hardware to resend its current state (keeps software and hardware aligned),
-                // then reload config + remap outputs.
-                comServer.updateVolumes();
-                UpdateMAVCSave();
-
-                Console.WriteLine("Conf Update: " + mavcSave);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.StackTrace);
-            }
-        };
-    }
-
-    // Reads config.json and refreshes audio mappings.
-    public static void UpdateMAVCSave()
-    {
-        lock (mavcSaveLock)
-        {
-            string json = File.ReadAllText(configFilePath);
-            mavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
-        }
-
-        // AudioController caches enumerations; invalidate so new outputs/sessions are visible.
-        audioContr.InvalidateCache();
-        UpdateAllAOs();
-    }
-
-    // Rebuild all knob->AudioOutput mappings from the current config.
-    public static void UpdateAllAOs()
-    {
-        // Lock config during rebuild to keep it consistent across all lists.
-        lock (mavcSaveLock)
-        {
-            UpdateAOsList(aoListVol1, aoList1Lock, mavcSave.AOsVol1);
-            UpdateAOsList(aoListVol2, aoList2Lock, mavcSave.AOsVol2);
-            UpdateAOsList(aoListVol3, aoList3Lock, mavcSave.AOsVol3);
-            UpdateAOsList(aoListVol4, aoList4Lock, mavcSave.AOsVol4);
-        }
     }
 
     // Rebuilds one mapping list from config:
@@ -209,32 +234,70 @@ class MavcAgent
     // Opens a console and redirects stdout/stderr so Console.WriteLine() is visible.
     private static void enableDebugWindow()
     {
-        AllocConsole();
+        if (!AllocConsole())
+            return;
 
         stdOut = Console.OpenStandardOutput();
         writer = new StreamWriter(stdOut) { AutoFlush = true };
         Console.SetOut(writer);
         Console.SetError(writer);
-
         Console.OutputEncoding = Encoding.UTF8;
+
+        Console.WriteLine("Console allocated.");
+        Console.Title = "MAVC Agent Debug";
     }
+
+    #endregion
+
+    #region Main Method
 
     static void Main(string[] args)
     {
-        Console.WriteLine("Started Mavc Debug-Console");
+        // Make sure folder exists (prevents FileSystemWatcher/path issues)
+        try
+        {
+            Directory.CreateDirectory(configSavePath);
+        }
+        catch { }
+
         bool foundFile = false;
 
-        Log logger = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC", "agent-log.txt"));
+        // Load config
+        while (!foundFile)
+        {
+            try
+            {
+                if (File.Exists(configFilePath))
+                {
+                    UpdateMAVCSave();          // IMPORTANT: this must use DeserializeObject<MAVCSave>(...)
+                    SetupConfUpdater();
+                    foundFile = true;
+
+                    if (mavcSave.enableDebugMode)
+                        enableDebugWindow();   // AllocConsole BEFORE any Console.WriteLine you care about
+                }
+            }
+            catch
+            {
+                Thread.Sleep(5000);
+            }
+        }
+
+        Console.WriteLine("Started Mavc Debug-Console");
+
+        Log logger = new Log(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "MAVC",
+            "agent-log.txt"
+        ));
 
         // If the audio system reports a new output/session, refresh mappings and request current hardware volumes.
         audioContr.onOutputAddedCallback((sender, newSession) =>
         {
             Console.WriteLine("new audio output found!");
             logger.Info("A new output was found and added to the agent.");
-
             audioContr.InvalidateCache();
             lock (mavcSaveLock) { UpdateAllAOs(); }
-
             comServer?.updateVolumes();
         });
 
@@ -249,32 +312,10 @@ class MavcAgent
         });
         intervalUpdater.Start();
 
-        // Wait until config file exists, then load it and start watching for changes.
-        while (!foundFile)
-        {
-            try
-            {
-                if (File.Exists(configFilePath))
-                {
-                    UpdateMAVCSave();
-                    SetupConfUpdater();
-                    foundFile = true;
-
-                    if (mavcSave.enableDebugMode)
-                        enableDebugWindow();
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.StackTrace);
-                Thread.Sleep(5000);
-            }
-        }
-
+        // Overlay
         screenOverlayEnabled = mavcSave.enableScreenOverlay;
         Console.WriteLine("overlay enabled: " + screenOverlayEnabled);
 
-        // Start overlay UI (separate thread with its own message loop).
         if (screenOverlayEnabled)
         {
             Task ui = new Task(() =>
@@ -284,6 +325,8 @@ class MavcAgent
 
                 overlay = new Overlay(mavcSave.autoHideAfterSec);
                 overlay.SetAutoHideActive(mavcSave.activateAutoHide);
+                overlay.SetOverlayPosition(mavcSave.overlayX, mavcSave.overlayY);
+
                 Application.Run(overlay);
             });
             ui.Start();
@@ -313,4 +356,6 @@ class MavcAgent
             Thread.Sleep(5000);
         }
     }
+
+    #endregion
 }

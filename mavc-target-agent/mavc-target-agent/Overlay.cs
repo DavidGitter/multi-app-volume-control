@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -11,8 +11,10 @@ using System.Windows.Forms;
 
 public class Overlay : Form
 {
+    #region Fields
+
     // Background rectangle opacity (0..255)
-    private byte _backgroundOpacity = 150;
+    private byte _backgroundOpacity = 180;
 
     // Simple update gate: prevents calling UpdateLayeredWindow too frequently.
     private const int UpdateOverlayAfterMs = 40;
@@ -29,6 +31,10 @@ public class Overlay : Form
     private readonly int _autoHideAfterSec;
     private CancellationTokenSource _hideCts;
 
+    // Manual overlay text position (top-left)
+    private int textX = 10;
+    private int textY = 10;
+
     // WS_EX_LAYERED enables per-pixel alpha; WS_EX_TRANSPARENT makes it click-through.
     private const int WS_EX_TRANSPARENT = 0x20, WS_EX_LAYERED = 0x80000, WS_EX_TOOLWINDOW = 0x80;
 
@@ -42,6 +48,10 @@ public class Overlay : Form
 
     // 32bpp DIB section settings.
     private const uint BI_RGB = 0, DIB_RGB_COLORS = 0;
+
+    #endregion
+
+    #region Constructor
 
     /**
      * Creates the fullscreen overlay window.
@@ -62,14 +72,19 @@ public class Overlay : Form
         // but keeping it explicit avoids surprises in other paint paths.
         BackColor = Color.Black;
 
-        // Fullscreen overlay; we render only a small badge inside it.
-        Bounds = Screen.PrimaryScreen.Bounds;
+        // Small badge window instead of fullscreen
         StartPosition = FormStartPosition.Manual;
+        Size = new Size(320, 60);   // adjustable later if needed
+
 
         // Re-open the update gate periodically.
         GateTimer.Elapsed += (_, _) => _gateOpen = true;
         GateTimer.Start();
     }
+
+    #endregion
+
+    #region Public Methods
 
     public void SetAutoHideActive(bool active) => _autoHideActive = active;
 
@@ -78,11 +93,26 @@ public class Overlay : Form
         _backgroundOpacity = opacity;
         RenderAndApplyLayer();
     }
+    public void SetOverlayPosition(int x, int y)
+    {
+        // Move the overlay window itself
+        Left = x;
+        Top = y;
+
+        if (IsHandleCreated)
+        {
+            BeginInvoke(new Action(() =>
+            {
+                Show();
+                RenderAndApplyLayer();
+            }));
+        }
+    }
 
     /**
      * Updates the overlay text and value and schedules auto-hide (if enabled).
      *
-     * <param name="label">Text shown before the numeric value (e.g., "Knob 1").</param>k
+     * <param name="label">Text shown before the numeric value (e.g., "Knob 1").</param>
      * <param name="value">Value shown after the label.</param>
      */
     public void setUpdatedVolume(string label, int value)
@@ -117,16 +147,9 @@ public class Overlay : Form
         }
     }
 
-    private async void AutoHideAsync(int sec, CancellationToken token)
-    {
-        try
-        {
-            await Task.Delay(sec * 1000, token);
-            BeginInvoke((Action)(Hide));
-        }
-        catch (TaskCanceledException) { }
-        catch (Exception ex) { Debug.WriteLine(ex); }
-    }
+    #endregion
+
+    #region Protected Overrides
 
     protected override CreateParams CreateParams
     {
@@ -154,8 +177,21 @@ public class Overlay : Form
         RenderAndApplyLayer();
     }
 
-    // For layered windows, normal WM_PAINT isn't used because we draw via UpdateLayeredWindow.
-    protected override void OnPaint(PaintEventArgs e) { }
+
+    #endregion
+
+    #region Private Methods
+
+    private async void AutoHideAsync(int sec, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(sec * 1000, token);
+            BeginInvoke((Action)(Hide));
+        }
+        catch (TaskCanceledException) { }
+        catch (Exception ex) { Debug.WriteLine(ex); }
+    }
 
     private void RenderAndApplyLayer()
     {
@@ -184,7 +220,7 @@ public class Overlay : Form
         // Measure to size the rounded background.
         SizeF size = g.MeasureString(text, font);
 
-        const float x = 10f, y = 10f, padX = 6f, padY = 3f, radius = 8f;
+        float x = 10f, y = 10f, padX = 6f, padY = 3f, radius = 8f;
         RectangleF bgRect = new(x - padX, y - padY, size.Width + padX * 2, size.Height + padY * 2);
 
         // Draw translucent dark rounded rectangle behind the text.
@@ -318,9 +354,9 @@ public class Overlay : Form
         }
     }
 
-    #region Parked: Bar-chart overlay (keep for later)
-    // (unchanged, kept for later)
     #endregion
+
+    #region Interop
 
     // Win32 / GDI interop
     [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -331,9 +367,7 @@ public class Overlay : Form
     [DllImport("gdi32.dll", SetLastError = true)] private static extern bool DeleteDC(IntPtr hdc);
     [DllImport("gdi32.dll", SetLastError = true)] private static extern IntPtr SelectObject(IntPtr hdc, IntPtr hObject);
     [DllImport("gdi32.dll", SetLastError = true)] private static extern bool DeleteObject(IntPtr hObject);
-    [DllImport("gdi32.dll", SetLastError = true)] private static extern IntPtr CreateDIBSection(IntPtr hdc, [In] ref BITMAPINFO pbmi, uint iUsage, out IntPtr ppvBits, IntPtr hSection, uint dwOffset);
-
-    [StructLayout(LayoutKind.Sequential)] private struct POINT { public int X, Y; public POINT(int x, int y) { X = x; Y = y; } }
+    [DllImport("gdi32.dll", SetLastError = true)] private static extern IntPtr CreateDIBSection(IntPtr hdc, [In] ref BITMAPINFO pbmi, uint iUsage, out IntPtr ppvBits, IntPtr hSection, uint dwOffset); [StructLayout(LayoutKind.Sequential)] private struct POINT { public int X, Y; public POINT(int x, int y) { X = x; Y = y; } }
     [StructLayout(LayoutKind.Sequential)] private struct SIZE { public int cx, cy; public SIZE(int cx, int cy) { this.cx = cx; this.cy = cy; } }
     [StructLayout(LayoutKind.Sequential, Pack = 1)] private struct BLENDFUNCTION { public byte BlendOp, BlendFlags, SourceConstantAlpha, AlphaFormat; }
     [StructLayout(LayoutKind.Sequential)] private struct BITMAPINFO { public BITMAPINFOHEADER bmiHeader; [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)] public uint[] bmiColors; }
@@ -344,4 +378,54 @@ public class Overlay : Form
         public uint biCompression, biSizeImage; public int biXPelsPerMeter, biYPelsPerMeter;
         public uint biClrUsed, biClrImportant;
     }
+
+    #endregion
+
+    #region Parked: Bar-chart overlay (keep for later)
+
+    //// TODO: fit bar size factor accoring to screen diameter (9:21, 4:3...)
+    //int barWidth = GetScreenSize().width / 30;
+    //int barHeight = GetScreenSize().height / 10;
+
+    //base.OnPaint(e);
+    //e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
+
+    //using (Brush bg = new SolidBrush(Color.FromArgb(238, 244, 237)))
+    //{
+    //    e.Graphics.FillRectangle(bg, barArea);
+    //}
+
+    //int filledHeight = (barArea.Height * volValue) / 100;
+
+    //Rectangle fillRect = new Rectangle(
+    //    barArea.X,
+    //    barArea.Bottom - filledHeight,
+    //    barArea.Width,
+    //    filledHeight
+    //);
+
+    //using (Brush fg = new SolidBrush(Color.FromArgb(19, 49, 92)))
+    //{
+    //    e.Graphics.FillRectangle(fg, fillRect);
+    //}
+
+    //string text = volValue + "%";
+    //using (Font font = new Font("Segoe UI", 14, FontStyle.Bold))
+    //using (Brush textBrush = Brushes.White)
+    //{
+    //    SizeF textSize = e.Graphics.MeasureString(text, font);
+
+    //    float textX = barArea.X + (barArea.Width - textSize.Width) / 2;
+    //    float textY = barArea.Y + (barArea.Height - textSize.Height) / 2;
+
+    //    e.Graphics.DrawString(
+    //        text,
+    //        font,
+    //        Brushes.Black,
+    //        textX + 1,
+    //        textY + 1
+    //    );
+    //}
+    #endregion
 }
+
