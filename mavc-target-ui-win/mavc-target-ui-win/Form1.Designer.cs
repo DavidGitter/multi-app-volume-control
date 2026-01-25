@@ -65,14 +65,19 @@
             this.autoHideToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.activeAutoHideToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripTextBox1 = new System.Windows.Forms.ToolStripTextBox();
+            this.autoHideAfterSectoolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
             this.additionalBox = new System.Windows.Forms.GroupBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.numericUpDown2 = new System.Windows.Forms.NumericUpDown();
+            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.startMinimized = new System.Windows.Forms.CheckBox();
             this.closeActionToggle = new System.Windows.Forms.CheckBox();
             this.enableDebugBox = new System.Windows.Forms.CheckBox();
             this.reverseKnobsCheckbox = new System.Windows.Forms.CheckBox();
             this.versionText = new System.Windows.Forms.TextBox();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
-            this.autoHideAfterSectoolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -80,6 +85,8 @@
             this.groupBox5.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.additionalBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.SuspendLayout();
             // 
             // SaveBtn
@@ -371,7 +378,7 @@
             // darkModeToolStripMenuItem
             // 
             this.darkModeToolStripMenuItem.Name = "darkModeToolStripMenuItem";
-            this.darkModeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.darkModeToolStripMenuItem.Size = new System.Drawing.Size(132, 22);
             this.darkModeToolStripMenuItem.Text = "Dark Mode";
             this.darkModeToolStripMenuItem.Click += new System.EventHandler(this.darkModeToolStripMenuItem_Click);
             // 
@@ -381,14 +388,14 @@
             this.toolStripMenuItemOverlay,
             this.autoHideToolStripMenuItem});
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(132, 22);
             this.toolStripMenuItem2.Text = "Overlay";
             // 
             // toolStripMenuItemOverlay
             // 
             this.toolStripMenuItemOverlay.CheckOnClick = true;
             this.toolStripMenuItemOverlay.Name = "toolStripMenuItemOverlay";
-            this.toolStripMenuItemOverlay.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItemOverlay.Size = new System.Drawing.Size(146, 22);
             this.toolStripMenuItemOverlay.Text = "Show Overlay";
             this.toolStripMenuItemOverlay.Click += new System.EventHandler(this.toolStripMenuItemOverlay_Click);
             // 
@@ -399,14 +406,14 @@
             this.toolStripTextBox1,
             this.autoHideAfterSectoolStripTextBox});
             this.autoHideToolStripMenuItem.Name = "autoHideToolStripMenuItem";
-            this.autoHideToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.autoHideToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.autoHideToolStripMenuItem.Text = "Auto Hide";
             // 
             // activeAutoHideToolStripMenuItem
             // 
             this.activeAutoHideToolStripMenuItem.CheckOnClick = true;
             this.activeAutoHideToolStripMenuItem.Name = "activeAutoHideToolStripMenuItem";
-            this.activeAutoHideToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.activeAutoHideToolStripMenuItem.Size = new System.Drawing.Size(160, 22);
             this.activeAutoHideToolStripMenuItem.Text = "Active";
             this.activeAutoHideToolStripMenuItem.Click += new System.EventHandler(this.activeAutoHideToolStripMenuItem_Click);
             // 
@@ -418,8 +425,19 @@
             this.toolStripTextBox1.Size = new System.Drawing.Size(100, 23);
             this.toolStripTextBox1.Text = "Hide after (sec):";
             // 
+            // autoHideAfterSectoolStripTextBox
+            // 
+            this.autoHideAfterSectoolStripTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.autoHideAfterSectoolStripTextBox.Name = "autoHideAfterSectoolStripTextBox";
+            this.autoHideAfterSectoolStripTextBox.Size = new System.Drawing.Size(100, 23);
+            // 
             // additionalBox
             // 
+            this.additionalBox.Controls.Add(this.label3);
+            this.additionalBox.Controls.Add(this.label2);
+            this.additionalBox.Controls.Add(this.label1);
+            this.additionalBox.Controls.Add(this.numericUpDown2);
+            this.additionalBox.Controls.Add(this.numericUpDown1);
             this.additionalBox.Controls.Add(this.startMinimized);
             this.additionalBox.Controls.Add(this.closeActionToggle);
             this.additionalBox.Controls.Add(this.enableDebugBox);
@@ -430,12 +448,64 @@
             this.additionalBox.TabIndex = 13;
             this.additionalBox.TabStop = false;
             this.additionalBox.Text = "Settings";
-            //
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 171);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(38, 13);
+            this.label3.TabIndex = 19;
+            this.label3.Text = "Y Pos.";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(7, 145);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(38, 13);
+            this.label2.TabIndex = 18;
+            this.label2.Text = "X Pos.";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.label1.Location = new System.Drawing.Point(6, 117);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(83, 13);
+            this.label1.TabIndex = 17;
+            this.label1.Text = "Overlay Position";
+            // 
+            // numericUpDown2
+            // 
+            this.numericUpDown2.Location = new System.Drawing.Point(48, 169);
+            this.numericUpDown2.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.numericUpDown2.Name = "numericUpDown2";
+            this.numericUpDown2.Size = new System.Drawing.Size(120, 20);
+            this.numericUpDown2.TabIndex = 16;
+            // 
+            // numericUpDown1
+            // 
+            this.numericUpDown1.Location = new System.Drawing.Point(48, 143);
+            this.numericUpDown1.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.numericUpDown1.Name = "numericUpDown1";
+            this.numericUpDown1.Size = new System.Drawing.Size(120, 20);
+            this.numericUpDown1.TabIndex = 15;
+            // 
             // startMinimized
             // 
             this.startMinimized.AutoSize = true;
             this.startMinimized.Location = new System.Drawing.Point(6, 88);
-            this.startMinimized.Name = "startMinimizedBox";
+            this.startMinimized.Name = "startMinimized";
             this.startMinimized.Size = new System.Drawing.Size(162, 17);
             this.startMinimized.TabIndex = 14;
             this.startMinimized.Text = "Start minimized to Systemtray";
@@ -446,7 +516,7 @@
             // 
             this.closeActionToggle.AutoSize = true;
             this.closeActionToggle.Location = new System.Drawing.Point(6, 65);
-            this.closeActionToggle.Name = "closeActionToggleBox";
+            this.closeActionToggle.Name = "closeActionToggle";
             this.closeActionToggle.Size = new System.Drawing.Size(109, 17);
             this.closeActionToggle.TabIndex = 13;
             this.closeActionToggle.Text = "Minimize on close";
@@ -491,12 +561,6 @@
             this.notifyIcon1.Text = "notifyIcon1";
             this.notifyIcon1.Visible = true;
             // 
-            // autoHideAfterSectoolStripTextBox
-            // 
-            this.autoHideAfterSectoolStripTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.autoHideAfterSectoolStripTextBox.Name = "autoHideAfterSectoolStripTextBox";
-            this.autoHideAfterSectoolStripTextBox.Size = new System.Drawing.Size(100, 23);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -529,6 +593,8 @@
             this.menuStrip1.PerformLayout();
             this.additionalBox.ResumeLayout(false);
             this.additionalBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -577,7 +643,12 @@
         private System.Windows.Forms.ToolStripMenuItem autoHideToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem activeAutoHideToolStripMenuItem;
         private System.Windows.Forms.ToolStripTextBox toolStripTextBox1;
-        private System.Windows.Forms.ToolStripTextBox autoHideAfterSectoolStripTextBox; 
+        private System.Windows.Forms.ToolStripTextBox autoHideAfterSectoolStripTextBox;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.NumericUpDown numericUpDown2;
+        private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label2;
     }
 }
 

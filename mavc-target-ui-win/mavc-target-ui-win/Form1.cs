@@ -20,6 +20,7 @@ namespace mavc_target_ui_win
 {
     public partial class Form1 : Form
     {
+        #region Private Fields
         private string CURRENT_VERSION = "1.3.1";
 
         private AudioController audioController;
@@ -34,6 +35,10 @@ namespace mavc_target_ui_win
         // general purpose timer for updating etc.
         Timer updateTimer = new Timer();
 
+        // timer for saving overlay position changes
+        private readonly Timer overlayLiveTimer = new Timer();
+        private bool overlayPosDirty = false;
+
         // for notifying if there is a ui update
         ThreadSafeBool updateUIFlag = new ThreadSafeBool();
 
@@ -46,7 +51,9 @@ namespace mavc_target_ui_win
         // Agent process management
         private Process agentProcess;
         private string agentExecutablePath;
+        #endregion
 
+        #region Public Methods
         private void SetTitleBarTheme(bool isDark)
         {
             ThemeColors.SetTitleBarTheme(this.Handle, isDark);
@@ -56,7 +63,9 @@ namespace mavc_target_ui_win
         {
             return mavcSave;
         }
+        #endregion
 
+        #region Constructor
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
@@ -147,6 +156,35 @@ namespace mavc_target_ui_win
                     }
                 };
 
+                // overlay position controls
+                overlayLiveTimer.Interval = 30; // ~33fps; try 16 for ~60fps if your PC can handle it
+                overlayLiveTimer.Tick += (s, e) =>
+                {
+                    if (!overlayPosDirty) return;
+                    overlayPosDirty = false;
+
+                    // write config so agent's FileSystemWatcher reloads and moves overlay
+                    save(configSavePath, configFileName);
+                };
+
+                void markDirty()
+                {
+                    overlayPosDirty = true;
+                    if (!overlayLiveTimer.Enabled) overlayLiveTimer.Start();
+                }
+
+                // While editing: update values + request a (throttled) save
+                numericUpDown1.ValueChanged += (s, e) => { mavcSave.overlayX = (int)numericUpDown1.Value; markDirty(); };
+                numericUpDown2.ValueChanged += (s, e) => { mavcSave.overlayY = (int)numericUpDown2.Value; markDirty(); };
+
+                // Only do live updates while focused
+                numericUpDown1.Enter += (s, e) => overlayLiveTimer.Start();
+                numericUpDown2.Enter += (s, e) => overlayLiveTimer.Start();
+
+                numericUpDown1.Leave += (s, e) => { overlayLiveTimer.Stop(); overlayPosDirty = false; };
+                numericUpDown2.Leave += (s, e) => { overlayLiveTimer.Stop(); overlayPosDirty = false; };
+
+
                 // Start the agent process
                 StartAgentProcess();
             }
@@ -155,7 +193,9 @@ namespace mavc_target_ui_win
                 logger.Error(e.ToString());
             }
         }
+        #endregion
 
+        #region Agent Process Management
         /// <summary>
         /// Starts the agent process
         /// </summary>
@@ -163,38 +203,54 @@ namespace mavc_target_ui_win
         {
             try
             {
-                // kill any existing agent processes
-                KillExistingAgentProcesses();
+                // stop tracked instance first (failed attempts / stale handle)
+                try
+                {
+                    if (agentProcess != null)
+                    {
+                        if (!agentProcess.HasExited)
+                        {
+                            agentProcess.Kill();
+                            agentProcess.WaitForExit(2000);
+                        }
+                    }
+                }
+                catch { }
+                finally
+                {
+                    try { agentProcess?.Dispose(); } catch { }
+                    agentProcess = null;
+                }
 
-                // Look for the agent executable in multiple locations
-                // Priority depends on whether we're debugging or running in production
+                // kill any other agent processes
+                KillExistingAgentProcesses(); // you already have this method [file:18]
+
+                // find agent executable
                 string[] possiblePaths;
 
 #if DEBUG
-                // When debugging, prioritize development build location
-                possiblePaths = new string[]
+                possiblePaths = new[]
                 {
-                    // Development location (Debug build) - CHECK FIRST when debugging
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe"),
-                    // Production location (installed via MSI)
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
-                    // Alternative production location (64-bit Program Files)
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
-                    // Same directory as UI (portable deployment)
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agent", "mavc-target-agent.exe")
-                };
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..",
+                    "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe"),
+};
 #else
-                // When running in Release/Production, prioritize installed location
                 possiblePaths = new string[]
                 {
-                    // Production location (installed via MSI) - CHECK FIRST in production
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Production location installed via MSI - CHECK FIRST in production
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                        "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+
                     // Alternative production location (64-bit Program Files)
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                        "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+
                     // Same directory as UI (portable deployment)
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agent", "mavc-target-agent.exe"),
-                    // Development location (fallback)
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe")
+
+                    // Development location fallback
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..",
+                        "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe"),
                 };
 #endif
 
@@ -222,25 +278,26 @@ namespace mavc_target_ui_win
 
                 if (agentExecutablePath == null)
                 {
-                    string errorMessage = $"Agent executable not found.\n\n" +
-                                        $"Searched locations:\n" +
-                                        $"1. C:\\Program Files (x86)\\Mavc\\Mavc\\agent\\mavc-target-agent.exe\n" +
-                                        $"2. C:\\Program Files\\Mavc\\Mavc\\agent\\mavc-target-agent.exe\n" +
-                                        $"3. Development build folder\n" +
-                                        $"4. UI directory\\agent\\\n\n" +
-                                        $"Please ensure MAVC is installed or build the mavc-target-agent project.";
-
+                    string errorMessage =
+                        "Agent executable not found.\n\n" +
+                        "Please ensure MAVC is installed or build the mavc-target-agent project.";
                     Debug.WriteLine("Agent executable not found in any location.");
                     MessageBox.Show(errorMessage, "Agent Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
+                // start agent
                 agentProcess = new Process();
                 agentProcess.StartInfo.FileName = agentExecutablePath;
                 agentProcess.StartInfo.UseShellExecute = false;
-                agentProcess.StartInfo.CreateNoWindow = true;
-                agentProcess.EnableRaisingEvents = true;
 
+                // allow console window when debug mode is enabled
+                agentProcess.StartInfo.CreateNoWindow = !mavcSave.enableDebugMode;
+                agentProcess.StartInfo.WindowStyle = mavcSave.enableDebugMode
+                    ? ProcessWindowStyle.Normal
+                    : ProcessWindowStyle.Hidden;
+
+                agentProcess.EnableRaisingEvents = true;
                 agentProcess.Exited += (sender, e) =>
                 {
                     Debug.WriteLine("Agent process exited unexpectedly.");
@@ -249,14 +306,27 @@ namespace mavc_target_ui_win
                 agentProcess.Start();
                 Debug.WriteLine($"Agent process started successfully from: {agentExecutablePath}");
 
-                // Show success notification
+                // validate and cleanup “failed attempts”
+                System.Threading.Thread.Sleep(250);
+                if (agentProcess.HasExited)
+                {
+                    int code = agentProcess.ExitCode;
+                    try { agentProcess.Dispose(); } catch { }
+                    agentProcess = null;
+                    throw new Exception($"Agent exited immediately with code {code}.");
+                }
+
                 trayIcon.ShowBalloonTip(2000, "MAVC", "Agent started successfully", ToolTipIcon.Info);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to start agent process: {ex}");
-                string errorMessage = $"Failed to start agent process.\n\nError: {ex.Message}\n\n" +
-                                    $"The UI will continue to run, but the agent will need to be started manually.";
+                Debug.WriteLine("Failed to start agent process: " + ex);
+
+                string errorMessage =
+                    "Failed to start agent process.\n\n" +
+                    ex.Message + "\n\n" +
+                    "The UI will continue to run, but the agent will need to be started manually.";
+
                 MessageBox.Show(errorMessage, "Agent Start Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -362,7 +432,9 @@ namespace mavc_target_ui_win
             System.Threading.Thread.Sleep(500); // Give it a moment to fully terminate
             StartAgentProcess();
         }
+        #endregion
 
+        #region Tray Icon Management
         /// <summary>
         /// Initializes the system tray icon and context menu
         /// </summary>
@@ -473,7 +545,9 @@ namespace mavc_target_ui_win
                 SetTitleBarTheme(mavcSave.darkMode);
             }
         }
+        #endregion
 
+        #region Form Event Handlers
         /// <summary>
         /// Override form closing to minimize to tray instead of closing if toggle is enabled
         /// </summary>
@@ -500,7 +574,9 @@ namespace mavc_target_ui_win
             }
             base.OnFormClosing(e);
         }
+        #endregion
 
+        #region Update Methods
         private void checkForUpdate()
         {
             Version latestGitHubVersion = null;
@@ -592,7 +668,9 @@ namespace mavc_target_ui_win
             }
 
         }
+        #endregion
 
+        #region Available Outputs Management
         /**
          * Initializes availavleOutput Comboboxes gui after a new load
          * to prevent showing a available output which is already in a volumeList (a.k.a doubling)
@@ -689,54 +767,16 @@ namespace mavc_target_ui_win
                    mavcSave.AOsVol3.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name)) ||
                    mavcSave.AOsVol4.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name));
         }
+        #endregion
 
+        #region Configuration Management
         /**
          * Eventhandler of the gui "Save" button
          */
         private void saveBtn_Click(object sender, EventArgs e)
         {
             save(configSavePath, configFileName);
-        }
-
-        /**
-        * Eventhandler of the Volume 1 Combobox  (available audio outputs)
-        */
-        private void AddVol1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AudioOutput selectedAO = (AudioOutput)AddVol1.SelectedItem;
-            VolList1.Items.Add(selectedAO);
-            removeAvailableOutput(selectedAO);
-            //AddVol1.DroppedDown = true;
-        }
-
-        /**
-       * Eventhandler of the Volume 2 Combobox  (available audio outputs)
-       */
-        private void AddVol2_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AudioOutput selectedAO = (AudioOutput)AddVol2.SelectedItem;
-            VolList2.Items.Add(selectedAO);
-            removeAvailableOutput(selectedAO);
-        }
-
-        /**
-       * Eventhandler of the Volume 3 Combobox  (available audio outputs)
-       */
-        private void AddVol3_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AudioOutput selectedAO = (AudioOutput)AddVol3.SelectedItem;
-            VolList3.Items.Add(selectedAO);
-            removeAvailableOutput(selectedAO);
-        }
-
-        /**
-       * Eventhandler of the Volume 4 Combobox (available audio outputs)
-       */
-        private void AddVol4_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AudioOutput selectedAO = (AudioOutput)AddVol4.SelectedItem;
-            VolList4.Items.Add(selectedAO);
-            removeAvailableOutput(selectedAO);
+            RestartAgentProcess();
         }
 
         /**
@@ -909,6 +949,10 @@ namespace mavc_target_ui_win
                 // update auto hide after seconds textbox
                 autoHideAfterSectoolStripTextBox.Text = mavcSave.autoHideAfterSec.ToString();
 
+                // update overlay position numeric updowns
+                numericUpDown1.Value = mavcSave.overlayX;
+                numericUpDown2.Value = mavcSave.overlayY;
+
             }
             catch (Exception e)
             {
@@ -918,51 +962,6 @@ namespace mavc_target_ui_win
                 save(configSavePath, configFileName);
             }
 
-        }
-
-        /**
-         * The event handler for the gui "Delete Selection" button to delete a audio output in a listbox
-         */
-        private void delItemBtn_Click(object sender, EventArgs e)
-        {
-            List<AudioOutput> selectedItems = new List<AudioOutput>();
-
-            foreach (AudioOutput ao in VolList1.SelectedItems)
-                selectedItems.Add(ao);
-            foreach (AudioOutput ao in VolList2.SelectedItems)
-                selectedItems.Add(ao);
-            foreach (AudioOutput ao in VolList3.SelectedItems)
-                selectedItems.Add(ao);
-            foreach (AudioOutput ao in VolList4.SelectedItems)
-                selectedItems.Add(ao);
-
-            foreach (AudioOutput ao in selectedItems)
-            {
-                VolList1.Items.Remove(ao);
-                VolList2.Items.Remove(ao);
-                VolList3.Items.Remove(ao);
-                VolList4.Items.Remove(ao);
-                addAvailableOutput(ao);
-            }
-        }
-
-        /**
-         * Discards all selected audio outputs in the list boxes
-         */
-        private void discSelBtn_Click(object sender, EventArgs e)
-        {
-            VolList1.ClearSelected();
-            VolList2.ClearSelected();
-            VolList3.ClearSelected();
-            VolList4.ClearSelected();
-        }
-
-        /**
-        * Event Handler of the gui "Help" menu button
-        */
-        private void helpToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         /**
@@ -999,6 +998,7 @@ namespace mavc_target_ui_win
             else
             {
                 save(configSavePath, configFileName);
+                RestartAgentProcess();
             }
         }
 
@@ -1025,17 +1025,6 @@ namespace mavc_target_ui_win
         private void SaveToToolStripMenuItem_Click(object sender, EventArgs e)
         {
             saveTo();
-        }
-
-        /**
-         * Event Handler that gets called by the gui "Save To" menu bar button
-         */
-        private void ClearVolLists()
-        {
-            VolList1.Items.Clear();
-            VolList2.Items.Clear();
-            VolList3.Items.Clear();
-            VolList4.Items.Clear();
         }
 
         /**
@@ -1097,7 +1086,100 @@ namespace mavc_target_ui_win
                 Console.WriteLine("User clicked Yes.");
             }
         }
+        #endregion
 
+        #region Volume List Event Handlers
+        /**
+         * Eventhandler of the Volume 1 Combobox  (available audio outputs)
+         */
+        private void AddVol1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            AudioOutput selectedAO = (AudioOutput)AddVol1.SelectedItem;
+            VolList1.Items.Add(selectedAO);
+            removeAvailableOutput(selectedAO);
+            //AddVol1.DroppedDown = true;
+        }
+
+        /**
+       * Eventhandler of the Volume 2 Combobox  (available audio outputs)
+       */
+        private void AddVol2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            AudioOutput selectedAO = (AudioOutput)AddVol2.SelectedItem;
+            VolList2.Items.Add(selectedAO);
+            removeAvailableOutput(selectedAO);
+        }
+
+        /**
+       * Eventhandler of the Volume 3 Combobox  (available audio outputs)
+       */
+        private void AddVol3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            AudioOutput selectedAO = (AudioOutput)AddVol3.SelectedItem;
+            VolList3.Items.Add(selectedAO);
+            removeAvailableOutput(selectedAO);
+        }
+
+        /**
+       * Eventhandler of the Volume 4 Combobox (available audio outputs)
+       */
+        private void AddVol4_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            AudioOutput selectedAO = (AudioOutput)AddVol4.SelectedItem;
+            VolList4.Items.Add(selectedAO);
+            removeAvailableOutput(selectedAO);
+        }
+
+        /**
+         * The event handler for the gui "Delete Selection" button to delete a audio output in a listbox
+         */
+        private void delItemBtn_Click(object sender, EventArgs e)
+        {
+            List<AudioOutput> selectedItems = new List<AudioOutput>();
+
+            foreach (AudioOutput ao in VolList1.SelectedItems)
+                selectedItems.Add(ao);
+            foreach (AudioOutput ao in VolList2.SelectedItems)
+                selectedItems.Add(ao);
+            foreach (AudioOutput ao in VolList3.SelectedItems)
+                selectedItems.Add(ao);
+            foreach (AudioOutput ao in VolList4.SelectedItems)
+                selectedItems.Add(ao);
+
+            foreach (AudioOutput ao in selectedItems)
+            {
+                VolList1.Items.Remove(ao);
+                VolList2.Items.Remove(ao);
+                VolList3.Items.Remove(ao);
+                VolList4.Items.Remove(ao);
+                addAvailableOutput(ao);
+            }
+        }
+
+        /**
+         * Discards all selected audio outputs in the list boxes
+         */
+        private void discSelBtn_Click(object sender, EventArgs e)
+        {
+            VolList1.ClearSelected();
+            VolList2.ClearSelected();
+            VolList3.ClearSelected();
+            VolList4.ClearSelected();
+        }
+
+        /**
+         * Event Handler that gets called by the gui "Save To" menu bar button
+         */
+        private void ClearVolLists()
+        {
+            VolList1.Items.Clear();
+            VolList2.Items.Clear();
+            VolList3.Items.Clear();
+            VolList4.Items.Clear();
+        }
+        #endregion
+
+        #region UI Control Event Handlers
         private void reverseCheckbox1_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.reverseKnob1 = reverseCheckbox1.Checked;
@@ -1169,5 +1251,16 @@ namespace mavc_target_ui_win
         {
             mavcSave.activateAutoHide = activeAutoHideToolStripMenuItem.Checked;
         }
+        #endregion
+
+        #region Miscellaneous Event Handlers
+        /**
+        * Event Handler of the gui "Help" menu button
+        */
+        private void helpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
 }
