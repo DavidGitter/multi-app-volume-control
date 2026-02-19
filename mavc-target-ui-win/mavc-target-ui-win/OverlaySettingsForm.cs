@@ -13,7 +13,7 @@ namespace mavc_target_ui_win
      */
     public class OverlaySettingsForm : Form
     {
-        // ?? controls ??
+        // controls
         private CheckBox chkEnabled;
         private CheckBox chkAutoHide;
         private Label lblDelay;
@@ -26,13 +26,13 @@ namespace mavc_target_ui_win
         private TextBox txtY;
         private Button btnSaveRestart;
 
-        // ?? state ??
+        // state
         private readonly MAVCSave _save;
         private readonly Action _onSaveAndRestart;
         private readonly Action _onLiveSave;
         private readonly bool _isDark;
 
-        // ?? throttled live-save timer ??
+        // throttled live-save timer
         private readonly Timer _liveTimer = new Timer();
         private bool _dirty = false;
 
@@ -75,7 +75,7 @@ namespace mavc_target_ui_win
             base.OnFormClosed(e);
         }
 
-        // ?????????????????????? layout ??????????????????????
+        // ========================== layout ==========================
 
         private void BuildUI()
         {
@@ -95,7 +95,7 @@ namespace mavc_target_ui_win
             int ctrlLeft = 150;
             int ctrlWidth = 254;
 
-            // ?? Enable Overlay ??
+            // Enable Overlay
             chkEnabled = new CheckBox
             {
                 Text = "Enable Overlay",
@@ -105,7 +105,7 @@ namespace mavc_target_ui_win
             Controls.Add(chkEnabled);
             y += 30;
 
-            // ?? Auto-Hide ??
+            // Auto-Hide
             chkAutoHide = new CheckBox
             {
                 Text = "Auto-Hide",
@@ -115,7 +115,7 @@ namespace mavc_target_ui_win
             Controls.Add(chkAutoHide);
             y += 30;
 
-            // ?? Hide-after delay ??
+            // Hide-after delay
             lblDelay = new Label
             {
                 Text = "Hide after (sec):",
@@ -132,7 +132,7 @@ namespace mavc_target_ui_win
             Controls.Add(txtDelay);
             y += 34;
 
-            // ?? X Position ??
+            // X Position
             lblX = new Label
             {
                 Text = "X Position:",
@@ -172,7 +172,7 @@ namespace mavc_target_ui_win
             Controls.Add(txtX);
             y += 50;
 
-            // ?? Y Position ??
+            // Y Position
             lblY = new Label
             {
                 Text = "Y Position:",
@@ -212,7 +212,7 @@ namespace mavc_target_ui_win
             Controls.Add(txtY);
             y += 56;
 
-            // ?? Save & Restart Overlay ??
+            // Save & Restart Overlay
             btnSaveRestart = new Button
             {
                 Text = "Save && Restart Overlay",
@@ -226,7 +226,7 @@ namespace mavc_target_ui_win
             ClientSize = new Size(420, y + btnSaveRestart.Height + 14);
         }
 
-        // ?????????????????????? live position update ??????????????????????
+        // ========================== live position update ==========================
 
         private void Slider_ValueChanged(object sender, EventArgs e)
         {
@@ -236,7 +236,7 @@ namespace mavc_target_ui_win
             if (!_liveTimer.Enabled) _liveTimer.Start();
         }
 
-        // ?????????????????????? data binding ??????????????????????
+        // ========================== data binding ==========================
 
         private void LoadFromSave()
         {
@@ -262,7 +262,7 @@ namespace mavc_target_ui_win
             _save.overlayY = sliderY.Value;
         }
 
-        // ?????????????????????? events ??????????????????????
+        // ========================== events ==========================
 
         private void BtnSaveRestart_Click(object sender, EventArgs e)
         {
