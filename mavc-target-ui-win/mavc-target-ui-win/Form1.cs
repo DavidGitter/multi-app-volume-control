@@ -18,6 +18,10 @@ using System.Xml.Linq;
 
 namespace mavc_target_ui_win
 {
+    /**
+     * Main application form.  Hosts four volume-group panels, a menu bar,
+     * system-tray integration, and manages the background agent process.
+     */
     public partial class Form1 : Form
     {
         #region Private Fields
@@ -35,10 +39,6 @@ namespace mavc_target_ui_win
         // general purpose timer for updating etc.
         Timer updateTimer = new Timer();
 
-        // timer for saving overlay position changes
-        private readonly Timer overlayLiveTimer = new Timer();
-        private bool overlayPosDirty = false;
-
         // for notifying if there is a ui update
         ThreadSafeBool updateUIFlag = new ThreadSafeBool();
 
@@ -54,11 +54,21 @@ namespace mavc_target_ui_win
         #endregion
 
         #region Public Methods
+        /**
+         * Applies the immersive dark-mode title bar attribute to this form.
+         *
+         * @param isDark  true to enable dark title bar, false for light
+         */
         private void SetTitleBarTheme(bool isDark)
         {
             ThemeColors.SetTitleBarTheme(this.Handle, isDark);
         }
 
+        /**
+         * Returns the shared MAVCSave configuration instance.
+         *
+         * @return the current save-state object
+         */
         public static MAVCSave GetMavcSave()
         {
             return mavcSave;
@@ -66,6 +76,10 @@ namespace mavc_target_ui_win
         #endregion
 
         #region Constructor
+        /**
+         * Called after the form handle is created.  Hides the window
+         * immediately when the "start minimized" setting is enabled.
+         */
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
@@ -82,6 +96,10 @@ namespace mavc_target_ui_win
             }
         }
 
+        /**
+         * Constructs the main form: initializes components, tray icon, config,
+         * and starts the agent process.
+         */
         public Form1()
         {
             try
@@ -97,7 +115,7 @@ namespace mavc_target_ui_win
 
 
                 this.Text = "MAVC";
-                this.versionText.Text = CURRENT_VERSION;
+                this.versionLabel.Text = CURRENT_VERSION;
 
                 try
                 {
@@ -132,59 +150,6 @@ namespace mavc_target_ui_win
                 updateTimer.Tick += updateTimer_Tick;  // set handler
                 updateTimer.Start();
 
-                autoHideAfterSectoolStripTextBox.KeyDown += (s, e) =>
-                {
-                    try
-                    {
-                        if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Tab)
-                        {
-                            if (!autoHideAfterSectoolStripTextBox.Text.All(char.IsDigit))
-                            {
-                                MessageBox.Show("Input not a number.");
-                                e.SuppressKeyPress = true;
-                                return;
-                            }
-
-                            Debug.WriteLine("autohideafter: " + autoHideAfterSectoolStripTextBox.Text);
-                            mavcSave.autoHideAfterSec =
-                                int.Parse(autoHideAfterSectoolStripTextBox.Text);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        Debug.WriteLine(e);
-                    }
-                };
-
-                // overlay position controls
-                overlayLiveTimer.Interval = 30; // ~33fps; try 16 for ~60fps if your PC can handle it
-                overlayLiveTimer.Tick += (s, e) =>
-                {
-                    if (!overlayPosDirty) return;
-                    overlayPosDirty = false;
-
-                    // write config so agent's FileSystemWatcher reloads and moves overlay
-                    save(configSavePath, configFileName);
-                };
-
-                void markDirty()
-                {
-                    overlayPosDirty = true;
-                    if (!overlayLiveTimer.Enabled) overlayLiveTimer.Start();
-                }
-
-                // While editing: update values + request a (throttled) save
-                numericUpDown1.ValueChanged += (s, e) => { mavcSave.overlayX = (int)numericUpDown1.Value; markDirty(); };
-                numericUpDown2.ValueChanged += (s, e) => { mavcSave.overlayY = (int)numericUpDown2.Value; markDirty(); };
-
-                // Only do live updates while focused
-                numericUpDown1.Enter += (s, e) => overlayLiveTimer.Start();
-                numericUpDown2.Enter += (s, e) => overlayLiveTimer.Start();
-
-                numericUpDown1.Leave += (s, e) => { overlayLiveTimer.Stop(); overlayPosDirty = false; };
-                numericUpDown2.Leave += (s, e) => { overlayLiveTimer.Stop(); overlayPosDirty = false; };
-
-
                 // Start the agent process
                 StartAgentProcess();
             }
@@ -196,9 +161,7 @@ namespace mavc_target_ui_win
         #endregion
 
         #region Agent Process Management
-        /// <summary>
-        /// Starts the agent process
-        /// </summary>
+        /** Starts the agent process. */
         private void StartAgentProcess()
         {
             try
@@ -306,7 +269,7 @@ namespace mavc_target_ui_win
                 agentProcess.Start();
                 Debug.WriteLine($"Agent process started successfully from: {agentExecutablePath}");
 
-                // validate and cleanup “failed attempts”
+                // validate and cleanup "failed attempts"
                 System.Threading.Thread.Sleep(250);
                 if (agentProcess.HasExited)
                 {
@@ -331,9 +294,7 @@ namespace mavc_target_ui_win
             }
         }
 
-        /// <summary>
-        /// Kills all existing agent processes that are currently running
-        /// </summary>
+        /** Kills all existing agent processes that are currently running. */
         private void KillExistingAgentProcesses()
         {
             try
@@ -393,9 +354,7 @@ namespace mavc_target_ui_win
             }
         }
 
-        /// <summary>
-        /// Stops the agent process
-        /// </summary>
+        /** Stops the agent process. */
         private void StopAgentProcess()
         {
             try
@@ -416,9 +375,7 @@ namespace mavc_target_ui_win
             }
         }
 
-        /// <summary>
-        /// Restarts the agent process
-        /// </summary>
+        /** Restarts the agent process. */
         private void RestartAgentProcess()
         {
             Debug.WriteLine("Restarting agent process...");
@@ -435,9 +392,7 @@ namespace mavc_target_ui_win
         #endregion
 
         #region Tray Icon Management
-        /// <summary>
-        /// Initializes the system tray icon and context menu
-        /// </summary>
+        /** Initializes the system tray icon and context menu. */
         private void InitializeTrayIcon()
         {
             // Create the tray icon
@@ -476,17 +431,13 @@ namespace mavc_target_ui_win
             trayIcon.DoubleClick += (s, e) => ShowUI();
         }
 
-        /// <summary>
-        /// Event handler for "Open UI" menu item
-        /// </summary>
+        /** Event handler for "Open UI" menu item. */
         private void OnOpenUI(object sender, EventArgs e)
         {
             ShowUI();
         }
 
-        /// <summary>
-        /// Event handler for "Restart Agent" menu item
-        /// </summary>
+        /** Event handler for "Restart Agent" menu item. */
         private void OnRestartAgent(object sender, EventArgs e)
         {
             try
@@ -503,9 +454,7 @@ namespace mavc_target_ui_win
             }
         }
 
-        /// <summary>
-        /// Event handler for "Exit" menu item
-        /// </summary>
+        /** Event handler for "Exit" menu item. */
         private void OnExit(object sender, EventArgs e)
         {
             // Confirm exit
@@ -528,9 +477,7 @@ namespace mavc_target_ui_win
             }
         }
 
-        /// <summary>
-        /// Shows the UI window
-        /// </summary>
+        /** Shows the UI window. */
         private void ShowUI()
         {
             this.ShowInTaskbar = true; // before showing the windowto prevent default icon
@@ -548,12 +495,10 @@ namespace mavc_target_ui_win
         #endregion
 
         #region Form Event Handlers
-        /// <summary>
-        /// Override form closing to minimize to tray instead of closing if toggle is enabled
-        /// </summary>
+        /** Override form closing to minimize to tray instead of closing if toggle is enabled. */
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            if (e.CloseReason == CloseReason.UserClosing && closeActionToggle.Checked)
+            if (e.CloseReason == CloseReason.UserClosing && minimizeOnCloseToolStripMenuItem.Checked)
             {
                 // Hide to tray instead of closing
                 e.Cancel = true;
@@ -577,6 +522,10 @@ namespace mavc_target_ui_win
         #endregion
 
         #region Update Methods
+        /**
+         * Checks the latest GitHub release tag against CURRENT_VERSION
+         * and prompts the user to update when a newer version exists.
+         */
         private void checkForUpdate()
         {
             Version latestGitHubVersion = null;
@@ -624,6 +573,10 @@ namespace mavc_target_ui_win
             }
         }
 
+        /**
+         * Downloads the latest MSI installer from GitHub, extracts it, and
+         * launches the installer before closing the current instance.
+         */
         private void updateApplication()
         {
             WebClient client = new WebClient();
@@ -656,6 +609,10 @@ namespace mavc_target_ui_win
             }
         }
 
+        /**
+         * Timer tick handler.  Polls updateUIFlag and refreshes the available
+         * audio outputs and volume lists when a change is detected.
+         */
         private void updateTimer_Tick(object sender, EventArgs e)  //run this logic each timer tick
         {
 
@@ -672,10 +629,11 @@ namespace mavc_target_ui_win
 
         #region Available Outputs Management
         /**
-         * Initializes availavleOutput Comboboxes gui after a new load
-         * to prevent showing a available output which is already in a volumeList (a.k.a doubling)
-         * 
-         * @param availableOutputs  a array of available outputs
+         * Populates the four "Add Volume" combo boxes with outputs that are not
+         * already assigned to a volume list, plus the special Focused and
+         * Other Apps function entries.
+         *
+         * @param availableOutputs  all currently available audio outputs
          */
         private void initAvailableOutputs(AudioOutput[] availableOutputs)
         {
@@ -704,9 +662,7 @@ namespace mavc_target_ui_win
             AddVol4.Items.Add(aoa);
         }
 
-        /** 
-         * Refreshes the available outputs
-         */
+        /** Refreshes the available outputs. */
         private void refreshAvailableOutputs()
         {
             availableOutputs.Clear();
@@ -716,9 +672,9 @@ namespace mavc_target_ui_win
         }
 
         /**
-         * Removes a item of the avail. outp. comboboxes
-         * 
-         * @param output    the audio output to be removed
+         * Removes a single audio output from all four combo boxes.
+         *
+         * @param output  the audio output to remove
          */
         private void removeAvailableOutput(AudioOutput output)
         {
@@ -729,9 +685,7 @@ namespace mavc_target_ui_win
             AddVol4.Items.Remove(output);
         }
 
-        /**
-         * Removes all items of the avail. outp. comboboxes
-         */
+        /** Clears every item from all four combo boxes. */
         private void removeAvailableOutputs()
         {
 
@@ -741,9 +695,10 @@ namespace mavc_target_ui_win
             AddVol4.Items.Clear();
         }
 
-        /** adds a audio output to the avail. outp. comboboxes
-         * 
-         * @param output    the output to be added to the combobox
+        /**
+         * Adds a single audio output to all four combo boxes.
+         *
+         * @param output  the audio output to add
          */
         private void addAvailableOutput(AudioOutput output)
         {
@@ -755,9 +710,11 @@ namespace mavc_target_ui_win
         }
 
         /**
-         * Retrieves if the conf storage has a specified audio output
-         * 
-         * @param ao    the audio output to be checked for its existence
+         * Checks whether any of the four volume lists in the current config
+         * already contain the specified audio output (by name).
+         *
+         * @param ao  the audio output to look for
+         * @return true if the output is already assigned to a volume list
          */
         private bool confHasAudioOutput(AudioOutput ao)
         {
@@ -771,7 +728,8 @@ namespace mavc_target_ui_win
 
         #region Configuration Management
         /**
-         * Eventhandler of the gui "Save" button
+         * "Save" button click handler.  Persists the current config to disk
+         * and restarts the agent so it picks up the changes.
          */
         private void saveBtn_Click(object sender, EventArgs e)
         {
@@ -779,9 +737,7 @@ namespace mavc_target_ui_win
             RestartAgentProcess();
         }
 
-        /**
-         * Updated the config save member with the newest listbox output selections
-         */
+        /** Copies the current volume-list contents back into mavcSave. */
         private void updateMavcSave()
         {
             mavcSave.AOsVol1.Clear();
@@ -800,7 +756,8 @@ namespace mavc_target_ui_win
         }
 
         /**
-         * Loads the stored audio outputs form the config save memeber to the listBoxes
+         * Loads all settings and volume-list entries from mavcSave
+         * into the UI controls (list boxes, checkboxes, menu items, etc.).
          */
         private void loadFromMavcSave()
         {
@@ -924,34 +881,21 @@ namespace mavc_target_ui_win
                 reverseCheckbox3.Checked = mavcSave.reverseKnob3;
                 reverseCheckbox4.Checked = mavcSave.reverseKnob4;
 
-                //update knob order
-                reverseKnobsCheckbox.Checked = mavcSave.reverseKnobOrder;
+                // update knob order (now in menu strip)
+                reverseKnobOrderToolStripMenuItem.Checked = mavcSave.reverseKnobOrder;
 
                 // load darkmode state
                 darkModeToolStripMenuItem.Checked = mavcSave.darkMode;
-                ApplyTheme(mavcSave.darkMode);
+                ApplyTheme(mavcSave.darkMode);            
 
-                // load minimize on close setting
-                closeActionToggle.Checked = mavcSave.minimizeOnClose;
+                // load minimize on close setting (now in menu strip)
+                minimizeOnCloseToolStripMenuItem.Checked = mavcSave.minimizeOnClose;
 
-                // update enable debug mode
-                enableDebugBox.Checked = mavcSave.enableDebugMode;
+                // update enable debug mode (now in menu strip)
+                enableDebugModeToolStripMenuItem.Checked = mavcSave.enableDebugMode;
 
-                // load start minimized setting
-                startMinimized.Checked = mavcSave.startMinimized;
-
-                // update box for screen overlay
-                toolStripMenuItemOverlay.Checked = mavcSave.enableScreenOverlay;
-
-                // update auto hide active checkbox item
-                activeAutoHideToolStripMenuItem.Checked = mavcSave.activateAutoHide;
-
-                // update auto hide after seconds textbox
-                autoHideAfterSectoolStripTextBox.Text = mavcSave.autoHideAfterSec.ToString();
-
-                // update overlay position numeric updowns
-                numericUpDown1.Value = mavcSave.overlayX;
-                numericUpDown2.Value = mavcSave.overlayY;
+                // load start minimized setting (now in menu strip)
+                startMinimizedToolStripMenuItem.Checked = mavcSave.startMinimized;
 
             }
             catch (Exception e)
@@ -967,8 +911,8 @@ namespace mavc_target_ui_win
         /**
          * Saves the config saves to a specified file
          *
-         * @param path  path to the save file (the folder)
-         * @param file  the name of the file
+         * @param path  folder path for the config file
+         * @param file  file name (e.g. config.json)
          */
         private void save(string path, string file)
         {
@@ -987,7 +931,8 @@ namespace mavc_target_ui_win
         }
 
         /**
-         * The event handler of the menu bar save button
+         * Menu-bar "Save" handler.  Falls back to saveTo when no
+         * save path has been set yet.
          */
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1002,9 +947,7 @@ namespace mavc_target_ui_win
             }
         }
 
-        /**
-         * Saves the config saves to a choosable path in the gui with a chooser (for backuping)
-         */
+        /** Opens a SaveFileDialog and saves the config to the user-chosen location. */
         private void saveTo()
         {
             string selectedFilePath = null;
@@ -1019,19 +962,18 @@ namespace mavc_target_ui_win
             save(selectedFilePath, configFileName);
         }
 
-        /**
-         * Event Handler that gets called by the gui "Save To" menu bar button
-         */
+        /** Menu-bar "Save To…" handler.  Delegates to saveTo. */
         private void SaveToToolStripMenuItem_Click(object sender, EventArgs e)
         {
             saveTo();
         }
 
         /**
-         * Loads a config save from a file by a specified path
+         * Deserialises a config file from disk, populates mavcSave,
+         * loads the UI, and initialises the available audio outputs.
          *
-         * @param configFileFolder  path to the save file (the folder)
-         * @param configFileName    the name of the file
+         * @param configFileFolder  folder that contains the config file
+         * @param configFileName    name of the config file
          */
         private void loadConfig(string configFileFolder, string configFileName)
         {
@@ -1054,7 +996,8 @@ namespace mavc_target_ui_win
         }
 
         /**
-         * Event Handler that gets called by the gui "Open" menu bar button to open a config file
+         * Menu-bar "Open" handler.  Prompts the user to discard unsaved changes,
+         * then loads a config file chosen via OpenFileDialog.
          */
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1090,7 +1033,8 @@ namespace mavc_target_ui_win
 
         #region Volume List Event Handlers
         /**
-         * Eventhandler of the Volume 1 Combobox  (available audio outputs)
+         * Volume 1 combo-box handler.  Adds the selected output to VolList1
+         * and removes it from all combo boxes to prevent duplicates.
          */
         private void AddVol1_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -1101,8 +1045,9 @@ namespace mavc_target_ui_win
         }
 
         /**
-       * Eventhandler of the Volume 2 Combobox  (available audio outputs)
-       */
+         * Volume 2 combo-box handler.  Adds the selected output to VolList2
+         * and removes it from all combo boxes.
+         */
         private void AddVol2_SelectedIndexChanged(object sender, EventArgs e)
         {
             AudioOutput selectedAO = (AudioOutput)AddVol2.SelectedItem;
@@ -1111,8 +1056,9 @@ namespace mavc_target_ui_win
         }
 
         /**
-       * Eventhandler of the Volume 3 Combobox  (available audio outputs)
-       */
+         * Volume 3 combo-box handler.  Adds the selected output to VolList3
+         * and removes it from all combo boxes.
+         */
         private void AddVol3_SelectedIndexChanged(object sender, EventArgs e)
         {
             AudioOutput selectedAO = (AudioOutput)AddVol3.SelectedItem;
@@ -1121,8 +1067,9 @@ namespace mavc_target_ui_win
         }
 
         /**
-       * Eventhandler of the Volume 4 Combobox (available audio outputs)
-       */
+         * Volume 4 combo-box handler.  Adds the selected output to VolList4
+         * and removes it from all combo boxes.
+         */
         private void AddVol4_SelectedIndexChanged(object sender, EventArgs e)
         {
             AudioOutput selectedAO = (AudioOutput)AddVol4.SelectedItem;
@@ -1131,7 +1078,8 @@ namespace mavc_target_ui_win
         }
 
         /**
-         * The event handler for the gui "Delete Selection" button to delete a audio output in a listbox
+         * "Delete Selection" button handler.  Removes every selected audio output
+         * from all four volume lists and adds them back to the combo boxes.
          */
         private void delItemBtn_Click(object sender, EventArgs e)
         {
@@ -1157,7 +1105,8 @@ namespace mavc_target_ui_win
         }
 
         /**
-         * Discards all selected audio outputs in the list boxes
+         * "Discard Selection" button handler.  Clears the selection highlight
+         * in all four volume list boxes without removing items.
          */
         private void discSelBtn_Click(object sender, EventArgs e)
         {
@@ -1167,9 +1116,7 @@ namespace mavc_target_ui_win
             VolList4.ClearSelected();
         }
 
-        /**
-         * Event Handler that gets called by the gui "Save To" menu bar button
-         */
+        /** Removes all items from all four volume list boxes. */
         private void ClearVolLists()
         {
             VolList1.Items.Clear();
@@ -1180,31 +1127,38 @@ namespace mavc_target_ui_win
         #endregion
 
         #region UI Control Event Handlers
+        /** Reverse-knob checkbox handler for Volume 1. Persists immediately. */
         private void reverseCheckbox1_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.reverseKnob1 = reverseCheckbox1.Checked;
+            save(configSavePath, configFileName);
         }
 
+        /** Reverse-knob checkbox handler for Volume 2. Persists immediately. */
         private void reverseCheckbox2_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.reverseKnob2 = reverseCheckbox2.Checked;
+            save(configSavePath, configFileName);
         }
 
+        /** Reverse-knob checkbox handler for Volume 3. Persists immediately. */
         private void reverseCheckbox3_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.reverseKnob3 = reverseCheckbox3.Checked;
+            save(configSavePath, configFileName);
         }
 
+        /** Reverse-knob checkbox handler for Volume 4. Persists immediately. */
         private void reverseCheckbox4_CheckedChanged(object sender, EventArgs e)
         {
             mavcSave.reverseKnob4 = reverseCheckbox4.Checked;
+            save(configSavePath, configFileName);
         }
 
-        private void reverseKnobsCheckbox_CheckedChanged(object sender, EventArgs e)
-        {
-            mavcSave.reverseKnobOrder = reverseKnobsCheckbox.Checked;
-        }
-
+        /**
+         * Menu-bar "Refresh" handler.  Re-scans audio outputs and reloads
+         * the volume lists from the current config.
+         */
         private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //refresh all audio outputs available + there state
@@ -1212,6 +1166,10 @@ namespace mavc_target_ui_win
             loadFromMavcSave();
         }
 
+        /**
+         * Menu-bar "Dark Mode" toggle handler.  Flips the dark-mode flag,
+         * applies the theme, and persists the setting.
+         */
         private void darkModeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             mavcSave.darkMode = !mavcSave.darkMode; // toggle
@@ -1219,44 +1177,64 @@ namespace mavc_target_ui_win
             save(configSavePath, configFileName);   // save
         }
 
+        /**
+         * Applies the dark or light theme to this form and updates the
+         * menu-item check state.
+         *
+         * @param isDark  true for dark mode, false for light mode
+         */
         private void ApplyTheme(bool isDark)
         {
             ThemeColors.ApplyTheme(this, isDark);
             darkModeToolStripMenuItem.Checked = isDark;
         }
 
-        private void enableDebugBox_CheckedChanged(object sender, EventArgs e)
+        /** "Reverse Knob Order" settings toggle. Persists immediately. */
+        private void reverseKnobOrderToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            mavcSave.enableDebugMode = enableDebugBox.Checked;
-        }
-
-        private void closeActionToggle_CheckedChanged(object sender, EventArgs e)
-        {
-            mavcSave.minimizeOnClose = closeActionToggle.Checked;
-        }
-
-        private void startMinimized_CheckedChanged(object sender, EventArgs e)
-        {
-            mavcSave.startMinimized = startMinimized.Checked;
-        }
-
-        private void toolStripMenuItemOverlay_Click(object sender, EventArgs e)
-        {
-            mavcSave.enableScreenOverlay = toolStripMenuItemOverlay.Checked;
+            mavcSave.reverseKnobOrder = reverseKnobOrderToolStripMenuItem.Checked;
             save(configSavePath, configFileName);
-            Debug.WriteLine("checked: " + mavcSave.enableScreenOverlay);
         }
 
-        private void activeAutoHideToolStripMenuItem_Click(object sender, EventArgs e)
+        /** "Enable Debug Mode" settings toggle. Persists immediately. */
+        private void enableDebugModeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            mavcSave.activateAutoHide = activeAutoHideToolStripMenuItem.Checked;
+            mavcSave.enableDebugMode = enableDebugModeToolStripMenuItem.Checked;
+            save(configSavePath, configFileName);
+        }
+
+        /** "Minimize on Close" settings toggle. Persists immediately. */
+        private void minimizeOnCloseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            mavcSave.minimizeOnClose = minimizeOnCloseToolStripMenuItem.Checked;
+            save(configSavePath, configFileName);
+        }
+
+        /** "Start Minimized to Systemtray" settings toggle. Persists immediately. */
+        private void startMinimizedToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            mavcSave.startMinimized = startMinimizedToolStripMenuItem.Checked;
+            save(configSavePath, configFileName);
+        }
+
+        /** Opens the Overlay Settings dialog. */
+        private void overlaySettingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var dlg = new OverlaySettingsForm(mavcSave, mavcSave.darkMode, () =>
+            {
+                save(configSavePath, configFileName);
+                RestartAgentProcess();
+            },
+            () =>
+            {
+                save(configSavePath, configFileName);
+            });
+            dlg.ShowDialog(this);
         }
         #endregion
 
         #region Miscellaneous Event Handlers
-        /**
-        * Event Handler of the gui "Help" menu button
-        */
+        /** Menu-bar "Help" handler. Not yet implemented. */
         private void helpToolStripMenuItem_Click(object sender, EventArgs e)
         {
             throw new NotImplementedException();
