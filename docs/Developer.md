@@ -8,9 +8,9 @@ This guide is intended for developers of this project.
 - `dev` : integration branch, all features merge here first
 - `feature/[issue-number]-short-description` : one branch per feature or fix, optional issue number after the `/` (for example: `feature/42-changelog-ui`)
 
-## Commit Messages
+## Commit Messages Convention *(optional)*
 
-Use [Conventional Commits](https://www.conventionalcommits.org/) format for consistency:
+Optionally use [Conventional Commits](https://www.conventionalcommits.org/) format:
 
 ```
 feat: add changelog UI to settings form
