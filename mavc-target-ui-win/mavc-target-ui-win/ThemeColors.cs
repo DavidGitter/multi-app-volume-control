@@ -1,175 +1,661 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace mavc_target_ui_win
 {
+    /**
+     * Provides a 5-color dark/light palette and applies it recursively to every
+     * control on a Form.  Includes owner-draw logic for rounded GroupBox borders,
+     * rounded Button regions, and dark-mode ComboBox items.
+     */
     public static class ThemeColors
     {
+        // ================== DARK PALETTE ==================
+
+        /**
+         * Dark-mode color tokens.
+         */
         public static class Dark
         {
-            // Text colors
-            public static readonly Color TextPrimary = Color.FromArgb(185, 187, 190);
-            public static readonly Color TextSecondary = Color.FromArgb(148, 149, 156);
-            
-            // Background colors
-            public static readonly Color BgPrimary = Color.FromArgb(32, 34, 37);
-            
-            // Border colors (for lines/separators)
-            public static readonly Color BorderPrimary = Color.FromArgb(130, 131, 139);
-            
-            // Interactive colors
-            public static readonly Color InteractivePrimary = Color.FromArgb(47, 49, 54);
+            /** Main background color (form, containers). */
+            public static readonly Color Base = Color.FromArgb(30, 30, 30);
+            /** Raised-surface color (inputs, lists, buttons at rest). */
+            public static readonly Color Surface = Color.FromArgb(45, 45, 45);
+            /** Border / separator / pressed-state color. */
+            public static readonly Color Border = Color.FromArgb(80, 80, 80);
+            /** Mouse-over highlight color. */
+            public static readonly Color Hover = Color.FromArgb(65, 65, 65);
+            /** Primary text color. */
+            public static readonly Color Text = Color.FromArgb(212, 212, 212);
         }
 
+        // ================== LIGHT PALETTE (system defaults) ==================
+
+        /**
+         * Light-mode color tokens (delegates to SystemColors).
+         */
         public static class Light
         {
-            // Text colors
-            public static readonly Color TextPrimary = SystemColors.ControlText;
-            public static readonly Color TextSecondary = SystemColors.ControlDark;
-            
-            // Background colors
-            public static readonly Color BgPrimary = SystemColors.Control;
-            
-            // Border colors (for lines/separators)
-            public static readonly Color BorderPrimary = SystemColors.ControlDark;
-            
-            // Interactive colors
-            public static readonly Color InteractivePrimary = SystemColors.MenuHighlight;
+            /** Main background color. */
+            public static readonly Color Base = SystemColors.Control;
+            /** Input / list / button surface color. */
+            public static readonly Color Surface = SystemColors.Window;
+            /** Border color. */
+            public static readonly Color Border = SystemColors.ControlDark;
+            /** Mouse-over highlight color. */
+            public static readonly Color Hover = Color.FromArgb(210, 225, 245);
+            /** Primary text color. */
+            public static readonly Color Text = SystemColors.ControlText;
         }
 
-        // Semantic helper methods
-        public static Color GetTextPrimary(bool isDark) => isDark ? Dark.TextPrimary : Light.TextPrimary;
-        public static Color GetTextSecondary(bool isDark) => isDark ? Dark.TextSecondary : Light.TextSecondary;
-        public static Color GetBgPrimary(bool isDark) => isDark ? Dark.BgPrimary : Light.BgPrimary;
-        public static Color GetBorderPrimary(bool isDark) => isDark ? Dark.BorderPrimary : Light.BorderPrimary;
-        public static Color GetInteractivePrimary(bool isDark) => isDark ? Dark.InteractivePrimary : Light.InteractivePrimary;
+        // ================== SEMANTIC ACCESS ==================
+
+        /// <summary>Returns the Base color for the requested theme.</summary>
+        public static Color Base(bool dark) => dark ? Dark.Base : Light.Base;
+
+        /// <summary>Returns the Surface color for the requested theme.</summary>
+        public static Color Surface(bool dark) => dark ? Dark.Surface : Light.Surface;
+
+        /// <summary>Returns the Border color for the requested theme.</summary>
+        public static Color Border(bool dark) => dark ? Dark.Border : Light.Border;
+
+        /// <summary>Returns the Hover color for the requested theme.</summary>
+        public static Color Hover(bool dark) => dark ? Dark.Hover : Light.Hover;
+
+        /// <summary>Returns the Text color for the requested theme.</summary>
+        public static Color Text(bool dark) => dark ? Dark.Text : Light.Text;
+
+        /** Shared corner radius (px) for Win11-style rounding. */
+        private const int Radius = 8;
+
+        // ================== TITLE BAR HELPER ==================
 
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
-
         private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
 
+        /**
+         * Sets the Windows title-bar to dark or light mode via DWM.
+         *
+         * @param handle  the window handle (Form.Handle)
+         * @param isDark  true to enable immersive dark mode on the title bar
+         */
         public static void SetTitleBarTheme(IntPtr handle, bool isDark)
         {
             int darkMode = isDark ? 1 : 0;
-            DwmSetWindowAttribute(handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+            try { DwmSetWindowAttribute(handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int)); } catch { }
         }
 
+        // ================== ROUNDED RECT HELPER ==================
+
+        /**
+         * Creates a GraphicsPath describing a rectangle with uniformly rounded corners.
+         *
+         * @param r       the bounding rectangle
+         * @param radius  corner radius in pixels
+         * @return a closed GraphicsPath with four rounded corners
+         */
+        private static GraphicsPath RoundedRect(Rectangle r, int radius)
+        {
+            int d = radius * 2;
+            var path = new GraphicsPath();
+            path.AddArc(r.X, r.Y, d, d, 180, 90);
+            path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+            path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+            path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        // ================== MAIN APPLY LOGIC ==================
+
+        /**
+         * Applies the dark or light theme to an entire form and all its child controls.
+         *
+         * @param form    the target form
+         * @param isDark  true for dark mode, false for light mode
+         */
         public static void ApplyTheme(Form form, bool isDark)
         {
-            Color backColor = GetBgPrimary(isDark);
-
-            SetTitleBarTheme(form.Handle, isDark);
-            form.BackColor = backColor;
-
-            UpdateControlTheme(form, isDark);
+            form.SuspendLayout();
+            try
+            {
+                form.BackColor = Base(isDark);
+                form.ForeColor = Text(isDark);
+                SetTitleBarTheme(form.Handle, isDark);
+                UpdateControlTheme(form, isDark);
+            }
+            finally
+            {
+                form.ResumeLayout(true);
+                form.Invalidate(true);
+            }
         }
 
+        /**
+         * Recursively themes every child control of the given parent.
+         * Handles menus, combo boxes, list boxes, text boxes, buttons, checkboxes,
+         * group boxes, labels, and generic containers.
+         *
+         * @param parent  the parent control whose children will be themed
+         * @param isDark  true for dark mode, false for light mode
+         */
         public static void UpdateControlTheme(Control parent, bool isDark)
         {
-            Color back = GetBgPrimary(isDark);
-            Color text = GetTextPrimary(isDark);
-            Color border = GetBorderPrimary(isDark);
-            Color groupBoxBorderColor = GetBorderPrimary(isDark);
-
             foreach (Control c in parent.Controls)
             {
+                // -- MENUS --
                 if (c is MenuStrip menuStrip)
                 {
-                    menuStrip.BackColor = back;
-                    menuStrip.ForeColor = text;
-                    menuStrip.Renderer = new ToolStripProfessionalRenderer(new DarkModeColorTable(isDark));
-                    foreach (ToolStripMenuItem menuItem in menuStrip.Items)
-                    {
-                        ApplyThemeToMenuItem(menuItem, isDark);
-                    }
+                    menuStrip.BackColor = Base(isDark);
+                    menuStrip.ForeColor = Text(isDark);
+                    menuStrip.Renderer = new ToolStripProfessionalRenderer(new ThemeColorTable(isDark));
+                    UpdateMenuItems(menuStrip.Items, isDark);
                 }
+                else if (c is ContextMenuStrip contextMenu)
+                {
+                    contextMenu.BackColor = Base(isDark);
+                    contextMenu.ForeColor = Text(isDark);
+                    contextMenu.Renderer = new ToolStripProfessionalRenderer(new ThemeColorTable(isDark));
+                    UpdateMenuItems(contextMenu.Items, isDark);
+                }
+                // -- DROPDOWNS --
                 else if (c is ComboBox combo)
                 {
-                    combo.BackColor = back;
-                    combo.ForeColor = text;
-                    combo.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
+                    combo.DrawItem -= ComboBox_DrawItem;
+                    if (isDark)
+                    {
+                        combo.FlatStyle = FlatStyle.Flat;
+                        combo.DrawMode = DrawMode.OwnerDrawFixed;
+                        combo.BackColor = Dark.Surface;
+                        combo.ForeColor = Dark.Text;
+                        combo.DrawItem += ComboBox_DrawItem;
+                        ComboBoxPainter.Attach(combo);
+                    }
+                    else
+                    {
+                        ComboBoxPainter.Detach(combo);
+                        combo.FlatStyle = FlatStyle.Standard;
+                        combo.DrawMode = DrawMode.Normal;
+                        combo.BackColor = Light.Surface;
+                        combo.ForeColor = Light.Text;
+                    }
                 }
-                else if (c is ListBox)
+                // -- LISTBOXES --
+                else if (c is ListBox list)
                 {
-                    c.BackColor = back;
-                    c.ForeColor = text;
+                    list.BackColor = Surface(isDark);
+                    list.ForeColor = Text(isDark);
+                    list.BorderStyle = isDark ? BorderStyle.None : BorderStyle.FixedSingle;
                 }
+                // -- NUMERICUPDOWN --
+                else if (c is NumericUpDown nud)
+                {
+                    nud.BackColor = Surface(isDark);
+                    nud.ForeColor = Text(isDark);
+                }
+                // -- TEXTBOXES --
                 else if (c is TextBox txt)
                 {
-                    txt.BackColor = back;
-                    txt.ForeColor = text;
+                    txt.BackColor = Surface(isDark);
+                    txt.ForeColor = Text(isDark);
                     txt.BorderStyle = BorderStyle.FixedSingle;
                 }
+                // -- BUTTONS --
                 else if (c is Button btn)
                 {
-                    btn.BackColor = back;
-                    btn.ForeColor = text;
                     btn.FlatStyle = FlatStyle.Flat;
-                    btn.FlatAppearance.BorderSize = 1;
-                    btn.FlatAppearance.BorderColor = border;
+                    btn.FlatAppearance.BorderSize = 0;
+                    btn.BackColor = Surface(isDark);
+                    btn.ForeColor = Text(isDark);
+                    btn.FlatAppearance.MouseOverBackColor = Hover(isDark);
+                    btn.FlatAppearance.MouseDownBackColor = Border(isDark);
+
+                    btn.Paint -= Button_Paint;
+                    btn.Resize -= Control_SetRoundRegion;
+                    if (isDark)
+                    {
+                        btn.Paint += Button_Paint;
+                        btn.Resize += Control_SetRoundRegion;
+                        SetRoundRegion(btn, Radius);
+                    }
+                    else
+                    {
+                        btn.Region = null;
+                    }
                 }
+                // -- CHECKBOXES --
                 else if (c is CheckBox chk)
                 {
-                    chk.ForeColor = text;
-                    chk.FlatStyle = isDark ? FlatStyle.Flat : FlatStyle.Standard;
+                    chk.BackColor = Base(isDark);
+                    chk.ForeColor = Text(isDark);
+                    chk.Paint -= CheckBox_Paint;
+                    if (isDark)
+                    {
+                        chk.FlatStyle = FlatStyle.Standard;
+                        chk.Appearance = Appearance.Normal;
+                        chk.Paint += CheckBox_Paint;
+                    }
+                    else
+                    {
+                        chk.FlatStyle = FlatStyle.Standard;
+                    }
                 }
-                else if (c is Label)
-                {
-                    c.ForeColor = text;
-                }
+                // -- GROUPBOXES --
                 else if (c is GroupBox gb)
                 {
-                    gb.ForeColor = groupBoxBorderColor;
-                    gb.FlatStyle = FlatStyle.Flat;
+                    gb.Paint -= GroupBox_Paint;
+                    if (isDark)
+                    {
+                        gb.ForeColor = Text(isDark);
+                        gb.Paint += GroupBox_Paint;
+                    }
+                    else
+                    {
+                        gb.ForeColor = Text(isDark);
+                    }
+                    gb.Invalidate();
                 }
-                else if (c is Panel || c is TabControl || c is TabPage)
+                // -- LABELS --
+                else if (c is Label lbl)
                 {
-                    c.BackColor = back;
-                    c.ForeColor = text;
+                    lbl.ForeColor = Text(isDark);
+                }
+                // -- CONTAINERS --
+                else if (c is TableLayoutPanel || c is Panel || c is TabControl || c is TabPage)
+                {
+                    c.BackColor = Base(isDark);
+                    c.ForeColor = Text(isDark);
                 }
 
-                if (c.HasChildren) UpdateControlTheme(c, isDark);
+                if (c.HasChildren)
+                    UpdateControlTheme(c, isDark);
+
+                if (c.ContextMenuStrip != null)
+                    UpdateControlTheme(c.ContextMenuStrip, isDark);
             }
         }
 
-        private static void ApplyThemeToMenuItem(ToolStripMenuItem item, bool isDark)
-        {
-            Color backColor = GetBgPrimary(isDark);
-            Color textColor = GetTextPrimary(isDark);
+        // ================== ROUNDED REGION HELPERS ==================
 
-            item.BackColor = backColor;
-            item.ForeColor = textColor;
-            foreach (ToolStripItem subItem in item.DropDownItems)
+        /**
+         * Clips the control to a rounded rectangle so its background and hover
+         * states follow the rounded shape.
+         *
+         * @param c       the control to clip
+         * @param radius  corner radius in pixels
+         */
+        private static void SetRoundRegion(Control c, int radius)
+        {
+            if (c.Width > 0 && c.Height > 0)
             {
-                subItem.BackColor = backColor;
-                subItem.ForeColor = textColor;
-                if (subItem is ToolStripMenuItem subMenuItem)
+                using (var path = RoundedRect(new Rectangle(0, 0, c.Width, c.Height), radius))
+                    c.Region = new Region(path);
+            }
+        }
+
+        /**
+         * Resize event handler that re-applies the rounded region after layout changes.
+         *
+         * @param sender  the control that was resized
+         * @param e       event arguments (unused)
+         */
+        private static void Control_SetRoundRegion(object sender, EventArgs e)
+        {
+            if (sender is Control c) SetRoundRegion(c, Radius);
+        }
+
+        // ================== BUTTON PAINT (rounded border) ==================
+
+        /**
+         * Paint handler that draws a rounded border on a Button using the
+         * current theme's Border color.
+         *
+         * @param sender  the button being painted
+         * @param e       paint event arguments containing the Graphics surface
+         */
+        private static void Button_Paint(object sender, PaintEventArgs e)
+        {
+            var btn = (Button)sender;
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            var rect = new Rectangle(0, 0, btn.Width - 1, btn.Height - 1);
+            using (var pen = new Pen(Border(btn.FindForm()?.BackColor == Dark.Base), 1))
+            using (var path = RoundedRect(rect, Radius))
+                g.DrawPath(pen, path);
+        }
+
+        // ================== CHECKBOX PAINT (owner-drawn for dark mode) ==================
+
+        /**
+         * Paint handler that draws a custom checkbox with a visible checkmark
+         * in dark mode.  Draws a rounded box with the Border color, fills it
+         * with an accent blue when checked, and draws a white checkmark on top.
+         *
+         * @param sender  the CheckBox being painted
+         * @param e       paint event arguments containing the Graphics surface
+         */
+        private static void CheckBox_Paint(object sender, PaintEventArgs e)
+        {
+            var chk = (CheckBox)sender;
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            // clear background
+            g.Clear(chk.BackColor);
+
+            // checkbox box dimensions
+            int boxSize = 14;
+            int boxY = (chk.Height - boxSize) / 2;
+            var boxRect = new Rectangle(1, boxY, boxSize, boxSize);
+
+            // draw the box
+            if (chk.Checked)
+            {
+                using (var fill = new SolidBrush(Color.FromArgb(60, 130, 210)))
+                    g.FillRectangle(fill, boxRect);
+                using (var pen = new Pen(Color.FromArgb(80, 150, 230), 1))
+                    g.DrawRectangle(pen, boxRect);
+
+                // draw checkmark
+                using (var pen = new Pen(Color.White, 2))
                 {
-                    ApplyThemeToMenuItem(subMenuItem, isDark);
+                    g.DrawLine(pen, boxRect.X + 3, boxRect.Y + boxSize / 2,
+                                    boxRect.X + boxSize / 2 - 1, boxRect.Y + boxSize - 4);
+                    g.DrawLine(pen, boxRect.X + boxSize / 2 - 1, boxRect.Y + boxSize - 4,
+                                    boxRect.X + boxSize - 3, boxRect.Y + 3);
+                }
+            }
+            else
+            {
+                using (var fill = new SolidBrush(Dark.Surface))
+                    g.FillRectangle(fill, boxRect);
+                using (var pen = new Pen(Dark.Border, 1))
+                    g.DrawRectangle(pen, boxRect);
+            }
+
+            // draw text
+            var textRect = new Rectangle(boxSize + 6, 0, chk.Width - boxSize - 6, chk.Height);
+            TextRenderer.DrawText(g, chk.Text, chk.Font, textRect, Dark.Text,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
+        }
+
+        // ================== GROUPBOX PAINT (rounded border + title) ==================
+
+        /**
+         * Paint handler that owner-draws a GroupBox with a rounded border and
+         * properly colored title text.  The border uses the Border color while
+         * the title uses the Text color, fixing the WinForms issue where
+         * ForeColor controls both.
+         *
+         * @param sender  the GroupBox being painted
+         * @param e       paint event arguments containing the Graphics surface
+         */
+        private static void GroupBox_Paint(object sender, PaintEventArgs e)
+        {
+            var gb = (GroupBox)sender;
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            bool isDark = gb.FindForm()?.BackColor == Dark.Base;
+
+            g.Clear(Base(isDark));
+
+            var titleSize = g.MeasureString(gb.Text, gb.Font);
+            int titleH = (int)Math.Ceiling(titleSize.Height);
+            int titleW = (int)Math.Ceiling(titleSize.Width);
+            int titleX = 8;
+            int titleY = 0;
+
+            var borderRect = new Rectangle(0, titleH / 2, gb.Width - 1, gb.Height - titleH / 2 - 1);
+            using (var pen = new Pen(Border(isDark), 1))
+            using (var path = RoundedRect(borderRect, Radius))
+                g.DrawPath(pen, path);
+
+            using (var bgBrush = new SolidBrush(Base(isDark)))
+                g.FillRectangle(bgBrush, titleX - 2, titleY, titleW + 4, titleH);
+
+            using (var textBrush = new SolidBrush(Text(isDark)))
+                g.DrawString(gb.Text, gb.Font, textBrush, titleX, titleY);
+        }
+
+        // ================== MENU ITEM RECURSION ==================
+
+        /**
+         * Recursively themes all items in a ToolStripItemCollection, including
+         * embedded controls (text boxes) inside menu host items.
+         *
+         * @param items   the collection of menu items to theme
+         * @param isDark  true for dark mode, false for light mode
+         */
+        private static void UpdateMenuItems(ToolStripItemCollection items, bool isDark)
+        {
+            foreach (ToolStripItem item in items)
+            {
+                if (item is ToolStripControlHost host)
+                {
+                    host.BackColor = Surface(isDark);
+                    host.ForeColor = Text(isDark);
+                    if (host.Control != null)
+                    {
+                        host.Control.BackColor = Surface(isDark);
+                        host.Control.ForeColor = Text(isDark);
+                        if (host.Control is TextBox tb) tb.BorderStyle = BorderStyle.FixedSingle;
+                    }
+                }
+                else
+                {
+                    item.BackColor = Base(isDark);
+                    item.ForeColor = Text(isDark);
+                }
+
+                if (item is ToolStripDropDownItem dropDownItem && dropDownItem.HasDropDownItems)
+                    UpdateMenuItems(dropDownItem.DropDownItems, isDark);
+            }
+        }
+
+        // ================== CUSTOM COMBOBOX DRAWING ==================
+
+        /**
+         * NativeWindow subclass that fully owner-draws a ComboBox in dark mode.
+         * Takes complete control of WM_PAINT via BeginPaint/EndPaint so the
+         * default white rendering never reaches the screen, and intercepts
+         * WM_ERASEBKGND to prevent background flash.
+         */
+        private class ComboBoxPainter : NativeWindow
+        {
+            private const int WM_PAINT = 0x000F;
+            private const int WM_ERASEBKGND = 0x0014;
+            private readonly ComboBox _combo;
+
+            [StructLayout(LayoutKind.Sequential)]
+            private struct PAINTSTRUCT
+            {
+                public IntPtr hdc;
+                public bool fErase;
+                public RECT rcPaint;
+                public bool fRestore;
+                public bool fIncUpdate;
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+                public byte[] rgbReserved;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            private struct RECT
+            {
+                public int Left, Top, Right, Bottom;
+            }
+
+            [DllImport("user32.dll")]
+            private static extern IntPtr BeginPaint(IntPtr hwnd, out PAINTSTRUCT lpPaint);
+
+            [DllImport("user32.dll")]
+            private static extern bool EndPaint(IntPtr hwnd, ref PAINTSTRUCT lpPaint);
+
+            private ComboBoxPainter(ComboBox combo)
+            {
+                _combo = combo;
+                AssignHandle(combo.Handle);
+                combo.HandleDestroyed += OnHandleDestroyed;
+            }
+
+            private void OnHandleDestroyed(object sender, EventArgs e)
+            {
+                ReleaseHandle();
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                if (m.Msg == WM_ERASEBKGND)
+                {
+                    m.Result = (IntPtr)1;
+                    return;
+                }
+
+                if (m.Msg == WM_PAINT)
+                {
+                    PAINTSTRUCT ps;
+                    IntPtr hdc = BeginPaint(m.HWnd, out ps);
+                    try
+                    {
+                        using (var g = Graphics.FromHdc(hdc))
+                        {
+                            int w = _combo.Width;
+                            int h = _combo.Height;
+                            int btnWidth = SystemInformation.VerticalScrollBarWidth;
+
+                            // fill entire control
+                            using (var bgBrush = new SolidBrush(Dark.Surface))
+                                g.FillRectangle(bgBrush, 0, 0, w, h);
+
+                            // draw selected item text
+                            var textRect = new Rectangle(3, 0, w - btnWidth - 6, h);
+                            string text = _combo.SelectedItem?.ToString() ?? "";
+                            TextRenderer.DrawText(g, text, _combo.Font, textRect, Dark.Text,
+                                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
+
+                            // draw arrow glyph
+                            int arrowSize = 4;
+                            int btnX = w - btnWidth;
+                            int arrowX = btnX + (btnWidth - arrowSize * 2) / 2;
+                            int arrowY = (h - arrowSize) / 2;
+                            var arrowPoints = new Point[]
+                            {
+                                new Point(arrowX, arrowY),
+                                new Point(arrowX + arrowSize * 2, arrowY),
+                                new Point(arrowX + arrowSize, arrowY + arrowSize)
+                            };
+                            g.SmoothingMode = SmoothingMode.AntiAlias;
+                            using (var arrowBrush = new SolidBrush(Dark.Text))
+                                g.FillPolygon(arrowBrush, arrowPoints);
+
+                            // draw outer border
+                            using (var pen = new Pen(Dark.Border, 1))
+                                g.DrawRectangle(pen, 0, 0, w - 1, h - 1);
+                        }
+                    }
+                    finally
+                    {
+                        EndPaint(m.HWnd, ref ps);
+                    }
+                    m.Result = IntPtr.Zero;
+                    return;
+                }
+
+                base.WndProc(ref m);
+            }
+
+            // ?? static attach / detach management ??
+
+            private static readonly System.Collections.Generic.Dictionary<ComboBox, ComboBoxPainter> _painters
+                = new System.Collections.Generic.Dictionary<ComboBox, ComboBoxPainter>();
+
+            public static void Attach(ComboBox combo)
+            {
+                if (_painters.ContainsKey(combo)) return;
+                _painters[combo] = new ComboBoxPainter(combo);
+                combo.Invalidate();
+            }
+
+            public static void Detach(ComboBox combo)
+            {
+                if (_painters.TryGetValue(combo, out var painter))
+                {
+                    painter._combo.HandleDestroyed -= painter.OnHandleDestroyed;
+                    painter.ReleaseHandle();
+                    _painters.Remove(combo);
+                    combo.Invalidate();
                 }
             }
         }
 
-        private class DarkModeColorTable : ProfessionalColorTable
+        /**
+         * Owner-draw handler for ComboBox items in dark mode.  Draws a dark
+         * background with highlighted text for the selected item.
+         *
+         * @param sender  the ComboBox whose item is being drawn
+         * @param e       draw-item event arguments (index, bounds, state)
+         */
+        private static void ComboBox_DrawItem(object sender, DrawItemEventArgs e)
         {
-            private readonly bool _isDark;
+            if (e.Index < 0) return;
+            ComboBox combo = sender as ComboBox;
 
-            public DarkModeColorTable(bool isDark) => _isDark = isDark;
+            bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+            Color bg = selected ? Dark.Hover : Dark.Surface;
 
-            public override Color MenuItemSelected => GetInteractivePrimary(_isDark);
-            public override Color MenuItemSelectedGradientBegin => GetInteractivePrimary(_isDark);
-            public override Color MenuItemSelectedGradientEnd => GetInteractivePrimary(_isDark);
-            public override Color MenuItemBorder => GetBorderPrimary(_isDark);
-            public override Color MenuBorder => GetBorderPrimary(_isDark);
-            public override Color MenuItemPressedGradientBegin => GetBgPrimary(_isDark);
-            public override Color MenuItemPressedGradientEnd => GetBgPrimary(_isDark);
-            public override Color ImageMarginGradientBegin => GetBgPrimary(_isDark);
-            public override Color ImageMarginGradientMiddle => GetBgPrimary(_isDark);
-            public override Color ImageMarginGradientEnd => GetBgPrimary(_isDark);
-            public override Color ToolStripDropDownBackground => GetBgPrimary(_isDark);
+            using (var bgBrush = new SolidBrush(bg))
+                e.Graphics.FillRectangle(bgBrush, e.Bounds);
+
+            string text = combo.Items[e.Index].ToString();
+            using (var textBrush = new SolidBrush(Dark.Text))
+            {
+                float yOffset = (e.Bounds.Height - e.Font.Height) / 2;
+                e.Graphics.DrawString(text, combo.Font, textBrush, new PointF(e.Bounds.X + 2, e.Bounds.Y + yOffset));
+            }
+        }
+
+        // ================== MENU RENDERER ==================
+
+        /**
+         * Custom ProfessionalColorTable that feeds theme-aware colors into the
+         * ToolStripProfessionalRenderer for menus.
+         */
+        public class ThemeColorTable : ProfessionalColorTable
+        {
+            private readonly bool _dark;
+
+            /**
+             * Creates a new ThemeColorTable.
+             *
+             * @param dark  true for dark-mode colors, false for light-mode
+             */
+            public ThemeColorTable(bool dark) { _dark = dark; UseSystemColors = false; }
+
+            public override Color MenuItemSelected => Hover(_dark);
+            public override Color MenuItemSelectedGradientBegin => Hover(_dark);
+            public override Color MenuItemSelectedGradientEnd => Hover(_dark);
+            public override Color MenuItemPressedGradientBegin => Border(_dark);
+            public override Color MenuItemPressedGradientEnd => Border(_dark);
+
+            public override Color ToolStripDropDownBackground => Base(_dark);
+            public override Color MenuStripGradientBegin => Base(_dark);
+            public override Color MenuStripGradientEnd => Base(_dark);
+
+            public override Color MenuBorder => Border(_dark);
+            public override Color MenuItemBorder => Border(_dark);
+            public override Color ToolStripBorder => Border(_dark);
+
+            public override Color ImageMarginGradientBegin => Base(_dark);
+            public override Color ImageMarginGradientMiddle => Base(_dark);
+            public override Color ImageMarginGradientEnd => Base(_dark);
+
+            public override Color SeparatorDark => Border(_dark);
+            public override Color SeparatorLight => Border(_dark);
         }
     }
 }
