@@ -19,8 +19,8 @@ You will need the following parts to build your mixer:
   It should be able to be used out-of-the-box with the Arduino Enviroment like a ESP32 or a Arduino UNO.
   The microcontroller used here is a ESP32 WROOM 32 because its relativly thin and is therefore easy to get in a case.
   You will also need a suitable USB cable to connect your microcontroller to your PC. It must be a USB-!DATA!-cable!
-  >[!IMPORTANT]
-  >The micro controller you choose should be have atleast 4 ADC Pins where the rotary knobs are connected to. To find out if a microcontroller is usaable please refer to its datasheet.
+  > [!IMPORTANT]  
+  > The micro-controller you choose should be have atleast 4 ADC Pins where the rotary knobs are connected to. To find out if a microcontroller is usaable please refer to its datasheet.
   
 <img src="/docs/readme-pics/microcontroller.png" alt="drawing" width="200"/>
 
@@ -29,4 +29,7 @@ You will need the following parts to build your mixer:
   For those who have a 3D printer, there will be an STL file in the future so that you can print the housing yourself.
 
 ## Installation
-*To be continued...*
+The setup may vary depending on the microcontroller used. Therefore, check how many and which pins of the microcontroller ADC ports are required to read the values of the potentiometer. There are countless YouTube videos on the general use of a potentiometer.
+
+Here is the general setup for a microcontroller with 4 potentiometers:
+<img src="/docs/readme-pics/circuit.png" alt="drawing" width="800"/>
