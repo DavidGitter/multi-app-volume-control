@@ -17,23 +17,19 @@ public class Overlay : Form
     private byte _backgroundOpacity = 180;
 
     // Simple update gate: prevents calling UpdateLayeredWindow too frequently.
-    private const int UpdateOverlayAfterMs = 40;
+    private const int UpdateOverlayAfterMs = 40;    // 25 FPS (match esp32 delay)
     private static readonly System.Timers.Timer GateTimer = new(UpdateOverlayAfterMs);
     private static bool _gateOpen = true;
 
     // Overlay state: "Overlay ready" until first real update arrives from the agent.
     private bool _hasData = false;
-    private string _label = "Overlay ready";
+    private string _label = "";
     private int _value = 0;
 
     // Optional auto-hide after updates.
     private bool _autoHideActive;
     private readonly int _autoHideAfterSec;
     private CancellationTokenSource _hideCts;
-
-    // Manual overlay text position (top-left)
-    private int textX = 10;
-    private int textY = 10;
 
     // WS_EX_LAYERED enables per-pixel alpha; WS_EX_TRANSPARENT makes it click-through.
     private const int WS_EX_TRANSPARENT = 0x20, WS_EX_LAYERED = 0x80000, WS_EX_TOOLWINDOW = 0x80;
@@ -56,7 +52,7 @@ public class Overlay : Form
     /**
      * Creates the fullscreen overlay window.
      *
-     * <param name="autoHideAfterSecs">Seconds to wait before hiding after an update (if auto-hide is enabled).</param>
+     * @param autoHideAfterSecs  Seconds to wait before hiding after an update (if auto-hide is enabled).
      */
     public Overlay(int autoHideAfterSecs)
     {
@@ -68,8 +64,7 @@ public class Overlay : Form
         TopMost = true;
         DoubleBuffered = true;
 
-        // BackColor is irrelevant for layered updates (we push our own bitmap),
-        // but keeping it explicit avoids surprises in other paint paths.
+        // Keep for Barchart option later
         BackColor = Color.Black;
 
         // Small badge window instead of fullscreen
@@ -77,7 +72,7 @@ public class Overlay : Form
         Size = new Size(320, 60);   // adjustable later if needed
 
 
-        // Re-open the update gate periodically.
+        // Re-open update gate periodically.
         GateTimer.Elapsed += (_, _) => _gateOpen = true;
         GateTimer.Start();
     }
@@ -112,8 +107,8 @@ public class Overlay : Form
     /**
      * Updates the overlay text and value and schedules auto-hide (if enabled).
      *
-     * <param name="label">Text shown before the numeric value (e.g., "Knob 1").</param>
-     * <param name="value">Value shown after the label.</param>
+     * @param label  Text shown before the numeric value (e.g., "Knob 1").
+     * @param value  Value shown after the label.
      */
     public void setUpdatedVolume(string label, int value)
     {
@@ -157,7 +152,7 @@ public class Overlay : Form
         {
             var cp = base.CreateParams;
 
-            // Layered + transparent (click-through) + toolwindow (usually hides from Alt-Tab).
+            // Layered + transparent (click-through) + toolwindow (hides from Alt-Tab).
             cp.ExStyle |= WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW;
             return cp;
         }
@@ -211,7 +206,7 @@ public class Overlay : Form
 
     private void DrawText(Graphics g)
     {
-        // "Ready" until we got actual knob data, then "Knob X: N".
+        // "Ready" until knob data, then "Knob X: N".
         string text = _hasData ? $"{_label}: {_value}" : "Ready";
 
         // Use a Windows UI font; bold improves legibility over games/video.
