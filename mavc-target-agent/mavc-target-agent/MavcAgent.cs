@@ -1,12 +1,15 @@
-﻿using static COM;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-// For console debugging -> change Project > Properties > Windows Application to Console Application
+/**
+ * Background agent that bridges the hardware mixer (serial/COM) with the
+ * Windows audio system.  Reads knob values, maps them to audio sessions
+ * and devices, and optionally shows an on-screen overlay.
+ */
 class MavcAgent
 {
     #region Static Fields
@@ -61,9 +64,10 @@ class MavcAgent
     #region Public Static Methods
 
     /**
-     * Function that interprets the words received from the mixer.
+     * Interprets a word received from the hardware mixer and dispatches
+     * the corresponding volume change to the correct knob handler.
      *
-     * <param name="word">The word to be interpreted (see COM class).</param>
+     * @param word  the word to be interpreted (see COM class)
      */
     public static void interpretWord(COM.Word word)
     {
@@ -98,6 +102,10 @@ class MavcAgent
     private static readonly object confDebounceLock = new object();
     private static System.Threading.Timer confDebounceTimer;
 
+    /**
+     * Initializes a FileSystemWatcher that reloads the configuration
+     * whenever config.json is modified on disk.
+     */
     public static void SetupConfUpdater()
     {
         watcher = new FileSystemWatcher
@@ -122,7 +130,10 @@ class MavcAgent
         };
     }
 
-    // Reads config.json and refreshes audio mappings.
+    /**
+     * Reads config.json from disk and refreshes the audio output mappings.
+     * If only the overlay position changed, the heavy rebuild is skipped.
+     */
     public static void UpdateMAVCSave()
     {
         MAVCSave loaded;
@@ -153,7 +164,7 @@ class MavcAgent
     }
 
 
-    // Rebuild all knob->AudioOutput mappings from the current config.
+    /** Rebuilds all knob-to-AudioOutput mappings from the current config. */
     public static void UpdateAllAOs()
     {
         // Lock config during rebuild to keep it consistent across all lists.
@@ -174,10 +185,10 @@ class MavcAgent
      * Converts the raw knob value into a 0..1 volume value (optionally reversed),
      * applies it to all mapped targets, and updates the overlay.
      *
-     * <param name="knobIndex">Knob number (1..4).</param>
-     * <param name="arg">Raw device argument (typically "0".."100").</param>
-     * <param name="reverse">If true, invert the knob direction.</param>
-     * <param name="outputs">Resolved output targets controlled by this knob.</param>
+     * @param knobIndex  knob number (1..4)
+     * @param arg        raw device argument (typically "0".."100")
+     * @param reverse    if true, invert the knob direction
+     * @param outputs    resolved output targets controlled by this knob
      */
     private static void HandleKnob(int knobIndex, string arg, bool reverse, List<AudioOutput> outputs)
     {
@@ -200,9 +211,14 @@ class MavcAgent
             overlay.setUpdatedVolume($"Knob {knobIndex}", (int)(value * 100));
     }
 
-    // Rebuilds one mapping list from config:
-    // - Normal entries: resolve outputs by name.
-    // - Function entries: create synthetic outputs (Focused, Other Apps).
+    /**
+     * Rebuilds one mapping list from the config.  Normal entries are resolved
+     * by name; function entries create synthetic outputs (Focused, Other Apps).
+     *
+     * @param target      the list of AudioOutput targets to rebuild
+     * @param targetLock  lock object protecting the target list
+     * @param config      configured audio outputs to resolve
+     */
     private static void UpdateAOsList(List<AudioOutput> target, object targetLock, IEnumerable<MAVCSave.AudioOutput> config)
     {
         lock (targetLock)
@@ -231,7 +247,7 @@ class MavcAgent
         }
     }
 
-    // Opens a console and redirects stdout/stderr so Console.WriteLine() is visible.
+    /** Opens a console and redirects stdout/stderr so Console.WriteLine() is visible. */
     private static void enableDebugWindow()
     {
         if (!AllocConsole())
@@ -251,6 +267,13 @@ class MavcAgent
 
     #region Main Method
 
+    /**
+     * Application entry point.  Loads the configuration, starts the overlay
+     * and periodic-refresh tasks, then enters the main reconnect loop for
+     * the hardware COM connection.
+     *
+     * @param args  command-line arguments (unused)
+     */
     static void Main(string[] args)
     {
         // Make sure folder exists (prevents FileSystemWatcher/path issues)
