@@ -21,35 +21,21 @@ public class MAVCSave
 
     #region Volume Mappings
 
-    // volume 1 mappings
-    public List<AudioOutput> AOsVol1;
+    // number of knobs / volume lists
+    public int numberOfKnobs;
 
-    // volume 2 mappings
-    public List<AudioOutput> AOsVol2;
+    // volume mappings per knob (index-based)
+    public List<List<AudioOutput>> volumeMappings;
 
-    // volume 3 mappings
-    public List<AudioOutput> AOsVol3;
+    // reverse knob flags per knob (index-based)
+    public List<bool> reverseKnobs;
 
-    // volume 4 mappings
-    public List<AudioOutput> AOsVol4;
-
+    
     #endregion
 
     #region Knob Settings
 
-    // reverse knob of volume 1
-    public bool reverseKnob1;
-
-    // reverse knob of volume 2
-    public bool reverseKnob2;
-
-    // reverse knob of volume 3
-    public bool reverseKnob3;
-
-    // reverse knob of volume 4
-    public bool reverseKnob4;
-
-    // reverse knob order (Knob 1 <-> Knob 4, Knob 2 <-> Knob 3)
+    // reverse knob order (Knob 1 <-> Knob N, etc.)
     public bool reverseKnobOrder;
 
     #endregion
@@ -89,26 +75,81 @@ public class MAVCSave
 
     #endregion
 
+    #region Window Settings
+
+    // window width (0 = use default)
+    public int windowWidth;
+
+    // window height (0 = use default)
+    public int windowHeight;
+
+    // window position X (int.MinValue = use default)
+    public int windowX = int.MinValue;
+
+    // window position Y (int.MinValue = use default)
+    public int windowY = int.MinValue;
+
+    #endregion
+
     public MAVCSave()
     {
-        AOsVol1 = new List<AudioOutput>();
-        AOsVol2 = new List<AudioOutput>();
-        AOsVol3 = new List<AudioOutput>();
-        AOsVol4 = new List<AudioOutput>();
-        reverseKnob1 = false;
-        reverseKnob2 = false;
-        reverseKnob3 = false;
-        reverseKnob4 = false;
+        numberOfKnobs = 4;
+        volumeMappings = new List<List<AudioOutput>>();
+        reverseKnobs = new List<bool>();
         reverseKnobOrder = false;
         enableDebugMode = false;
         darkMode = false;
         minimizeOnClose = false;
-        startMinimized = true;
+        startMinimized = false;
         enableScreenOverlay = false;
         activateAutoHide = true;
         autoHideAfterSec = 1;
         overlayX = 10;
         overlayY = 10;
+        windowWidth = 0;
+        windowHeight = 0;
+    }
+
+    /**
+     * Ensures volumeMappings and reverseKnobs lists have at least numberOfKnobs entries.
+     */
+    public void EnsureCapacity()
+    {
+        if (numberOfKnobs < 1)
+            numberOfKnobs = 4;
+
+        if (volumeMappings == null)
+            volumeMappings = new List<List<AudioOutput>>();
+        if (reverseKnobs == null)
+            reverseKnobs = new List<bool>();
+
+        while (volumeMappings.Count < numberOfKnobs)
+            volumeMappings.Add(new List<AudioOutput>());
+        while (reverseKnobs.Count < numberOfKnobs)
+            reverseKnobs.Add(false);
+    }
+
+    /**
+     * Sets the number of knobs and resizes volumeMappings / reverseKnobs accordingly.
+     * Excess entries are trimmed (mappings for removed knobs are lost).
+     *
+     * @param count  desired number of knobs (minimum 1)
+     */
+    public void SetNumberOfKnobs(int count)
+    {
+        if (count < 1) count = 1;
+        numberOfKnobs = count;
+
+        while (volumeMappings.Count < numberOfKnobs)
+            volumeMappings.Add(new List<AudioOutput>());
+        while (reverseKnobs.Count < numberOfKnobs)
+            reverseKnobs.Add(false);
+
+        // Trim excess (data is lost for removed knobs)
+        while (volumeMappings.Count > numberOfKnobs)
+            volumeMappings.RemoveAt(volumeMappings.Count - 1);
+        while (reverseKnobs.Count > numberOfKnobs)
+            reverseKnobs.RemoveAt(reverseKnobs.Count - 1);
     }
 
     public static MAVCSave LoadConfigFromFile(string configLoadPath, string configSavePath)
@@ -121,7 +162,10 @@ public class MAVCSave
                 string json = System.IO.File.ReadAllText(configLoadPath);
                 MAVCSave loadedMavcSave = JsonConvert.DeserializeObject<MAVCSave>(json);
                 if (loadedMavcSave != null)
+                {
+                    loadedMavcSave.EnsureCapacity();
                     return loadedMavcSave;
+                }
                 throw new FileLoadException("Could not load config file " + configLoadPath);
             }
             else

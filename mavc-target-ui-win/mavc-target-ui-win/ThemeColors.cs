@@ -53,23 +53,27 @@ namespace mavc_target_ui_win
 
         // ================== SEMANTIC ACCESS ==================
 
-        /// <summary>Returns the Base color for the requested theme.</summary>
+        /** Returns colors for the requested theme. */
         public static Color Base(bool dark) => dark ? Dark.Base : Light.Base;
 
-        /// <summary>Returns the Surface color for the requested theme.</summary>
         public static Color Surface(bool dark) => dark ? Dark.Surface : Light.Surface;
 
-        /// <summary>Returns the Border color for the requested theme.</summary>
         public static Color Border(bool dark) => dark ? Dark.Border : Light.Border;
 
-        /// <summary>Returns the Hover color for the requested theme.</summary>
         public static Color Hover(bool dark) => dark ? Dark.Hover : Light.Hover;
 
-        /// <summary>Returns the Text color for the requested theme.</summary>
         public static Color Text(bool dark) => dark ? Dark.Text : Light.Text;
 
         /** Shared corner radius (px) for Win11-style rounding. */
         private const int Radius = 8;
+
+        // ================== CACHED GDI OBJECTS (dark mode) ==================
+
+        private static readonly SolidBrush _darkSurfaceBrush = new SolidBrush(Dark.Surface);
+        private static readonly SolidBrush _darkHoverBrush = new SolidBrush(Dark.Hover);
+        private static readonly SolidBrush _darkTextBrush = new SolidBrush(Dark.Text);
+        private static readonly SolidBrush _darkBaseBrush = new SolidBrush(Dark.Base);
+        private static readonly Pen _darkBorderPen = new Pen(Dark.Border, 1);
 
         // ================== TITLE BAR HELPER ==================
 
@@ -137,8 +141,9 @@ namespace mavc_target_ui_win
 
         /**
          * Recursively themes every child control of the given parent.
-         * Handles menus, combo boxes, list boxes, text boxes, buttons, checkboxes,
-         * group boxes, labels, and generic containers.
+         *
+         * Handles menus, combo boxes, list boxes, text boxes, buttons,
+         * checkboxes, group boxes, labels, and generic containers.
          *
          * @param parent  the parent control whose children will be themed
          * @param isDark  true for dark mode, false for light mode
@@ -147,7 +152,6 @@ namespace mavc_target_ui_win
         {
             foreach (Control c in parent.Controls)
             {
-                // -- MENUS --
                 if (c is MenuStrip menuStrip)
                 {
                     menuStrip.BackColor = Base(isDark);
@@ -162,7 +166,6 @@ namespace mavc_target_ui_win
                     contextMenu.Renderer = new ToolStripProfessionalRenderer(new ThemeColorTable(isDark));
                     UpdateMenuItems(contextMenu.Items, isDark);
                 }
-                // -- DROPDOWNS --
                 else if (c is ComboBox combo)
                 {
                     combo.DrawItem -= ComboBox_DrawItem;
@@ -178,56 +181,54 @@ namespace mavc_target_ui_win
                     else
                     {
                         ComboBoxPainter.Detach(combo);
-                        combo.FlatStyle = FlatStyle.Standard;
                         combo.DrawMode = DrawMode.Normal;
                         combo.BackColor = Light.Surface;
                         combo.ForeColor = Light.Text;
+                        combo.FlatStyle = FlatStyle.Standard;
                     }
                 }
-                // -- LISTBOXES --
                 else if (c is ListBox list)
                 {
                     list.BackColor = Surface(isDark);
                     list.ForeColor = Text(isDark);
                     list.BorderStyle = isDark ? BorderStyle.None : BorderStyle.FixedSingle;
                 }
-                // -- NUMERICUPDOWN --
                 else if (c is NumericUpDown nud)
                 {
                     nud.BackColor = Surface(isDark);
                     nud.ForeColor = Text(isDark);
                 }
-                // -- TEXTBOXES --
                 else if (c is TextBox txt)
                 {
                     txt.BackColor = Surface(isDark);
                     txt.ForeColor = Text(isDark);
                     txt.BorderStyle = BorderStyle.FixedSingle;
                 }
-                // -- BUTTONS --
                 else if (c is Button btn)
                 {
-                    btn.FlatStyle = FlatStyle.Flat;
-                    btn.FlatAppearance.BorderSize = 0;
-                    btn.BackColor = Surface(isDark);
-                    btn.ForeColor = Text(isDark);
-                    btn.FlatAppearance.MouseOverBackColor = Hover(isDark);
-                    btn.FlatAppearance.MouseDownBackColor = Border(isDark);
-
                     btn.Paint -= Button_Paint;
                     btn.Resize -= Control_SetRoundRegion;
                     if (isDark)
                     {
+                        btn.FlatStyle = FlatStyle.Flat;
+                        btn.FlatAppearance.BorderSize = 0;
+                        btn.BackColor = Surface(isDark);
+                        btn.ForeColor = Text(isDark);
+                        btn.FlatAppearance.MouseOverBackColor = Hover(isDark);
+                        btn.FlatAppearance.MouseDownBackColor = Border(isDark);
                         btn.Paint += Button_Paint;
                         btn.Resize += Control_SetRoundRegion;
                         SetRoundRegion(btn, Radius);
                     }
                     else
                     {
+                        btn.FlatStyle = FlatStyle.Standard;
+                        btn.BackColor = Light.Base;
+                        btn.ForeColor = Light.Text;
                         btn.Region = null;
+                        btn.UseVisualStyleBackColor = true;
                     }
                 }
-                // -- CHECKBOXES --
                 else if (c is CheckBox chk)
                 {
                     chk.BackColor = Base(isDark);
@@ -244,7 +245,6 @@ namespace mavc_target_ui_win
                         chk.FlatStyle = FlatStyle.Standard;
                     }
                 }
-                // -- GROUPBOXES --
                 else if (c is GroupBox gb)
                 {
                     gb.Paint -= GroupBox_Paint;
@@ -259,12 +259,10 @@ namespace mavc_target_ui_win
                     }
                     gb.Invalidate();
                 }
-                // -- LABELS --
                 else if (c is Label lbl)
                 {
                     lbl.ForeColor = Text(isDark);
                 }
-                // -- CONTAINERS --
                 else if (c is TableLayoutPanel || c is Panel || c is TabControl || c is TabPage)
                 {
                     c.BackColor = Base(isDark);
@@ -311,8 +309,7 @@ namespace mavc_target_ui_win
         // ================== BUTTON PAINT (rounded border) ==================
 
         /**
-         * Paint handler that draws a rounded border on a Button using the
-         * current theme's Border color.
+         * Paint handler that draws a rounded border on a Button.
          *
          * @param sender  the button being painted
          * @param e       paint event arguments containing the Graphics surface
@@ -324,17 +321,17 @@ namespace mavc_target_ui_win
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             var rect = new Rectangle(0, 0, btn.Width - 1, btn.Height - 1);
-            using (var pen = new Pen(Border(btn.FindForm()?.BackColor == Dark.Base), 1))
             using (var path = RoundedRect(rect, Radius))
-                g.DrawPath(pen, path);
+                g.DrawPath(_darkBorderPen, path);
         }
 
         // ================== CHECKBOX PAINT (owner-drawn for dark mode) ==================
 
         /**
-         * Paint handler that draws a custom checkbox with a visible checkmark
-         * in dark mode.  Draws a rounded box with the Border color, fills it
-         * with an accent blue when checked, and draws a white checkmark on top.
+         * Paint handler that draws a custom checkbox in dark mode.
+         *
+         * Draws a box with the Border color, fills it with an accent blue when
+         * checked, and draws a white checkmark on top.
          *
          * @param sender  the CheckBox being painted
          * @param e       paint event arguments containing the Graphics surface
@@ -345,15 +342,12 @@ namespace mavc_target_ui_win
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
-            // clear background
             g.Clear(chk.BackColor);
 
-            // checkbox box dimensions
             int boxSize = 14;
             int boxY = (chk.Height - boxSize) / 2;
             var boxRect = new Rectangle(1, boxY, boxSize, boxSize);
 
-            // draw the box
             if (chk.Checked)
             {
                 using (var fill = new SolidBrush(Color.FromArgb(60, 130, 210)))
@@ -361,7 +355,6 @@ namespace mavc_target_ui_win
                 using (var pen = new Pen(Color.FromArgb(80, 150, 230), 1))
                     g.DrawRectangle(pen, boxRect);
 
-                // draw checkmark
                 using (var pen = new Pen(Color.White, 2))
                 {
                     g.DrawLine(pen, boxRect.X + 3, boxRect.Y + boxSize / 2,
@@ -372,13 +365,10 @@ namespace mavc_target_ui_win
             }
             else
             {
-                using (var fill = new SolidBrush(Dark.Surface))
-                    g.FillRectangle(fill, boxRect);
-                using (var pen = new Pen(Dark.Border, 1))
-                    g.DrawRectangle(pen, boxRect);
+                g.FillRectangle(_darkSurfaceBrush, boxRect);
+                g.DrawRectangle(_darkBorderPen, boxRect);
             }
 
-            // draw text
             var textRect = new Rectangle(boxSize + 6, 0, chk.Width - boxSize - 6, chk.Height);
             TextRenderer.DrawText(g, chk.Text, chk.Font, textRect, Dark.Text,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
@@ -387,10 +377,8 @@ namespace mavc_target_ui_win
         // ================== GROUPBOX PAINT (rounded border + title) ==================
 
         /**
-         * Paint handler that owner-draws a GroupBox with a rounded border and
-         * properly colored title text.  The border uses the Border color while
-         * the title uses the Text color, fixing the WinForms issue where
-         * ForeColor controls both.
+         * Paint handler that owner-draws a GroupBox with a rounded border
+         * and properly colored title text.
          *
          * @param sender  the GroupBox being painted
          * @param e       paint event arguments containing the Graphics surface
@@ -426,8 +414,7 @@ namespace mavc_target_ui_win
         // ================== MENU ITEM RECURSION ==================
 
         /**
-         * Recursively themes all items in a ToolStripItemCollection, including
-         * embedded controls (text boxes) inside menu host items.
+         * Recursively themes all items in a ToolStripItemCollection.
          *
          * @param items   the collection of menu items to theme
          * @param isDark  true for dark mode, false for light mode
@@ -462,9 +449,10 @@ namespace mavc_target_ui_win
 
         /**
          * NativeWindow subclass that fully owner-draws a ComboBox in dark mode.
-         * Takes complete control of WM_PAINT via BeginPaint/EndPaint so the
-         * default white rendering never reaches the screen, and intercepts
-         * WM_ERASEBKGND to prevent background flash.
+         *
+         * Takes complete control of WM_PAINT via BeginPaint/EndPaint so the default
+         * white rendering never reaches the screen, and intercepts WM_ERASEBKGND to
+         * prevent background flash.  Uses cached GDI objects to minimize allocations.
          */
         private class ComboBoxPainter : NativeWindow
         {
@@ -508,6 +496,13 @@ namespace mavc_target_ui_win
                 ReleaseHandle();
             }
 
+            /**
+             * Handles WM_PAINT and WM_ERASEBKGND for dark-mode ComboBox rendering.
+             *
+             * Uses cached brushes/pens and TextRenderer for fast text output.
+             *
+             * @param m  the Windows message to process
+             */
             protected override void WndProc(ref Message m)
             {
                 if (m.Msg == WM_ERASEBKGND)
@@ -528,17 +523,13 @@ namespace mavc_target_ui_win
                             int h = _combo.Height;
                             int btnWidth = SystemInformation.VerticalScrollBarWidth;
 
-                            // fill entire control
-                            using (var bgBrush = new SolidBrush(Dark.Surface))
-                                g.FillRectangle(bgBrush, 0, 0, w, h);
+                            g.FillRectangle(_darkSurfaceBrush, 0, 0, w, h);
 
-                            // draw selected item text
                             var textRect = new Rectangle(3, 0, w - btnWidth - 6, h);
                             string text = _combo.SelectedItem?.ToString() ?? "";
                             TextRenderer.DrawText(g, text, _combo.Font, textRect, Dark.Text,
                                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
 
-                            // draw arrow glyph
                             int arrowSize = 4;
                             int btnX = w - btnWidth;
                             int arrowX = btnX + (btnWidth - arrowSize * 2) / 2;
@@ -549,13 +540,9 @@ namespace mavc_target_ui_win
                                 new Point(arrowX + arrowSize * 2, arrowY),
                                 new Point(arrowX + arrowSize, arrowY + arrowSize)
                             };
-                            g.SmoothingMode = SmoothingMode.AntiAlias;
-                            using (var arrowBrush = new SolidBrush(Dark.Text))
-                                g.FillPolygon(arrowBrush, arrowPoints);
+                            g.FillPolygon(_darkTextBrush, arrowPoints);
 
-                            // draw outer border
-                            using (var pen = new Pen(Dark.Border, 1))
-                                g.DrawRectangle(pen, 0, 0, w - 1, h - 1);
+                            g.DrawRectangle(_darkBorderPen, 0, 0, w - 1, h - 1);
                         }
                     }
                     finally
@@ -569,18 +556,37 @@ namespace mavc_target_ui_win
                 base.WndProc(ref m);
             }
 
-            // ?? static attach / detach management ??
-
             private static readonly System.Collections.Generic.Dictionary<ComboBox, ComboBoxPainter> _painters
                 = new System.Collections.Generic.Dictionary<ComboBox, ComboBoxPainter>();
 
+            /**
+             * Attaches a ComboBoxPainter to the given ComboBox.
+             * @param combo  the ComboBox to attach dark-mode painting to
+             */
             public static void Attach(ComboBox combo)
             {
                 if (_painters.ContainsKey(combo)) return;
+                if (!combo.IsHandleCreated)
+                {
+                    // Defer until the handle exists
+                    combo.HandleCreated += (s, e) =>
+                    {
+                        if (!_painters.ContainsKey(combo))
+                        {
+                            _painters[combo] = new ComboBoxPainter(combo);
+                            combo.Invalidate();
+                        }
+                    };
+                    return;
+                }
                 _painters[combo] = new ComboBoxPainter(combo);
                 combo.Invalidate();
             }
 
+            /**
+             * Detaches the ComboBoxPainter from the given ComboBox.
+             * @param combo  the ComboBox to detach dark-mode painting from
+             */
             public static void Detach(ComboBox combo)
             {
                 if (_painters.TryGetValue(combo, out var painter))
@@ -594,8 +600,10 @@ namespace mavc_target_ui_win
         }
 
         /**
-         * Owner-draw handler for ComboBox items in dark mode.  Draws a dark
-         * background with highlighted text for the selected item.
+         * Owner-draw handler for ComboBox dropdown items in dark mode.
+         *
+         * Uses TextRenderer for fast GDI text output and cached brushes for
+         * background fills.
          *
          * @param sender  the ComboBox whose item is being drawn
          * @param e       draw-item event arguments (index, bounds, state)
@@ -606,17 +614,11 @@ namespace mavc_target_ui_win
             ComboBox combo = sender as ComboBox;
 
             bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
-            Color bg = selected ? Dark.Hover : Dark.Surface;
-
-            using (var bgBrush = new SolidBrush(bg))
-                e.Graphics.FillRectangle(bgBrush, e.Bounds);
+            e.Graphics.FillRectangle(selected ? _darkHoverBrush : _darkSurfaceBrush, e.Bounds);
 
             string text = combo.Items[e.Index].ToString();
-            using (var textBrush = new SolidBrush(Dark.Text))
-            {
-                float yOffset = (e.Bounds.Height - e.Font.Height) / 2;
-                e.Graphics.DrawString(text, combo.Font, textBrush, new PointF(e.Bounds.X + 2, e.Bounds.Y + yOffset));
-            }
+            TextRenderer.DrawText(e.Graphics, text, combo.Font, e.Bounds, Dark.Text,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
         }
 
         // ================== MENU RENDERER ==================

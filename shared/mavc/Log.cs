@@ -1,40 +1,45 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 class Log
 {
-    private string logFilePath;
+    private static Log _instance;
+    public static Log Instance => _instance;
+
+    private readonly string logFilePath;
+    private readonly object fileLock = new object();
+
     public Log(string logFilePath)
     {
         this.logFilePath = logFilePath;
-        File.Create(logFilePath).Dispose();
-        Info("Started logger");
+        _instance = this;
+
+        // Ensure directory exists and start with a fresh file.
+        string logDir = Path.GetDirectoryName(logFilePath);
+        Directory.CreateDirectory(logDir);
+        File.WriteAllText(logFilePath, string.Empty);
+
+        Write("INFO", "Logger started");
     }
 
-    private void write(string content)
+    private void Write(string level, string content)
     {
-        using (StreamWriter writer = new StreamWriter(logFilePath))
+        string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} | {level,-7} | {content}";
+
+        // Mirror to console (no-op before AllocConsole, harmless after).
+        Console.WriteLine(line);
+
+        // Append to log file.
+        lock (fileLock)
         {
-            writer.WriteLine(content);
+            using (StreamWriter sw = new StreamWriter(logFilePath, append: true))
+            {
+                sw.WriteLine(line);
+            }
         }
     }
 
-    public void Info(string content)
-    {
-        write(DateTime.Now + " | INFO: " + content);
-    }
-
-    public void Warning(string content)
-    {
-        write(DateTime.Now + " | Warning: " + content);
-    }
-
-    public void Error(string content)
-    {
-        write(DateTime.Now + " | Error: " + content);
-    }
+    public void Info(string content)    => Write("INFO",    content);
+    public void Warning(string content) => Write("WARNING", content);
+    public void Error(string content)   => Write("ERROR",   content);
 }
