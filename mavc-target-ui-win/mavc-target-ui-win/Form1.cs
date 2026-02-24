@@ -639,14 +639,16 @@ namespace mavc_target_ui_win
             this.BringToFront();
             this.Activate();
 
-            // Reapply full theme when showing from tray
-            if (mavcSave != null)
+            // Defer focus reset so WinForms' own focus pass doesn't override it
+            this.BeginInvoke(new Action(() =>
             {
+                if (this.ActiveControl is Button)
+                    this.ActiveControl = null;
+            }));
+            if (mavcSave != null)
                 SetTitleBarTheme(mavcSave.darkMode);
-                ApplyTheme(mavcSave.darkMode);
-                ThemeColors.UpdateControlTheme(tableLayoutPanel1, mavcSave.darkMode);
-            }
         }
+
         #endregion
 
         #region Form Event Handlers
@@ -1273,50 +1275,14 @@ namespace mavc_target_ui_win
         /** "Number of Knobs..." settings handler. Prompts for the number and rebuilds the UI. */
         private void numberOfKnobsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using (var dlg = new Form())
+            using (var dlg = new NumberOfKnobsForm(mavcSave.numberOfKnobs, mavcSave.darkMode))
             {
-                dlg.Text = "Number of Knobs";
-                dlg.FormBorderStyle = FormBorderStyle.FixedDialog;
-                dlg.StartPosition = FormStartPosition.CenterParent;
-                dlg.MaximizeBox = false;
-                dlg.MinimizeBox = false;
-                dlg.ClientSize = new Size(260, 100);
-
-                var lbl = new System.Windows.Forms.Label();
-                lbl.Text = "Number of knobs (1-16):";
-                lbl.Location = new Point(12, 15);
-                lbl.AutoSize = true;
-                dlg.Controls.Add(lbl);
-
-                var nud = new NumericUpDown();
-                nud.Minimum = 1;
-                nud.Maximum = 16;
-                nud.Value = mavcSave.numberOfKnobs;
-                nud.Location = new Point(180, 12);
-                nud.Size = new Size(60, 20);
-                dlg.Controls.Add(nud);
-
-                var btnOk = new Button();
-                btnOk.Text = "OK";
-                btnOk.DialogResult = DialogResult.OK;
-                btnOk.Location = new Point(85, 55);
-                btnOk.Size = new Size(90, 30);
-                dlg.Controls.Add(btnOk);
-                dlg.AcceptButton = btnOk;
-
-                if (mavcSave.darkMode)
-                    ThemeColors.ApplyTheme(dlg, true);
-
-                if (dlg.ShowDialog(this) == DialogResult.OK)
+                if (dlg.ShowDialog(this) == DialogResult.OK && dlg.SelectedValue != mavcSave.numberOfKnobs)
                 {
-                    int newCount = (int)nud.Value;
-                    if (newCount != mavcSave.numberOfKnobs)
-                    {
-                        mavcSave.SetNumberOfKnobs(newCount);
-                        save(configSavePath, configFileName);
-                        loadFromMavcSave();
-                        refreshAvailableOutputs();
-                    }
+                    mavcSave.SetNumberOfKnobs(dlg.SelectedValue);
+                    save(configSavePath, configFileName);
+                    loadFromMavcSave();
+                    refreshAvailableOutputs();
                 }
             }
         }

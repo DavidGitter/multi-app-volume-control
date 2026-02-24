@@ -207,18 +207,18 @@ namespace mavc_target_ui_win
                 else if (c is Button btn)
                 {
                     btn.Paint -= Button_Paint;
-                    btn.Resize -= Control_SetRoundRegion;
+                    btn.MouseEnter -= Button_Invalidate;
+                    btn.MouseLeave -= Button_Invalidate;
                     if (isDark)
                     {
                         btn.FlatStyle = FlatStyle.Flat;
                         btn.FlatAppearance.BorderSize = 0;
                         btn.BackColor = Surface(isDark);
                         btn.ForeColor = Text(isDark);
-                        btn.FlatAppearance.MouseOverBackColor = Hover(isDark);
-                        btn.FlatAppearance.MouseDownBackColor = Border(isDark);
+                        btn.Region = null;
                         btn.Paint += Button_Paint;
-                        btn.Resize += Control_SetRoundRegion;
-                        SetRoundRegion(btn, Radius);
+                        btn.MouseEnter += Button_Invalidate;
+                        btn.MouseLeave += Button_Invalidate;
                     }
                     else
                     {
@@ -280,35 +280,6 @@ namespace mavc_target_ui_win
         // ================== ROUNDED REGION HELPERS ==================
 
         /**
-         * Clips the control to a rounded rectangle so its background and hover
-         * states follow the rounded shape.
-         *
-         * @param c       the control to clip
-         * @param radius  corner radius in pixels
-         */
-        private static void SetRoundRegion(Control c, int radius)
-        {
-            if (c.Width > 0 && c.Height > 0)
-            {
-                using (var path = RoundedRect(new Rectangle(0, 0, c.Width, c.Height), radius))
-                    c.Region = new Region(path);
-            }
-        }
-
-        /**
-         * Resize event handler that re-applies the rounded region after layout changes.
-         *
-         * @param sender  the control that was resized
-         * @param e       event arguments (unused)
-         */
-        private static void Control_SetRoundRegion(object sender, EventArgs e)
-        {
-            if (sender is Control c) SetRoundRegion(c, Radius);
-        }
-
-        // ================== BUTTON PAINT (rounded border) ==================
-
-        /**
          * Paint handler that draws a rounded border on a Button.
          *
          * @param sender  the button being painted
@@ -320,10 +291,34 @@ namespace mavc_target_ui_win
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
+            // Detect hover by checking if the mouse is over the button
+            bool hovered = btn.ClientRectangle.Contains(btn.PointToClient(Control.MousePosition));
+            Color bgColor = hovered ? Dark.Hover : Dark.Surface;
+
+            // Fill the entire control area with the parent background first.
+            // This "erases" the square corners without needing a Region clip.
+            g.Clear(btn.Parent?.BackColor ?? Dark.Base);
+
+            // Draw the rounded fill + border on top
             var rect = new Rectangle(0, 0, btn.Width - 1, btn.Height - 1);
             using (var path = RoundedRect(rect, Radius))
+            {
+                using (var brush = new SolidBrush(bgColor))
+                    g.FillPath(brush, path);
                 g.DrawPath(_darkBorderPen, path);
+            }
+
+            // Draw the button label
+            TextRenderer.DrawText(g, btn.Text, btn.Font,
+                new Rectangle(0, 0, btn.Width, btn.Height),
+                Dark.Text,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
         }
+
+        // Triggers a repaint on mouse enter/leave so hover color updates correctly
+        private static void Button_Invalidate(object sender, EventArgs e)
+            => ((Control)sender).Invalidate();
+
 
         // ================== CHECKBOX PAINT (owner-drawn for dark mode) ==================
 
@@ -493,6 +488,7 @@ namespace mavc_target_ui_win
 
             private void OnHandleDestroyed(object sender, EventArgs e)
             {
+                _painters.Remove(_combo);
                 ReleaseHandle();
             }
 

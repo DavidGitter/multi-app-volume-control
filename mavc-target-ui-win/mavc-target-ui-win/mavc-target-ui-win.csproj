@@ -34,6 +34,9 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="NumberOfKnobsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="OverlaySettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
