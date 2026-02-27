@@ -31,6 +31,12 @@
     <Compile Include="..\..\shared\mavc\MAVCSave.cs">
       <Link>MAVCSave.cs</Link>
     </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NumberOfKnobsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="OverlaySettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -144,9 +150,6 @@
   <ItemGroup>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

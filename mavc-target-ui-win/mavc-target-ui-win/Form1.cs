@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Octokit;
+﻿using Octokit;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,12 +14,13 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using Newtonsoft.Json;
 
 namespace mavc_target_ui_win
 {
     /**
-     * Main application form.  Hosts four volume-group panels, a menu bar,
-     * system-tray integration, and manages the background agent process.
+     * Main application form.  Hosts a variable number of volume-group panels,
+     * a menu bar, system-tray integration, and manages the background agent process.
      */
     public partial class Form1 : Form
     {
@@ -51,6 +51,15 @@ namespace mavc_target_ui_win
         // Agent process management
         private Process agentProcess;
         private string agentExecutablePath;
+
+        // Dynamic volume panel controls
+        private List<GroupBox> volumeGroupBoxes = new List<GroupBox>();
+        private List<VolumeListBox> volumeListBoxes = new List<VolumeListBox>();
+        private List<ComboBox> addVolumeComboBoxes = new List<ComboBox>();
+        private List<CheckBox> reverseCheckboxes = new List<CheckBox>();
+
+        // Suppresses save() calls during UI population from config
+        private bool isLoadingConfig = false;
         #endregion
 
         #region Public Methods
@@ -113,6 +122,8 @@ namespace mavc_target_ui_win
                 // Auto Check for update
                 checkForUpdate();
 
+                string uiLocation = AppDomain.CurrentDomain.BaseDirectory;
+                logger.Info("UI running from: " + uiLocation);
 
                 this.Text = "MAVC";
                 this.versionLabel.Text = CURRENT_VERSION;
@@ -127,6 +138,7 @@ namespace mavc_target_ui_win
                 }
 
                 mavcSave = new MAVCSave();
+                mavcSave.EnsureCapacity();
                 audioController = new AudioController();
 
                 loadConfig(configSavePath, configFileName);
@@ -136,14 +148,14 @@ namespace mavc_target_ui_win
                 {
                     dev.OnOutputCreated((sender, newSession) =>
                     {
-                        Console.WriteLine("new output registered");
+                        logger.Info("new output registered");
                         updateUIFlag.Value = true;
                     });
                 }
 
                 foreach (var ou in availableOutputs)
                 {
-                    Console.WriteLine(ou.ToString());
+                    logger.Info(ou.ToString());
                 }
 
                 updateTimer.Interval = 3000;   // milliseconds
@@ -157,6 +169,128 @@ namespace mavc_target_ui_win
             {
                 logger.Error(e.ToString());
             }
+        }
+        #endregion
+
+        #region Dynamic Volume Panel Generation
+        /**
+         * Builds the dynamic volume panels in the tableLayoutPanel based on
+         * the numberOfKnobs setting in mavcSave.
+         */
+        private void BuildVolumePanels()
+        {
+            // Clear existing dynamic controls
+            ClearVolumePanels();
+
+            int knobCount = mavcSave.numberOfKnobs;
+            if (knobCount < 1) knobCount = 1;
+
+            tableLayoutPanel1.SuspendLayout();
+
+            // Configure table layout columns
+            tableLayoutPanel1.ColumnStyles.Clear();
+            tableLayoutPanel1.ColumnCount = knobCount;
+            float colPercent = 100f / knobCount;
+            for (int i = 0; i < knobCount; i++)
+            {
+                tableLayoutPanel1.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Percent, colPercent));
+            }
+
+            for (int i = 0; i < knobCount; i++)
+            {
+                int index = i; // capture for closures
+
+                // GroupBox
+                var groupBox = new GroupBox();
+                groupBox.Text = "Volume " + (i + 1);
+                groupBox.Dock = DockStyle.Fill;
+                groupBox.TabStop = false;
+                groupBox.Padding = new Padding(6, 4, 6, 6);
+
+                // Reverse Knob checkbox
+                var reverseCheckbox = new CheckBox();
+                reverseCheckbox.AutoSize = true;
+                reverseCheckbox.Dock = DockStyle.Top;
+                reverseCheckbox.Text = "Reverse Knob";
+                reverseCheckbox.UseVisualStyleBackColor = true;
+                reverseCheckbox.Padding = new Padding(0, 4, 0, 2);
+                reverseCheckbox.CheckedChanged += (sender, e) =>
+                {
+                    if (isLoadingConfig) return;
+                    if (index < mavcSave.reverseKnobs.Count)
+                    {
+                        mavcSave.reverseKnobs[index] = reverseCheckbox.Checked;
+                        save(configSavePath, configFileName);
+                    }
+                };
+
+                // Add Volume combo box
+                var addVolCombo = new ComboBox();
+                addVolCombo.Dock = DockStyle.Top;
+                addVolCombo.DropDownStyle = ComboBoxStyle.DropDownList;
+                addVolCombo.FormattingEnabled = true;
+                addVolCombo.SelectedIndexChanged += (sender, e) =>
+                {
+                    AudioOutput selectedAO = (AudioOutput)addVolCombo.SelectedItem;
+                    if (selectedAO != null)
+                    {
+                        volumeListBoxes[index].Items.Add(selectedAO);
+                        removeAvailableOutput(selectedAO);
+                        addVolCombo.SelectedIndex = -1;
+                    }
+                };
+
+                // Spacer between combo and list
+                var spacer = new Panel();
+                spacer.Dock = DockStyle.Top;
+                spacer.Height = 4;
+
+                // Volume list box
+                var volList = new VolumeListBox();
+                volList.Dock = DockStyle.Fill;
+                volList.FormattingEnabled = true;
+                volList.IntegralHeight = false;
+                volList.SelectionMode = SelectionMode.MultiSimple;
+
+                // Add controls bottom-up so Dock stacking works correctly:
+                // Fill (volList) first, then top items stack from top
+                groupBox.Controls.Add(volList);
+                groupBox.Controls.Add(spacer);
+                groupBox.Controls.Add(addVolCombo);
+                groupBox.Controls.Add(reverseCheckbox);
+
+                tableLayoutPanel1.Controls.Add(groupBox, i, 0);
+
+                volumeGroupBoxes.Add(groupBox);
+                volumeListBoxes.Add(volList);
+                addVolumeComboBoxes.Add(addVolCombo);
+                reverseCheckboxes.Add(reverseCheckbox);
+            }
+
+            tableLayoutPanel1.ResumeLayout(true);
+
+            // Apply current theme to newly created controls
+            if (mavcSave != null)
+            {
+                ThemeColors.UpdateControlTheme(tableLayoutPanel1, mavcSave.darkMode);
+            }
+        }
+
+        /** Removes all dynamically created volume panels. */
+        private void ClearVolumePanels()
+        {
+            tableLayoutPanel1.SuspendLayout();
+            tableLayoutPanel1.Controls.Clear();
+            tableLayoutPanel1.ResumeLayout(false);
+
+            foreach (var gb in volumeGroupBoxes)
+                gb.Dispose();
+
+            volumeGroupBoxes.Clear();
+            volumeListBoxes.Clear();
+            addVolumeComboBoxes.Clear();
+            reverseCheckboxes.Clear();
         }
         #endregion
 
@@ -186,36 +320,55 @@ namespace mavc_target_ui_win
                 }
 
                 // kill any other agent processes
-                KillExistingAgentProcesses(); // you already have this method [file:18]
+                KillExistingAgentProcesses();
 
                 // find agent executable
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+                // Detect if we are running from a build output directory (IDE scenario).
+                // Build output paths look like: ...\bin\Debug\  or  ...\bin\Release\
+                bool isDevelopment = false;
+                string devAgentPath = null;
+
+                string normalizedBase = baseDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string parentName = Path.GetFileName(Path.GetDirectoryName(normalizedBase)) ?? "";
+
+                if (parentName.Equals("bin", StringComparison.OrdinalIgnoreCase))
+                {
+                    // baseDir is  ...\bin\<Config>\  (running from build output)
+                    string buildConfig = Path.GetFileName(normalizedBase); // "Debug" or "Release"
+                    isDevelopment = true;
+                    devAgentPath = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..",
+                        "mavc-target-agent", "mavc-target-agent", "bin", buildConfig, "net6.0-windows", "mavc-target-agent.exe"));
+                }
+
                 string[] possiblePaths;
 
-#if DEBUG
-                possiblePaths = new[]
+                if (isDevelopment)
                 {
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..",
-                    "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe"),
-};
-#else
-                possiblePaths = new string[]
+                    // Running from IDE (prefer the matching build-config agent)
+                    possiblePaths = new string[]
+                    {
+                        devAgentPath
+                    };
+                }
+                else
                 {
-                    // Production location installed via MSI - CHECK FIRST in production
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                        "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    // Installed / portable (production paths only)
+                    possiblePaths = new string[]
+                    {
+                        // Same directory as UI (portable deployment)
+                        Path.Combine(baseDir, "agent", "mavc-target-agent.exe"),
 
-                    // Alternative production location (64-bit Program Files)
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                        "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                        // Production location installed via MSI
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                            "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
 
-                    // Same directory as UI (portable deployment)
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agent", "mavc-target-agent.exe"),
-
-                    // Development location fallback
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..",
-                        "mavc-target-agent", "mavc-target-agent", "bin", "Debug", "net6.0-windows", "mavc-target-agent.exe"),
-                };
-#endif
+                        // Alternative production location (64-bit Program Files)
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                            "Mavc", "Mavc", "agent", "mavc-target-agent.exe"),
+                    };
+                }
 
                 agentExecutablePath = null;
 
@@ -224,18 +377,18 @@ namespace mavc_target_ui_win
                     try
                     {
                         string fullPath = Path.GetFullPath(path);
-                        Debug.WriteLine($"Checking for agent at: {fullPath}");
+                        logger.Info($"Checking for agent at: {fullPath}");
 
                         if (File.Exists(fullPath))
                         {
                             agentExecutablePath = fullPath;
-                            Debug.WriteLine($"Found agent executable at: {agentExecutablePath}");
+                            logger.Info($"Found agent executable at: {agentExecutablePath}");
                             break;
                         }
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"Error checking path {path}: {ex.Message}");
+                        logger.Warning($"Error checking path {path}: {ex.Message}");
                     }
                 }
 
@@ -244,7 +397,7 @@ namespace mavc_target_ui_win
                     string errorMessage =
                         "Agent executable not found.\n\n" +
                         "Please ensure MAVC is installed or build the mavc-target-agent project.";
-                    Debug.WriteLine("Agent executable not found in any location.");
+                    logger.Warning("Agent executable not found in any location.");
                     MessageBox.Show(errorMessage, "Agent Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -263,11 +416,11 @@ namespace mavc_target_ui_win
                 agentProcess.EnableRaisingEvents = true;
                 agentProcess.Exited += (sender, e) =>
                 {
-                    Debug.WriteLine("Agent process exited unexpectedly.");
+                    logger.Warning("Agent process exited unexpectedly.");
                 };
 
                 agentProcess.Start();
-                Debug.WriteLine($"Agent process started successfully from: {agentExecutablePath}");
+                logger.Info($"Agent process started successfully from: {agentExecutablePath}");
 
                 // validate and cleanup "failed attempts"
                 System.Threading.Thread.Sleep(250);
@@ -283,7 +436,7 @@ namespace mavc_target_ui_win
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Failed to start agent process: " + ex);
+                logger.Error("Failed to start agent process: " + ex);
 
                 string errorMessage =
                     "Failed to start agent process.\n\n" +
@@ -303,7 +456,7 @@ namespace mavc_target_ui_win
 
                 if (existingProcesses.Length > 0)
                 {
-                    Debug.WriteLine($"Found {existingProcesses.Length} existing agent process(es). Terminating...");
+                    logger.Info($"Found {existingProcesses.Length} existing agent process(es). Terminating...");
 
                     foreach (Process proc in existingProcesses)
                     {
@@ -312,45 +465,45 @@ namespace mavc_target_ui_win
                             // Check if process has already exited before trying to access its properties
                             if (proc.HasExited)
                             {
-                                Debug.WriteLine($"Process already exited, skipping.");
+                                logger.Info($"Process already exited, skipping.");
                                 proc.Dispose();
                                 continue;
                             }
 
                             int processId = proc.Id; // Store PID before killing
-                            Debug.WriteLine($"Killing agent process with PID: {processId}");
+                            logger.Info($"Killing agent process with PID: {processId}");
 
                             proc.Kill();
                             proc.WaitForExit(2000); // Wait up to 2 seconds for each process
                             proc.Dispose();
 
-                            Debug.WriteLine($"Successfully terminated agent process with PID: {processId}");
+                            logger.Info($"Successfully terminated agent process with PID: {processId}");
                         }
                         catch (InvalidOperationException)
                         {
                             // Process has already exited or is no longer accessible
-                            Debug.WriteLine($"Process already exited or inaccessible, skipping.");
+                            logger.Info($"Process already exited or inaccessible, skipping.");
                             try { proc.Dispose(); } catch { }
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine($"Failed to kill process: {ex.Message}");
+                            logger.Error($"Failed to kill process: {ex.Message}");
                             try { proc.Dispose(); } catch { }
                         }
                     }
 
                     // wait for all processes to fully terminate
                     System.Threading.Thread.Sleep(500);
-                    Debug.WriteLine("All existing agent processes terminated.");
+                    logger.Info("All existing agent processes terminated.");
                 }
                 else
                 {
-                    Debug.WriteLine("No existing agent processes found.");
+                    logger.Info("No existing agent processes found.");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error checking for existing agent processes: {ex.Message}");
+                logger.Error($"Error checking for existing agent processes: {ex.Message}");
             }
         }
 
@@ -361,24 +514,24 @@ namespace mavc_target_ui_win
             {
                 if (agentProcess != null && !agentProcess.HasExited)
                 {
-                    Debug.WriteLine("Stopping agent process...");
+                    logger.Info("Stopping agent process...");
                     agentProcess.Kill();
                     agentProcess.WaitForExit(5000); // Wait up to 5 seconds
                     agentProcess.Dispose();
                     agentProcess = null;
-                    Debug.WriteLine("Agent process stopped successfully.");
+                    logger.Info("Agent process stopped successfully.");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error stopping agent process: {ex}");
+                logger.Error($"Error stopping agent process: {ex}");
             }
         }
 
         /** Restarts the agent process. */
         private void RestartAgentProcess()
         {
-            Debug.WriteLine("Restarting agent process...");
+            logger.Info("Restarting agent process...");
 
             // Stop our tracked agent process
             StopAgentProcess();
@@ -480,18 +633,22 @@ namespace mavc_target_ui_win
         /** Shows the UI window. */
         private void ShowUI()
         {
-            this.ShowInTaskbar = true; // before showing the windowto prevent default icon
+            this.ShowInTaskbar = true; // before showing the window to prevent default icon
             this.Show();
             this.WindowState = FormWindowState.Normal;
             this.BringToFront();
             this.Activate();
 
-            // Reapply title bar theme when showing from tray
-            if (mavcSave != null)
+            // Defer focus reset so WinForms' own focus pass doesn't override it
+            this.BeginInvoke(new Action(() =>
             {
+                if (this.ActiveControl is Button)
+                    this.ActiveControl = null;
+            }));
+            if (mavcSave != null)
                 SetTitleBarTheme(mavcSave.darkMode);
-            }
         }
+
         #endregion
 
         #region Form Event Handlers
@@ -532,12 +689,12 @@ namespace mavc_target_ui_win
             Version localVersion = null;
             try
             {
-                Debug.WriteLine("Checking for latest version available...");
+                logger.Info("Checking for latest version available...");
 
                 GitHubClient client = new GitHubClient(new ProductHeaderValue("MavcAutoUpdater"));
                 IReadOnlyList<Release> releases = Task.Run(() => client.Repository.Release.GetAll("DavidGitter", "multi-app-volume-control")).GetAwaiter().GetResult();
 
-                Debug.WriteLine("Latest Release Tag found: " + releases[0].TagName);
+                logger.Info("Latest Release Tag found: " + releases[0].TagName);
 
                 //Setup the versions
                 latestGitHubVersion = new Version(releases[0].TagName);
@@ -611,9 +768,9 @@ namespace mavc_target_ui_win
 
         /**
          * Timer tick handler.  Polls updateUIFlag and refreshes the available
-         * audio outputs and volume lists when a change is detected.
+         * audio outputs when a new session is detected.
          */
-        private void updateTimer_Tick(object sender, EventArgs e)  //run this logic each timer tick
+        private void updateTimer_Tick(object sender, EventArgs e)
         {
 
             //check for new audio outputs
@@ -621,15 +778,15 @@ namespace mavc_target_ui_win
             {
                 updateUIFlag.Value = false;
                 refreshAvailableOutputs();
-                loadFromMavcSave();
+                // Don't call loadFromMavcSave here — it rebuilds panels unnecessarily
+                // and wipes the combo box contents. Just refresh the available outputs.
             }
-
         }
         #endregion
 
         #region Available Outputs Management
         /**
-         * Populates the four "Add Volume" combo boxes with outputs that are not
+         * Populates all "Add Volume" combo boxes with outputs that are not
          * already assigned to a volume list, plus the special Focused and
          * Other Apps function entries.
          *
@@ -641,25 +798,20 @@ namespace mavc_target_ui_win
             {
                 if (!confHasAudioOutput(output))
                 {
-                    AddVol1.Items.Add(output);
-                    AddVol2.Items.Add(output);
-                    AddVol3.Items.Add(output);
-                    AddVol4.Items.Add(output);
+                    foreach (var combo in addVolumeComboBoxes)
+                        combo.Items.Add(output);
                 }
             }
 
             //add additional functions
             AudioFocused af = new AudioFocused(audioController);
-            AddVol1.Items.Add(af);
-            AddVol2.Items.Add(af);
-            AddVol3.Items.Add(af);
-            AddVol4.Items.Add(af);
-
             AudioOtherApps aoa = new AudioOtherApps(audioController, mavcSave);
-            AddVol1.Items.Add(aoa);
-            AddVol2.Items.Add(aoa);
-            AddVol3.Items.Add(aoa);
-            AddVol4.Items.Add(aoa);
+
+            foreach (var combo in addVolumeComboBoxes)
+            {
+                combo.Items.Add(af);
+                combo.Items.Add(aoa);
+            }
         }
 
         /** Refreshes the available outputs. */
@@ -668,49 +820,55 @@ namespace mavc_target_ui_win
             availableOutputs.Clear();
             removeAvailableOutputs();
             availableOutputs = audioController.GetAllAudioOutputs();
+
+            logger.Info($"Refresh complete: found {availableOutputs.Count} available audio outputs");
+
+            if (availableOutputs.Count == 0)
+            {
+                logger.Warning("No new audio outputs found during refresh");
+            }
+            else
+            {
+                foreach (var output in availableOutputs)
+                {
+                    logger.Info($"  - {output.GetName()} ({output.GetAudioType()})");
+                }
+            }
+
             initAvailableOutputs(availableOutputs.ToArray());
         }
 
         /**
-         * Removes a single audio output from all four combo boxes.
+         * Removes a single audio output from all combo boxes.
          *
          * @param output  the audio output to remove
          */
         private void removeAvailableOutput(AudioOutput output)
         {
-
-            AddVol1.Items.Remove(output);
-            AddVol2.Items.Remove(output);
-            AddVol3.Items.Remove(output);
-            AddVol4.Items.Remove(output);
+            foreach (var combo in addVolumeComboBoxes)
+                combo.Items.Remove(output);
         }
 
-        /** Clears every item from all four combo boxes. */
+        /** Clears every item from all combo boxes. */
         private void removeAvailableOutputs()
         {
-
-            AddVol1.Items.Clear();
-            AddVol2.Items.Clear();
-            AddVol3.Items.Clear();
-            AddVol4.Items.Clear();
+            foreach (var combo in addVolumeComboBoxes)
+                combo.Items.Clear();
         }
 
         /**
-         * Adds a single audio output to all four combo boxes.
+         * Adds a single audio output to all combo boxes.
          *
          * @param output  the audio output to add
          */
         private void addAvailableOutput(AudioOutput output)
         {
-
-            AddVol1.Items.Add(output);
-            AddVol2.Items.Add(output);
-            AddVol3.Items.Add(output);
-            AddVol4.Items.Add(output);
+            foreach (var combo in addVolumeComboBoxes)
+                combo.Items.Add(output);
         }
 
         /**
-         * Checks whether any of the four volume lists in the current config
+         * Checks whether any of the volume lists in the current config
          * already contain the specified audio output (by name).
          *
          * @param ao  the audio output to look for
@@ -718,11 +876,12 @@ namespace mavc_target_ui_win
          */
         private bool confHasAudioOutput(AudioOutput ao)
         {
-
-            return mavcSave.AOsVol1.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name)) ||
-                   mavcSave.AOsVol2.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name)) ||
-                   mavcSave.AOsVol3.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name)) ||
-                   mavcSave.AOsVol4.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name));
+            foreach (var mapping in mavcSave.volumeMappings)
+            {
+                if (mapping.Exists(mavc_ao => ao.GetName().Equals(mavc_ao.name)))
+                    return true;
+            }
+            return false;
         }
         #endregion
 
@@ -740,19 +899,35 @@ namespace mavc_target_ui_win
         /** Copies the current volume-list contents back into mavcSave. */
         private void updateMavcSave()
         {
-            mavcSave.AOsVol1.Clear();
-            mavcSave.AOsVol2.Clear();
-            mavcSave.AOsVol3.Clear();
-            mavcSave.AOsVol4.Clear();
+            // Don't overwrite config when the UI panels haven't been populated yet
+            if (volumeListBoxes.Count == 0)
+                return;
 
-            foreach (AudioOutput ao in VolList1.Items) //TODO: handle apps that are online while mapping and then offline when saving
-                mavcSave.AOsVol1.Add(new MAVCSave.AudioOutput(ao.GetName(), ao.GetAudioType()));
-            foreach (AudioOutput ao in VolList2.Items)
-                mavcSave.AOsVol2.Add(new MAVCSave.AudioOutput(ao.GetName(), ao.GetAudioType()));
-            foreach (AudioOutput ao in VolList3.Items)
-                mavcSave.AOsVol3.Add(new MAVCSave.AudioOutput(ao.GetName(), ao.GetAudioType()));
-            foreach (AudioOutput ao in VolList4.Items)
-                mavcSave.AOsVol4.Add(new MAVCSave.AudioOutput(ao.GetName(), ao.GetAudioType()));
+            for (int i = 0; i < mavcSave.numberOfKnobs && i < mavcSave.volumeMappings.Count; i++)
+            {
+                mavcSave.volumeMappings[i].Clear();
+            }
+
+            for (int i = 0; i < volumeListBoxes.Count && i < mavcSave.numberOfKnobs; i++)
+            {
+                foreach (AudioOutput ao in volumeListBoxes[i].Items)
+                    mavcSave.volumeMappings[i].Add(new MAVCSave.AudioOutput(ao.GetName(), ao.GetAudioType()));
+            }
+
+            // Trim excess mappings/reverseKnobs that exceed numberOfKnobs
+            while (mavcSave.volumeMappings.Count > mavcSave.numberOfKnobs)
+                mavcSave.volumeMappings.RemoveAt(mavcSave.volumeMappings.Count - 1);
+            while (mavcSave.reverseKnobs.Count > mavcSave.numberOfKnobs)
+                mavcSave.reverseKnobs.RemoveAt(mavcSave.reverseKnobs.Count - 1);
+
+            // Persist current window size and position
+            if (this.WindowState == FormWindowState.Normal)
+            {
+                mavcSave.windowWidth = this.Size.Width;
+                mavcSave.windowHeight = this.Size.Height;
+                mavcSave.windowX = this.Location.X;
+                mavcSave.windowY = this.Location.Y;
+            }
         }
 
         /**
@@ -761,132 +936,79 @@ namespace mavc_target_ui_win
          */
         private void loadFromMavcSave()
         {
+            isLoadingConfig = true;
+
+            // Rebuild volume panels to match current numberOfKnobs
+            BuildVolumePanels();
+
             ClearVolLists();
 
+            int knobCount = mavcSave.numberOfKnobs;
+
+            // Load volume mappings into list boxes
             try
             {
-                Task t1;
-                Task t2;
-                Task t3;
-                Task t4;
+                var tasks = new Task[knobCount];
+                var foundOutputsPerKnob = new List<AudioOutput>[knobCount];
 
-                var foundAudioOutputs1 = new List<AudioOutput>();
-                t1 = Task.Run(() =>
+                for (int i = 0; i < knobCount; i++)
                 {
-                    foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol1)
-                        try
-                        {
-                            if (!mavc_ao.type.Equals("Function"))
-                                foundAudioOutputs1.Add(audioController.GetOutputByName(mavc_ao.name));
-                            else
-                                if (mavc_ao.name.Equals("Focused"))
-                                foundAudioOutputs1.Add(new AudioFocused(audioController));
-                            else if (mavc_ao.name.Equals("Other Apps"))
-                                foundAudioOutputs1.Add(new AudioOtherApps(audioController, mavcSave));
-                            else
-                                throw new NotImplementedException();
-                        }
-                        catch (Exception knfe)
-                        {
-                            // Add Log / Debug
-                            Console.WriteLine("AudioOutput " + mavc_ao.name + " of mavc save not found");
-                            foundAudioOutputs1.Add(new AudioOutputOffline(mavc_ao.name));
-                        }
-                });
+                    int index = i; // capture
+                    foundOutputsPerKnob[index] = new List<AudioOutput>();
 
-                var foundAudioOutputs2 = new List<AudioOutput>();
-                t2 = Task.Run(() =>
+                    tasks[index] = Task.Run(() =>
+                    {
+                        if (index >= mavcSave.volumeMappings.Count) return;
+
+                        foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.volumeMappings[index])
+                        {
+                            try
+                            {
+                                if (!mavc_ao.type.Equals("Function"))
+                                    foundOutputsPerKnob[index].Add(audioController.GetOutputByName(mavc_ao.name));
+                                else if (mavc_ao.name.Equals("Focused"))
+                                    foundOutputsPerKnob[index].Add(new AudioFocused(audioController));
+                                else if (mavc_ao.name.Equals("Other Apps"))
+                                    foundOutputsPerKnob[index].Add(new AudioOtherApps(audioController, mavcSave));
+                                else
+                                    throw new NotImplementedException();
+                            }
+                            catch (Exception)
+                            {
+                                logger.Warning("AudioOutput " + mavc_ao.name + " of mavc save not found");
+                                foundOutputsPerKnob[index].Add(new AudioOutputOffline(mavc_ao.name));
+                            }
+                        }
+                    });
+                }
+
+                Task.WaitAll(tasks);
+
+                for (int i = 0; i < knobCount && i < volumeListBoxes.Count; i++)
                 {
-                    foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol2)
-                        try
-                        {
-                            if (!mavc_ao.type.Equals("Function"))
-                                foundAudioOutputs2.Add(audioController.GetOutputByName(mavc_ao.name));
-                            else
-                                if (mavc_ao.name.Equals("Focused"))
-                                foundAudioOutputs2.Add(new AudioFocused(audioController));
-                            else if (mavc_ao.name.Equals("Other Apps"))
-                                foundAudioOutputs2.Add(new AudioOtherApps(audioController, mavcSave));
-                            else
-                                throw new NotImplementedException();
-                        }
-                        catch (Exception knfe)
-                        {
-                            // Add Log / Debug
-                            Console.WriteLine("AudioOutput " + mavc_ao.name + " of mavc save not found");
-                            foundAudioOutputs2.Add(new AudioOutputOffline(mavc_ao.name));
-                        }
-                });
+                    volumeListBoxes[i].Items.AddRange(foundOutputsPerKnob[i].ToArray());
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Error("Error loading volume mappings: " + e.Message + "\n" + e.StackTrace);
+            }
 
-
-
-                var foundAudioOutputs3 = new List<AudioOutput>();
-                t3 = Task.Run(() =>
-                {
-                    foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol3)
-                        try
-                        {
-                            if (!mavc_ao.type.Equals("Function"))
-                                foundAudioOutputs3.Add(audioController.GetOutputByName(mavc_ao.name));
-                            else
-                                if (mavc_ao.name.Equals("Focused"))
-                                foundAudioOutputs3.Add(new AudioFocused(audioController));
-                            else if (mavc_ao.name.Equals("Other Apps"))
-                                foundAudioOutputs3.Add(new AudioOtherApps(audioController, mavcSave));
-                            else
-                                throw new NotImplementedException();
-                        }
-                        catch (Exception knfe)
-                        {
-                            // Add Log / Debug
-                            Console.WriteLine("AudioOutput " + mavc_ao + " of mavc save not found");
-                            foundAudioOutputs3.Add(new AudioOutputOffline(mavc_ao.name));
-                        }
-                });
-
-
-                var foundAudioOutputs4 = new List<AudioOutput>();
-                t4 = Task.Run(() =>
-                {
-                    foreach (MAVCSave.AudioOutput mavc_ao in mavcSave.AOsVol4)
-                        try
-                        {
-                            if (!mavc_ao.type.Equals("Function"))
-                                foundAudioOutputs4.Add(audioController.GetOutputByName(mavc_ao.name));
-                            else
-                                if (mavc_ao.name.Equals("Focused"))
-                                foundAudioOutputs4.Add(new AudioFocused(audioController));
-                            else if (mavc_ao.name.Equals("Other Apps"))
-                                foundAudioOutputs4.Add(new AudioOtherApps(audioController, mavcSave));
-                            else
-                                throw new NotImplementedException();
-                        }
-                        catch (Exception knfe)
-                        {
-                            // Add Log / Debug
-                            Console.WriteLine("AudioOutput " + mavc_ao + " of mavc save not found");
-                            foundAudioOutputs4.Add(new AudioOutputOffline(mavc_ao.name));
-                        }
-                });
-
-                Task.WaitAll(t1, t2, t3, t4);
-                VolList1.Items.AddRange(foundAudioOutputs1.ToArray());
-                VolList2.Items.AddRange(foundAudioOutputs2.ToArray());
-                VolList3.Items.AddRange(foundAudioOutputs3.ToArray());
-                VolList4.Items.AddRange(foundAudioOutputs4.ToArray());
-
+            // Load UI settings (always apply, independent of volume loading)
+            try
+            {
                 // update knob-reversed checkboxes
-                reverseCheckbox1.Checked = mavcSave.reverseKnob1;
-                reverseCheckbox2.Checked = mavcSave.reverseKnob2;
-                reverseCheckbox3.Checked = mavcSave.reverseKnob3;
-                reverseCheckbox4.Checked = mavcSave.reverseKnob4;
+                for (int i = 0; i < knobCount && i < reverseCheckboxes.Count; i++)
+                {
+                    reverseCheckboxes[i].Checked = mavcSave.reverseKnobs[i];
+                }
 
                 // update knob order (now in menu strip)
                 reverseKnobOrderToolStripMenuItem.Checked = mavcSave.reverseKnobOrder;
 
                 // load darkmode state
                 darkModeToolStripMenuItem.Checked = mavcSave.darkMode;
-                ApplyTheme(mavcSave.darkMode);            
+                ApplyTheme(mavcSave.darkMode);
 
                 // load minimize on close setting (now in menu strip)
                 minimizeOnCloseToolStripMenuItem.Checked = mavcSave.minimizeOnClose;
@@ -897,15 +1019,23 @@ namespace mavc_target_ui_win
                 // load start minimized setting (now in menu strip)
                 startMinimizedToolStripMenuItem.Checked = mavcSave.startMinimized;
 
+                // restore window size and position
+                if (mavcSave.windowWidth > 0 && mavcSave.windowHeight > 0)
+                {
+                    this.Size = new Size(mavcSave.windowWidth, mavcSave.windowHeight);
+                }
+                if (mavcSave.windowX != int.MinValue && mavcSave.windowY != int.MinValue)
+                {
+                    this.StartPosition = FormStartPosition.Manual;
+                    this.Location = new Point(mavcSave.windowX, mavcSave.windowY);
+                }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message + "\n" + e.StackTrace);
-                Console.WriteLine("Config file cannot be opened or is invalid - creating new one...");
-
-                save(configSavePath, configFileName);
+                logger.Error("Error loading UI settings: " + e.Message + "\n" + e.StackTrace);
             }
 
+            isLoadingConfig = false;
         }
 
         /**
@@ -917,17 +1047,17 @@ namespace mavc_target_ui_win
         private void save(string path, string file)
         {
             updateMavcSave();
-            if (!System.IO.File.Exists(Path.Combine(path, file)))
+            string fullPath = Path.Combine(path, file);
+            if (!System.IO.File.Exists(fullPath))
             {
                 Directory.CreateDirectory(path);
-                System.IO.File.Create(file);
             }
 
             // Serialize the class to JSON
-            string json = JsonConvert.SerializeObject(mavcSave);
+            string json = JsonConvert.SerializeObject(mavcSave, Formatting.Indented);
 
             // Save the JSON string to a file
-            System.IO.File.WriteAllText(configFilePath, json);
+            System.IO.File.WriteAllText(fullPath, json);
         }
 
         /**
@@ -956,7 +1086,7 @@ namespace mavc_target_ui_win
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 selectedFilePath = saveFileDialog.FileName;
-                Console.WriteLine("Selected file: " + selectedFilePath);
+                logger.Info("Selected file: " + selectedFilePath);
             }
 
             save(selectedFilePath, configFileName);
@@ -984,7 +1114,6 @@ namespace mavc_target_ui_win
             }
             catch
             {
-                Console.WriteLine("Config file " + configFilePath + " propably not existing, creating new one...");
                 logger.Warning("Config file " + configFilePath + " propably not existing, creating new one...");
                 save(configSavePath, configFileName);
 
@@ -1015,7 +1144,7 @@ namespace mavc_target_ui_win
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     selectedFilePath = openFileDialog.FileName;
-                    Console.WriteLine("Selected file: " + selectedFilePath);
+                    logger.Info("Selected file: " + selectedFilePath);
                 }
 
                 //TODO: check if config is valid otherwise abort load
@@ -1026,144 +1155,62 @@ namespace mavc_target_ui_win
             else
             {
                 // stop opening
-                Console.WriteLine("User clicked Yes.");
+                logger.Info("User clicked No.");
             }
         }
         #endregion
 
         #region Volume List Event Handlers
         /**
-         * Volume 1 combo-box handler.  Adds the selected output to VolList1
-         * and removes it from all combo boxes to prevent duplicates.
-         */
-        private void AddVol1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AudioOutput selectedAO = (AudioOutput)AddVol1.SelectedItem;
-            VolList1.Items.Add(selectedAO);
-            removeAvailableOutput(selectedAO);
-            //AddVol1.DroppedDown = true;
-        }
-
-        /**
-         * Volume 2 combo-box handler.  Adds the selected output to VolList2
-         * and removes it from all combo boxes.
-         */
-        private void AddVol2_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AudioOutput selectedAO = (AudioOutput)AddVol2.SelectedItem;
-            VolList2.Items.Add(selectedAO);
-            removeAvailableOutput(selectedAO);
-        }
-
-        /**
-         * Volume 3 combo-box handler.  Adds the selected output to VolList3
-         * and removes it from all combo boxes.
-         */
-        private void AddVol3_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AudioOutput selectedAO = (AudioOutput)AddVol3.SelectedItem;
-            VolList3.Items.Add(selectedAO);
-            removeAvailableOutput(selectedAO);
-        }
-
-        /**
-         * Volume 4 combo-box handler.  Adds the selected output to VolList4
-         * and removes it from all combo boxes.
-         */
-        private void AddVol4_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AudioOutput selectedAO = (AudioOutput)AddVol4.SelectedItem;
-            VolList4.Items.Add(selectedAO);
-            removeAvailableOutput(selectedAO);
-        }
-
-        /**
          * "Delete Selection" button handler.  Removes every selected audio output
-         * from all four volume lists and adds them back to the combo boxes.
+         * from all volume lists and adds them back to the combo boxes.
          */
         private void delItemBtn_Click(object sender, EventArgs e)
         {
             List<AudioOutput> selectedItems = new List<AudioOutput>();
 
-            foreach (AudioOutput ao in VolList1.SelectedItems)
-                selectedItems.Add(ao);
-            foreach (AudioOutput ao in VolList2.SelectedItems)
-                selectedItems.Add(ao);
-            foreach (AudioOutput ao in VolList3.SelectedItems)
-                selectedItems.Add(ao);
-            foreach (AudioOutput ao in VolList4.SelectedItems)
-                selectedItems.Add(ao);
+            foreach (var volList in volumeListBoxes)
+            {
+                foreach (AudioOutput ao in volList.SelectedItems)
+                    selectedItems.Add(ao);
+            }
 
             foreach (AudioOutput ao in selectedItems)
             {
-                VolList1.Items.Remove(ao);
-                VolList2.Items.Remove(ao);
-                VolList3.Items.Remove(ao);
-                VolList4.Items.Remove(ao);
+                foreach (var volList in volumeListBoxes)
+                    volList.Items.Remove(ao);
                 addAvailableOutput(ao);
             }
         }
 
         /**
          * "Discard Selection" button handler.  Clears the selection highlight
-         * in all four volume list boxes without removing items.
+         * in all volume list boxes without removing items.
          */
         private void discSelBtn_Click(object sender, EventArgs e)
         {
-            VolList1.ClearSelected();
-            VolList2.ClearSelected();
-            VolList3.ClearSelected();
-            VolList4.ClearSelected();
+            foreach (var volList in volumeListBoxes)
+                volList.ClearSelected();
         }
 
-        /** Removes all items from all four volume list boxes. */
+        /** Removes all items from all volume list boxes. */
         private void ClearVolLists()
         {
-            VolList1.Items.Clear();
-            VolList2.Items.Clear();
-            VolList3.Items.Clear();
-            VolList4.Items.Clear();
+            foreach (var volList in volumeListBoxes)
+                volList.Items.Clear();
         }
         #endregion
 
         #region UI Control Event Handlers
-        /** Reverse-knob checkbox handler for Volume 1. Persists immediately. */
-        private void reverseCheckbox1_CheckedChanged(object sender, EventArgs e)
-        {
-            mavcSave.reverseKnob1 = reverseCheckbox1.Checked;
-            save(configSavePath, configFileName);
-        }
-
-        /** Reverse-knob checkbox handler for Volume 2. Persists immediately. */
-        private void reverseCheckbox2_CheckedChanged(object sender, EventArgs e)
-        {
-            mavcSave.reverseKnob2 = reverseCheckbox2.Checked;
-            save(configSavePath, configFileName);
-        }
-
-        /** Reverse-knob checkbox handler for Volume 3. Persists immediately. */
-        private void reverseCheckbox3_CheckedChanged(object sender, EventArgs e)
-        {
-            mavcSave.reverseKnob3 = reverseCheckbox3.Checked;
-            save(configSavePath, configFileName);
-        }
-
-        /** Reverse-knob checkbox handler for Volume 4. Persists immediately. */
-        private void reverseCheckbox4_CheckedChanged(object sender, EventArgs e)
-        {
-            mavcSave.reverseKnob4 = reverseCheckbox4.Checked;
-            save(configSavePath, configFileName);
-        }
-
         /**
-         * Menu-bar "Refresh" handler.  Re-scans audio outputs and reloads
-         * the volume lists from the current config.
+         * Menu-bar "Refresh" handler.  Re-scans audio outputs and updates
+         * the available outputs in combo boxes without rebuilding the UI.
          */
         private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //refresh all audio outputs available + there state
+            logger.Info("User triggered refresh of available audio outputs");
+            // Only refresh available outputs — don't rebuild panels
             refreshAvailableOutputs();
-            loadFromMavcSave();
         }
 
         /**
@@ -1172,9 +1219,12 @@ namespace mavc_target_ui_win
          */
         private void darkModeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            mavcSave.darkMode = !mavcSave.darkMode; // toggle
-            ApplyTheme(mavcSave.darkMode);          // refresh
-            save(configSavePath, configFileName);   // save
+            mavcSave.darkMode = !mavcSave.darkMode;
+            save(configSavePath, configFileName);
+            // Rebuild panels and reapply theme from scratch so combo boxes
+            // get recreated with the correct native styling.
+            loadFromMavcSave();
+            refreshAvailableOutputs();
         }
 
         /**
@@ -1192,29 +1242,49 @@ namespace mavc_target_ui_win
         /** "Reverse Knob Order" settings toggle. Persists immediately. */
         private void reverseKnobOrderToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            mavcSave.reverseKnobOrder = reverseKnobOrderToolStripMenuItem.Checked;
+            mavcSave.reverseKnobOrder = !mavcSave.reverseKnobOrder;
+            reverseKnobOrderToolStripMenuItem.Checked = mavcSave.reverseKnobOrder;
             save(configSavePath, configFileName);
         }
 
-        /** "Enable Debug Mode" settings toggle. Persists immediately. */
+        /** "Enable Debug Mode" settings toggle. Persists and restarts agent immediately. */
         private void enableDebugModeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            mavcSave.enableDebugMode = enableDebugModeToolStripMenuItem.Checked;
+            mavcSave.enableDebugMode = !mavcSave.enableDebugMode;
+            enableDebugModeToolStripMenuItem.Checked = mavcSave.enableDebugMode;
             save(configSavePath, configFileName);
+            RestartAgentProcess();
         }
 
         /** "Minimize on Close" settings toggle. Persists immediately. */
         private void minimizeOnCloseToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            mavcSave.minimizeOnClose = minimizeOnCloseToolStripMenuItem.Checked;
+            mavcSave.minimizeOnClose = !mavcSave.minimizeOnClose;
+            minimizeOnCloseToolStripMenuItem.Checked = mavcSave.minimizeOnClose;
             save(configSavePath, configFileName);
         }
 
         /** "Start Minimized to Systemtray" settings toggle. Persists immediately. */
         private void startMinimizedToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            mavcSave.startMinimized = startMinimizedToolStripMenuItem.Checked;
+            mavcSave.startMinimized = !mavcSave.startMinimized;
+            startMinimizedToolStripMenuItem.Checked = mavcSave.startMinimized;
             save(configSavePath, configFileName);
+        }
+
+        /** "Number of Knobs..." settings handler. Prompts for the number and rebuilds the UI. */
+        private void numberOfKnobsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var dlg = new NumberOfKnobsForm(mavcSave.numberOfKnobs, mavcSave.darkMode))
+            {
+                if (dlg.ShowDialog(this) == DialogResult.OK && dlg.SelectedValue != mavcSave.numberOfKnobs)
+                {
+                    mavcSave.SetNumberOfKnobs(dlg.SelectedValue);
+                    save(configSavePath, configFileName);
+                    loadFromMavcSave();
+                    refreshAvailableOutputs();
+                }
+            }
         }
 
         /** Opens the Overlay Settings dialog. */
@@ -1240,5 +1310,37 @@ namespace mavc_target_ui_win
             throw new NotImplementedException();
         }
         #endregion
+    }
+}
+
+/**
+ * ListBox subclass used for the volume mapping lists.
+ *
+ * Overrides the Windows message handler to ignore left-clicks that land on
+ * empty space below the last item.  Without this override, WinForms'
+ * MultiSimple selection mode would accidentally toggle the first item
+ * whenever the user clicks anywhere in the empty area of the list.
+ *
+ * @see ListBox
+ */
+internal class VolumeListBox : ListBox
+{
+    protected override void WndProc(ref Message m)
+    {
+        const int LeftButtonDown = 0x0201;
+        const int LeftButtonDoubleClick = 0x0203;
+
+        if (m.Msg == LeftButtonDown || m.Msg == LeftButtonDoubleClick)
+        {
+            // LParam encodes the cursor position as two packed 16-bit values.
+            int x = m.LParam.ToInt32() & 0xFFFF;
+            int y = (m.LParam.ToInt32() >> 16) & 0xFFFF;
+
+            // If the click didn't land on any item, swallow the message.
+            if (IndexFromPoint(x, y) == NoMatches)
+                return;
+        }
+
+        base.WndProc(ref m);
     }
 }

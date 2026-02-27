@@ -1,4 +1,3 @@
-﻿using static COM;
 using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -6,7 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-// For console debugging -> change Project > Properties > Windows Application to Console Application
+/**
+ * Background agent that bridges the hardware mixer (serial/COM) with the
+ * Windows audio system.  Reads knob values, maps them to audio sessions
+ * and devices, and optionally shows an on-screen overlay.
+ */
 class MavcAgent
 {
     #region Static Fields
@@ -31,19 +34,9 @@ class MavcAgent
     private static MAVCSave mavcSave = new MAVCSave();
     private static readonly object mavcSaveLock = new object();
 
-    // Per-knob output mappings (each knob controls a list of AudioOutput targets).
-    // Each list has its own lock because updates happen independently.
-    private static readonly List<AudioOutput> aoListVol1 = new List<AudioOutput>();
-    private static readonly object aoList1Lock = new object();
-
-    private static readonly List<AudioOutput> aoListVol2 = new List<AudioOutput>();
-    private static readonly object aoList2Lock = new object();
-
-    private static readonly List<AudioOutput> aoListVol3 = new List<AudioOutput>();
-    private static readonly object aoList3Lock = new object();
-
-    private static readonly List<AudioOutput> aoListVol4 = new List<AudioOutput>();
-    private static readonly object aoList4Lock = new object();
+    // Per-knob output mappings (dynamic, one list per knob).
+    private static List<List<AudioOutput>> aoLists = new List<List<AudioOutput>>();
+    private static List<object> aoListLocks = new List<object>();
 
     // Serial/COM connection to the hardware mixer (reconnected if needed).
     private static COM comServer = null;
@@ -56,48 +49,93 @@ class MavcAgent
     private static bool screenOverlayEnabled = false;
     private static Overlay overlay = null;
 
+    // Maps action characters to knob indices (A=0, B=1, C=2, D=3, ...).
+    private static readonly char[] knobActions = "ABCDEFGHIJKLMNOP".ToCharArray();
+
+    // Unified logger; writes to console + file with timestamps.
+    private static Log logger;
+
+    // Tracks which named outputs were already reported as offline to avoid log spam.
+    // true = last known state was offline; removed from dict = online or never seen.
+    private static readonly Dictionary<string, bool> offlineCache = new Dictionary<string, bool>();
+    private static readonly object offlineCacheLock = new object();
+
+    // Debounce for the audio-session-added callback (fires once per device, coalesce them).
+    private static readonly object sessionDebounceLock = new object();
+    private static System.Threading.Timer sessionDebounceTimer;
+
     #endregion
 
     #region Public Static Methods
 
     /**
-     * Function that interprets the words received from the mixer.
+     * Ensures aoLists and aoListLocks have enough entries for the current numberOfKnobs.
+     */
+    private static void EnsureAoListCapacity()
+    {
+        while (aoLists.Count < mavcSave.numberOfKnobs)
+        {
+            aoLists.Add(new List<AudioOutput>());
+            aoListLocks.Add(new object());
+        }
+    }
+
+    /**
+     * Interprets a word received from the hardware mixer and dispatches
+     * the corresponding volume change to the correct knob handler.
      *
-     * <param name="word">The word to be interpreted (see COM class).</param>
+     * @param word  the word to be interpreted (see COM class)
      */
     public static void interpretWord(COM.Word word)
     {
         char action = word.action;
         string arg = word.args;
 
-        // Optional knob order reversal (swap A<->D and B<->C).
-        if (mavcSave.reverseKnobOrder)
+        int knobCount = mavcSave.numberOfKnobs;
+
+        // Optional knob order reversal (mirror: first <-> last, etc.).
+        if (mavcSave.reverseKnobOrder && knobCount > 0)
         {
-            action = action switch
+            int idx = Array.IndexOf(knobActions, action);
+            if (idx >= 0 && idx < knobCount)
             {
-                'A' => 'D',
-                'B' => 'C',
-                'C' => 'B',
-                'D' => 'A',
-                _ => action
-            };
+                int reversed = knobCount - 1 - idx;
+                action = knobActions[reversed];
+            }
         }
 
         // Dispatch to the correct knob handler.
-        switch (action)
+        int knobIndex = Array.IndexOf(knobActions, action);
+        if (knobIndex < 0 || knobIndex >= knobCount)
+            return;
+
+        bool reverse = knobIndex < mavcSave.reverseKnobs.Count && mavcSave.reverseKnobs[knobIndex];
+
+        // Use the pre-resolved output lists (kept up-to-date by the interval updater).
+        List<AudioOutput> outputs;
+        if (knobIndex < aoLists.Count)
         {
-            case 'A': HandleKnob(1, arg, mavcSave.reverseKnob1, aoListVol1); break;
-            case 'B': HandleKnob(2, arg, mavcSave.reverseKnob2, aoListVol2); break;
-            case 'C': HandleKnob(3, arg, mavcSave.reverseKnob3, aoListVol3); break;
-            case 'D': HandleKnob(4, arg, mavcSave.reverseKnob4, aoListVol4); break;
-            default: throw new InvalidDataException();
+            lock (aoListLocks[knobIndex])
+            {
+                outputs = new List<AudioOutput>(aoLists[knobIndex]);
+            }
         }
+        else
+        {
+            outputs = new List<AudioOutput>();
+        }
+
+        HandleKnob(knobIndex + 1, arg, reverse, outputs);
     }
 
     // Sets up FileSystemWatcher to reload config when config.json changes.
     private static readonly object confDebounceLock = new object();
     private static System.Threading.Timer confDebounceTimer;
 
+    /**
+     * Initializes a FileSystemWatcher that reloads the configuration
+     * whenever config.json is modified on disk.
+     */
     public static void SetupConfUpdater()
     {
         watcher = new FileSystemWatcher
@@ -116,13 +154,16 @@ class MavcAgent
                 confDebounceTimer = new System.Threading.Timer(_ =>
                 {
                     try { UpdateMAVCSave(); }
-                    catch { /* log */ }
-                }, null, 50, Timeout.Infinite); // 50ms: tweak
+                    catch (Exception ex) { logger?.Error($"Config reload failed: {ex.Message}"); }
+                }, null, 50, Timeout.Infinite);
             }
         };
     }
 
-    // Reads config.json and refreshes audio mappings.
+    /**
+     * Reads config.json from disk and refreshes the audio output mappings.
+     * If only the overlay position changed, the heavy rebuild is skipped.
+     */
     public static void UpdateMAVCSave()
     {
         MAVCSave loaded;
@@ -131,14 +172,19 @@ class MavcAgent
         {
             string json = File.ReadAllText(configFilePath);
             loaded = JsonConvert.DeserializeObject<MAVCSave>(json) ?? new MAVCSave();
+            loaded.EnsureCapacity();
 
-            bool onlyOverlayChanged =
-                loaded.overlayX != mavcSave.overlayX ||
-                loaded.overlayY != mavcSave.overlayY;
+            // Only skip heavy rebuild when ONLY overlay position changed
+            bool onlyOverlayMoved =
+                (loaded.overlayX != mavcSave.overlayX || loaded.overlayY != mavcSave.overlayY) &&
+                loaded.numberOfKnobs == mavcSave.numberOfKnobs &&
+                loaded.reverseKnobOrder == mavcSave.reverseKnobOrder &&
+                loaded.enableScreenOverlay == mavcSave.enableScreenOverlay;
 
             mavcSave = loaded;
+            EnsureAoListCapacity();
 
-            if (onlyOverlayChanged && screenOverlayEnabled && overlay != null)
+            if (onlyOverlayMoved && screenOverlayEnabled && overlay != null)
             {
                 overlay.SetOverlayPosition(mavcSave.overlayX, mavcSave.overlayY);
                 return; // skip heavy rebuild
@@ -153,16 +199,18 @@ class MavcAgent
     }
 
 
-    // Rebuild all knob->AudioOutput mappings from the current config.
+    /** Rebuilds all knob-to-AudioOutput mappings from the current config. */
     public static void UpdateAllAOs()
     {
         // Lock config during rebuild to keep it consistent across all lists.
         lock (mavcSaveLock)
         {
-            UpdateAOsList(aoListVol1, aoList1Lock, mavcSave.AOsVol1);
-            UpdateAOsList(aoListVol2, aoList2Lock, mavcSave.AOsVol2);
-            UpdateAOsList(aoListVol3, aoList3Lock, mavcSave.AOsVol3);
-            UpdateAOsList(aoListVol4, aoList4Lock, mavcSave.AOsVol4);
+            EnsureAoListCapacity();
+
+            for (int i = 0; i < mavcSave.numberOfKnobs && i < mavcSave.volumeMappings.Count; i++)
+            {
+                UpdateAOsList(aoLists[i], aoListLocks[i], mavcSave.volumeMappings[i]);
+            }
         }
     }
 
@@ -174,64 +222,115 @@ class MavcAgent
      * Converts the raw knob value into a 0..1 volume value (optionally reversed),
      * applies it to all mapped targets, and updates the overlay.
      *
-     * <param name="knobIndex">Knob number (1..4).</param>
-     * <param name="arg">Raw device argument (typically "0".."100").</param>
-     * <param name="reverse">If true, invert the knob direction.</param>
-     * <param name="outputs">Resolved output targets controlled by this knob.</param>
+     * @param knobIndex  knob number (1..N)
+     * @param arg        raw device argument (typically "0".."100")
+     * @param reverse    if true, invert the knob direction
+     * @param outputs    resolved output targets controlled by this knob
      */
     private static void HandleKnob(int knobIndex, string arg, bool reverse, List<AudioOutput> outputs)
     {
-        // Device sends 0..100 as text.
         float raw = int.Parse(arg);
 
-        // Keep the exact logic you had (including the special-case raw==0 behavior).
         float value = reverse
-            ? (raw > 0 ? 1f - raw / 100f : 100)
+            ? (raw > 0 ? 1f - raw / 100f : 1f)
             : (raw > 0 ? raw / 100f : 0);
 
-        Console.WriteLine($"Set Volume {knobIndex}: {value}");
+        int pct = (int)(value * 100);
+
+        // Bar: 4 segments, each lights up at 25/50/75/100%.
+        // Even 1% shows one '=' so the bar is never misleadingly blank.
+        int filled = pct == 0 ? 0 : Math.Max(1, (int)Math.Round(value * 4));
+        string bar = new string('=', filled).PadRight(4);
+
+        // {pct,3} right-aligns in 3 chars: "  0", "  1" .. " 99", "100"
+        logger?.Info($"[Knob {knobIndex}] {pct,3}% [{bar}] -> {outputs.Count} target(s)");
 
         // Apply volume to all mapped targets.
         foreach (AudioOutput ao in outputs)
-            ao?.SetVolume(value);
+        {
+            try
+            {
+                if (ao != null)
+                    ao.SetVolume(value);
+            }
+            catch (Exception ex)
+            {
+                logger?.Error($"  !! {ao?.GetName()}: {ex.Message}");
+            }
+        }
 
-        // Best-effort overlay update (overlay object is created only if enabled at startup).
-        if (screenOverlayEnabled)
+        // Best-effort overlay update
+        if (screenOverlayEnabled && overlay != null)
             overlay.setUpdatedVolume($"Knob {knobIndex}", (int)(value * 100));
     }
 
-    // Rebuilds one mapping list from config:
-    // - Normal entries: resolve outputs by name.
-    // - Function entries: create synthetic outputs (Focused, Other Apps).
+    /**
+     * Rebuilds one mapping list from the config.  Normal entries are resolved
+     * by name; function entries create synthetic outputs (Focused, Other Apps).
+     *
+     * @param target      the list of AudioOutput targets to rebuild
+     * @param targetLock  lock object protecting the target list
+     * @param config      configured audio outputs to resolve
+     */
     private static void UpdateAOsList(List<AudioOutput> target, object targetLock, IEnumerable<MAVCSave.AudioOutput> config)
     {
         lock (targetLock)
         {
+            int previousCount = target.Count;
             target.Clear();
 
             foreach (MAVCSave.AudioOutput ao in config)
             {
-                if (!ao.type.Equals("Function"))
+                try
                 {
-                    target.AddRange(audioContr.GetOutputsByName(ao.name));
+                    if (!ao.type.Equals("Function"))
+                    {
+                        var resolved = audioContr.GetOutputsByName(ao.name);
+                        bool isOffline = resolved.Count == 0;
+
+                        lock (offlineCacheLock)
+                        {
+                            bool wasOffline = !offlineCache.TryGetValue(ao.name, out bool cached) ? false : cached;
+
+                            if (isOffline && !wasOffline)
+                            {
+                                logger?.Warning($"'{ao.name}' went offline (not running or no audio)");
+                                offlineCache[ao.name] = true;
+                            }
+                            else if (!isOffline && wasOffline)
+                            {
+                                logger?.Info($"'{ao.name}' is back online");
+                                offlineCache[ao.name] = false;
+                            }
+                            else if (!isOffline)
+                            {
+                                offlineCache[ao.name] = false;
+                            }
+                        }
+
+                        target.AddRange(resolved);
+                    }
+                    else if (ao.name.Equals("Focused"))
+                    {
+                        target.Add(new AudioFocused(audioContr));
+                    }
+                    else if (ao.name.Equals("Other Apps"))
+                    {
+                        target.Add(new AudioOtherApps(audioContr, mavcSave));
+                    }
                 }
-                else if (ao.name.Equals("Focused"))
+                catch (Exception ex)
                 {
-                    target.Add(new AudioFocused(audioContr));
-                }
-                else if (ao.name.Equals("Other Apps"))
-                {
-                    target.Add(new AudioOtherApps(audioContr, mavcSave));
-                }
-                else
-                {
-                    throw new NotImplementedException();
+                    logger?.Error($"Failed to resolve '{ao.name}': {ex.Message}");
                 }
             }
+
+            if (target.Count != previousCount)
+                logger?.Info($"Targets updated: {previousCount} -> {target.Count}");
         }
     }
 
-    // Opens a console and redirects stdout/stderr so Console.WriteLine() is visible.
+    /** Opens a console and redirects stdout/stderr so Console.WriteLine() is visible. */
     private static void enableDebugWindow()
     {
         if (!AllocConsole())
@@ -243,78 +342,85 @@ class MavcAgent
         Console.SetError(writer);
         Console.OutputEncoding = Encoding.UTF8;
 
-        Console.WriteLine("Console allocated.");
-        Console.Title = "MAVC Agent Debug";
+        Console.Title = "MAVC Agent";
     }
 
     #endregion
 
     #region Main Method
 
+    /**
+     * Application entry point.  Loads the configuration, starts the overlay
+     * and periodic-refresh tasks, then enters the main reconnect loop for
+     * the hardware COM connection.
+     *
+     * @param args  command-line arguments (unused)
+     */
     static void Main(string[] args)
     {
-        // Make sure folder exists (prevents FileSystemWatcher/path issues)
-        try
-        {
-            Directory.CreateDirectory(configSavePath);
-        }
-        catch { }
+        try { Directory.CreateDirectory(configSavePath); } catch { }
+
+        // initialize logger first; capture subsequent messages
+        logger = new Log(Path.Combine(configSavePath, "agent-log.txt"));
 
         bool foundFile = false;
 
-        // Load config
         while (!foundFile)
         {
             try
             {
                 if (File.Exists(configFilePath))
                 {
-                    UpdateMAVCSave();          // IMPORTANT: this must use DeserializeObject<MAVCSave>(...)
+                    UpdateMAVCSave();
                     SetupConfUpdater();
                     foundFile = true;
 
                     if (mavcSave.enableDebugMode)
-                        enableDebugWindow();   // AllocConsole BEFORE any Console.WriteLine you care about
+                        enableDebugWindow();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                logger.Error($"Config load failed: {ex.Message}");
                 Thread.Sleep(5000);
             }
         }
 
-        Console.WriteLine("Started Mavc Debug-Console");
+        logger.Info("============================================================");
+        logger.Info("         MAVC Agent - Multi-App Volume Control              ");
+        logger.Info("============================================================");
+        logger.Info($"Agent:  {AppDomain.CurrentDomain.BaseDirectory}");
+        logger.Info($"Config: {configFilePath}");
 
-        Log logger = new Log(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "MAVC",
-            "agent-log.txt"
-        ));
-
-        // If the audio system reports a new output/session, refresh mappings and request current hardware volumes.
         audioContr.onOutputAddedCallback((sender, newSession) =>
         {
-            Console.WriteLine("new audio output found!");
-            logger.Info("A new output was found and added to the agent.");
-            audioContr.InvalidateCache();
-            lock (mavcSaveLock) { UpdateAllAOs(); }
-            comServer?.updateVolumes();
+            // The event fires once per audio device; debounce into a single refresh.
+            lock (sessionDebounceLock)
+            {
+                sessionDebounceTimer?.Dispose();
+                sessionDebounceTimer = new System.Threading.Timer(_ =>
+                {
+                    logger.Info("New audio session detected - refreshing mappings");
+                    audioContr.InvalidateCache();
+                    lock (mavcSaveLock) { UpdateAllAOs(); }
+                    comServer?.updateVolumes();
+                }, null, 500, Timeout.Infinite);
+            }
         });
 
-        // Periodically refresh mappings in case sessions change without triggering the callback.
         Task intervalUpdater = new Task(() =>
         {
             while (true)
             {
+                audioContr.InvalidateCache();
                 lock (mavcSaveLock) { UpdateAllAOs(); }
                 Thread.Sleep(10_000);
             }
         });
         intervalUpdater.Start();
 
-        // Overlay
         screenOverlayEnabled = mavcSave.enableScreenOverlay;
-        Console.WriteLine("overlay enabled: " + screenOverlayEnabled);
+        logger.Info($"Overlay: {(screenOverlayEnabled ? "Enabled" : "Disabled")}");
 
         if (screenOverlayEnabled)
         {
@@ -332,24 +438,24 @@ class MavcAgent
             ui.Start();
         }
 
-        // Main reconnect loop for the hardware COM connection.
+        logger.Info("------------------------------------------------------------");
         while (true)
         {
             try
             {
                 if (comServer == null || !comServer.IsOpen())
                 {
-                    Console.WriteLine("Waiting for hardware to connect (COM3, 9600).");
+                    logger.Info("Waiting for hardware (COM3, 9600 baud)...");
                     comServer = new COM("COM3", 9600);
-                    Console.WriteLine("Hardware connected.");
+                    comServer.SetErrorLogger((msg) => logger.Error($"COM error: {msg}"));
+                    logger.Info("Hardware connected");
 
-                    // Start parsing incoming words and route them to interpretWord().
                     comServer.OnWordStreamReceive(MavcAgent.interpretWord);
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("An error occured: " + e);
+                logger.Error($"Connection error: {e.Message}");
                 Thread.Sleep(1000);
             }
 

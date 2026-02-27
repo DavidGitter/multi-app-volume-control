@@ -33,17 +33,22 @@ class AudioOtherApps : AudioOutput
         List<AudioApp> aos = ac.GetAllAudioApps();
         foreach (AudioApp app in aos)
         {
-            if( !save.AOsVol1.Any(o => o.name.Equals(app.GetName())) &&
-                !save.AOsVol2.Any(o => o.name.Equals(app.GetName())) &&
-                !save.AOsVol3.Any(o => o.name.Equals(app.GetName())) &&
-                !save.AOsVol4.Any(o => o.name.Equals(app.GetName()))) {
+            bool isSelected = false;
+            if (save.volumeMappings != null)
+            {
+                foreach (var mapping in save.volumeMappings)
+                {
+                    if (mapping != null && mapping.Any(o => o.name.Equals(app.GetName())))
+                    {
+                        isSelected = true;
+                        break;
+                    }
+                }
+            }
+            if (!isSelected)
+            {
                 otherApps.Add(app);
             }
-        }
-
-        foreach (AudioApp app in otherApps)
-        {
-            Console.WriteLine(app.GetName());
         }
     }
 

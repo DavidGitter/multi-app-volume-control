@@ -11,6 +11,9 @@ class COM
     //stores the callback function for the receiver
     private Action<Word> onReceiveFunc;
 
+    //stores the callback function for logging errors
+    private Action<string> onErrorLogFunc;
+
     /**
      * a class that expresses a word (command/data) in the com protocoll
      */
@@ -123,7 +126,7 @@ class COM
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                onErrorLogFunc?.Invoke(ex.Message);
             }
         }
     }
@@ -136,6 +139,16 @@ class COM
     public void OnWordStreamReceive(Action<Word> wordInterpreter)
     {
         this.onReceiveFunc = wordInterpreter;
+    }
+
+    /**
+     * Function to set the callback function for error logging
+     * 
+     * @param errorLogger   the function that handles error logging
+     */
+    public void SetErrorLogger(Action<string> errorLogger)
+    {
+        this.onErrorLogFunc = errorLogger;
     }
 
     /**
