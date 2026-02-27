@@ -4,7 +4,7 @@ using System.Windows.Forms;
 namespace mavc_target_ui_win
 {
     /**
-     * Dialog that lets the user choose the number of hardware knobs (1–16).
+     * Dialog that lets the user choose the number of hardware knobs (1–6).
      *
      * Extracted from the inline Form creation in Form1 so that the layout,
      * theming, and result property are defined in one dedicated place.
@@ -44,7 +44,7 @@ namespace mavc_target_ui_win
             _nud = new NumericUpDown
             {
                 Minimum = 1,
-                Maximum = 16,
+                Maximum = 6,
                 Value = currentValue,
                 Location = new Point(180, 12),
                 Size = new Size(60, 20)
