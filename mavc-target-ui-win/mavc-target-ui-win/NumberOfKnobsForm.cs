@@ -36,7 +36,7 @@ namespace mavc_target_ui_win
 
             var lbl = new Label
             {
-                Text = "Number of knobs (1-16):",
+                Text = "Number of knobs (1-6):",
                 Location = new Point(12, 15),
                 AutoSize = true
             };
