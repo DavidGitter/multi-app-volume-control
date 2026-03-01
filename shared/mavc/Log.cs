@@ -24,7 +24,7 @@ class Log
 
     private void Write(string level, string content)
     {
-        string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} | {level,-7} | {content}";
+        string line = $"{DateTime.Now:HH:mm:ss.fff} | {level,-7} | {content}";
 
         // Mirror to console (no-op before AllocConsole, harmless after).
         Console.WriteLine(line);

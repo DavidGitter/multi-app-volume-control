@@ -57,7 +57,7 @@ class COM
      */
     public String GetPortName()
     {
-        return serialPort.PortName;    
+        return serialPort.PortName;
     }
 
     /**
@@ -76,7 +76,8 @@ class COM
     * @param action    a letter that is related to a action or data (freely chooseable)
     * @param args      the data in form of a string (formless)
     */
-    public void sendCommand(char action, String args) {
+    public void sendCommand(char action, String args)
+    {
         serialPort.Write(action + "," + args + "#");
     }
 
@@ -93,12 +94,11 @@ class COM
     * @param action    a letter that is related to a action or data (freely chooseable)
     * @param args      the data in form of a string (formless)
     */
-    public  void sendCommand(Word w)
+    public void sendCommand(Word w)
     {
         serialPort.Write(w.ToString());
     }
 
-    /*** ########## RECEIVER */
 
     /**
     * A callback funtion that gets triggered on data input
@@ -108,12 +108,10 @@ class COM
     */
     private void receivingCallbackProxy(object sender, SerialDataReceivedEventArgs e)
     {
-
-        //Console.WriteLine("Info: Received data stream");
         while (serialPort.BytesToRead > 0)
         {
             char rbyte = (char)serialPort.ReadByte();
-            String word = "";
+            string word = "";
             while (rbyte != '#')
             {
                 word += rbyte;
@@ -126,7 +124,9 @@ class COM
             }
             catch (Exception ex)
             {
-                onErrorLogFunc?.Invoke(ex.Message);
+                // log raw word
+                onErrorLogFunc?.Invoke($"{ex.Message} | raw: '{word}' ({word.Length} chars, bytes: {string.Join(" ",
+                    System.Text.Encoding.ASCII.GetBytes(word).Select(b => b.ToString("X2")))})");
             }
         }
     }
@@ -169,7 +169,7 @@ class COM
      */
     private Word extractWord(String word)
     {
-        char action = word.ElementAt(0);   
+        char action = word.ElementAt(0);
         char sep = word.ElementAt(1);
         String arg = word.Substring(2);
 

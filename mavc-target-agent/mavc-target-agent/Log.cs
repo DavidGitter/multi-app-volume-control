@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.IO;
+using System.Text;
 
 /**
  * Singleton logger class that writes timestamped log entries to both console and file.
@@ -9,14 +10,14 @@ using System.IO;
  */
 class Log
 {
-    private static Log _instance;
+    private static Log? instance;
 
     /**
      * Gets the singleton instance of the logger.
      * 
      * @return the current Log instance
      */
-    public static Log Instance => _instance;
+    public static Log? Instance => instance;
 
     private readonly string logFilePath;
     private readonly object fileLock = new object();
@@ -30,7 +31,7 @@ class Log
     public Log(string logFilePath)
     {
         this.logFilePath = logFilePath;
-        _instance = this;
+        instance = this;
 
         // Ensure directory exists and start with a fresh file.
         Directory.CreateDirectory(Path.GetDirectoryName(logFilePath)!);
@@ -48,7 +49,7 @@ class Log
      */
     private void Write(string level, string content)
     {
-        string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} | {level,-7} | {content}";
+        string line = $"{DateTime.Now:HH:mm:ss.fff} | {level,-7} | {content}";
 
         // Mirror to console (no-op before AllocConsole, harmless after).
         Console.WriteLine(line);
@@ -56,12 +57,16 @@ class Log
         // Append to log file.
         lock (fileLock)
         {
-            using StreamWriter sw = new StreamWriter(logFilePath, append: true);
+            // FileShare.ReadWrite prevents IOException
+            using var fs = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+            using var sw = new StreamWriter(fs, Encoding.UTF8) { AutoFlush = true };
             sw.WriteLine(line);
         }
     }
 
     public void Info(string content) => Write("INFO", content);
+
+    public void Mixer(string content) => Write("MIXER", content);
 
     public void Warning(string content) => Write("WARNING", content);
 

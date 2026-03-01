@@ -339,7 +339,7 @@ namespace mavc_target_ui_win
                     string buildConfig = Path.GetFileName(normalizedBase); // "Debug" or "Release"
                     isDevelopment = true;
                     devAgentPath = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..",
-                        "mavc-target-agent", "mavc-target-agent", "bin", buildConfig, "net6.0-windows", "mavc-target-agent.exe"));
+                        "mavc-target-agent", "mavc-target-agent", "bin", buildConfig, "net8.0-windows", "mavc-target-agent.exe"));
                 }
 
                 string[] possiblePaths;
