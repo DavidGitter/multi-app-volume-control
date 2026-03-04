@@ -311,7 +311,16 @@ class MavcAgent
         {
             // Release COM / unmanaged resources held by the previous outputs.
             foreach (AudioOutput ao in target)
-                (ao as IDisposable)?.Dispose();
+            {
+                try
+                {
+                    (ao as IDisposable)?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    logger?.Error($"Error disposing AudioOutput '{ao?.GetName()}': {ex.Message}");
+                }
+            }
             target.Clear();
 
             foreach (MAVCSave.AudioOutput ao in config)
