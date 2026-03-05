@@ -1,6 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
+/**
+ * Singleton logger class that writes timestamped log entries to both console and file.
+ * 
+ * Provides thread-safe logging with support for different log levels (INFO, WARNING, ERROR, MIXER).
+ * All log messages are formatted with timestamps and severity levels.
+ */
 class Log
 {
     private static Log _instance;
@@ -14,9 +21,9 @@ class Log
         this.logFilePath = logFilePath;
         _instance = this;
 
-        // Ensure directory exists and start with a fresh file.
         string logDir = Path.GetDirectoryName(logFilePath);
-        Directory.CreateDirectory(logDir);
+        if (!string.IsNullOrEmpty(logDir))
+            Directory.CreateDirectory(logDir);
         File.WriteAllText(logFilePath, string.Empty);
 
         Write("INFO", "Logger started");
@@ -24,22 +31,21 @@ class Log
 
     private void Write(string level, string content)
     {
-        string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} | {level,-7} | {content}";
-
-        // Mirror to console (no-op before AllocConsole, harmless after).
+        string line = string.Format("{0:HH:mm:ss.fff} | {1,-7} | {2}", DateTime.Now, level, content);
         Console.WriteLine(line);
 
-        // Append to log file.
         lock (fileLock)
         {
-            using (StreamWriter sw = new StreamWriter(logFilePath, append: true))
+            using (var fs = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+            using (var sw = new StreamWriter(fs, Encoding.UTF8))
             {
                 sw.WriteLine(line);
             }
         }
     }
 
-    public void Info(string content)    => Write("INFO",    content);
-    public void Warning(string content) => Write("WARNING", content);
-    public void Error(string content)   => Write("ERROR",   content);
+    public void Info(string content) { Write("INFO", content); }
+    public void Mixer(string content) { Write("MIXER", content); }
+    public void Warning(string content) { Write("WARNING", content); }
+    public void Error(string content) { Write("ERROR", content); }
 }
