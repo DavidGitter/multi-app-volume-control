@@ -1,5 +1,26 @@
+/**
+ * @file ADC.cpp
+ * @brief Implementation of ADC class for analog input and filtering
+ */
 #include "ADC.h"
 
+/**
+ * @brief Default constructor
+ */
+ADC::ADC() {
+    portPin = -1;
+    map_min = 0;
+    map_max = 100;
+    lastVal = -1;
+    filtVal = -1;
+}
+
+/**
+ * @brief Parameterized constructor
+ * @param portPin GPIO pin number
+ * @param map_max Maximum mapped value
+ * @param map_min Minimum mapped value
+ */
 ADC::ADC(int portPin, int map_max, int map_min) {
     this->map_min = map_min;
     this->map_max = map_max;
