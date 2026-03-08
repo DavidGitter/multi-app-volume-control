@@ -11,8 +11,8 @@ COMClient cc("COM3", 9600);
  *   ADC1 (safe with Wi-Fi): 32, 33, 34, 35, 36 (VP), 39 (VN)
  *   ADC2 (not safe with Wi-Fi): 0, 2, 4, 12, 13, 14, 15, 25, 26, 27
  */
-int potiPins[] = {36, 39, 34, 35, 32};
-const int POTI_COUNT = sizeof(potiPins) / sizeof(potiPins[0]); // Hardcoded for now
+int potiPins[] = {36, 39, 34, 35, 32}; // Hardcoded for now
+const int POTI_COUNT = sizeof(potiPins) / sizeof(potiPins[0]);
 
 TemporalTresholdLock tta[POTI_COUNT];
 int lastVol[POTI_COUNT];
