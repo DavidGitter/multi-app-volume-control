@@ -5,6 +5,7 @@
 
 class ADC {
 public:
+    ADC(); // Default constructor
     ADC(int portPin, int map_max = 100, int map_min = 0);
 
     int getValue(); // filtered + hysteresis

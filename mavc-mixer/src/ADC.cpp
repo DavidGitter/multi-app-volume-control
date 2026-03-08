@@ -1,4 +1,12 @@
 #include "ADC.h"
+// Default constructor implementation
+ADC::ADC() {
+    portPin = -1;
+    map_min = 0;
+    map_max = 100;
+    lastVal = -1;
+    filtVal = -1;
+}
 
 ADC::ADC(int portPin, int map_max, int map_min) {
     this->map_min = map_min;
