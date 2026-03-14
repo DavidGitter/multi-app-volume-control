@@ -34,7 +34,8 @@ namespace mavc_target_ui_win
         public static string selectedFilePath = configSavePath;
 
         private List<AudioOutput> availableOutputs;
-        private static MAVCSave mavcSave;
+
+        private static MAVCSave mavcSave; // the most recent mavc save (including unsaved changes)
 
         // general purpose timer for updating etc.
         Timer updateTimer = new Timer();
@@ -214,26 +215,13 @@ namespace mavc_target_ui_win
                 groupBox.TabStop = false;
                 groupBox.Padding = new Padding(6, 4, 6, 6);
 
-                // Reverse Knob checkbox
-                var reverseCheckbox = new CheckBox();
-                reverseCheckbox.AutoSize = true;
-                reverseCheckbox.Dock = DockStyle.Top;
-                reverseCheckbox.Text = "Reverse Knob";
-                reverseCheckbox.UseVisualStyleBackColor = true;
-                reverseCheckbox.Padding = new Padding(0, 4, 0, 2);
-                reverseCheckbox.CheckedChanged += (sender, e) =>
-                {
-                    if (isLoadingConfig) return;
-                    if (index < mavcSave.reverseKnobs.Count)
-                    {
-                        mavcSave.reverseKnobs[index] = reverseCheckbox.Checked;
-                        save(configSavePath, configFileName);
-                    }
-                };
+                // Panel für ComboBox + Button
+                var comboPanel = new Panel();
+                comboPanel.Dock = DockStyle.Top;
 
                 // Add Volume combo box
                 var addVolCombo = new ComboBox();
-                addVolCombo.Dock = DockStyle.Top;
+                addVolCombo.Dock = DockStyle.Fill;
                 addVolCombo.DropDownStyle = ComboBoxStyle.DropDownList;
                 addVolCombo.FormattingEnabled = true;
                 addVolCombo.SelectedIndexChanged += (sender, e) =>
@@ -247,6 +235,39 @@ namespace mavc_target_ui_win
                     }
                 };
 
+                // Panelhöhe = echte Comboboxhöhe
+                comboPanel.Height = addVolCombo.PreferredHeight;
+
+                // Add knob settings button
+                Button knobSettingsBtn = new Button();
+                knobSettingsBtn.Text = "⚙";
+                knobSettingsBtn.Dock = DockStyle.Right;
+                knobSettingsBtn.Width = addVolCombo.PreferredHeight; // quadratisch
+
+                knobSettingsBtn.Click += (sender, e) =>
+                {
+                    using (var dlg = new KnobSettingsForm(index, mavcSave, mavcSave.darkMode))
+                    {
+                        dlg.KeyDown += (sender2, e2) =>
+                        {
+                            if (e2.KeyCode == Keys.Escape)
+                            {
+                                dlg.Close();
+                            }
+                        };
+                        if (dlg.ShowDialog(this) == DialogResult.OK)
+                        {
+                            save(configSavePath, configFileName);
+                            loadFromMavcSave();
+                            refreshAvailableOutputs();
+                        }
+                    }
+                };
+
+                // Controls ins Panel
+                comboPanel.Controls.Add(addVolCombo);
+                comboPanel.Controls.Add(knobSettingsBtn);
+
                 // Spacer between combo and list
                 var spacer = new Panel();
                 spacer.Dock = DockStyle.Top;
@@ -259,19 +280,17 @@ namespace mavc_target_ui_win
                 volList.IntegralHeight = false;
                 volList.SelectionMode = SelectionMode.MultiSimple;
 
-                // Add controls bottom-up so Dock stacking works correctly:
-                // Fill (volList) first, then top items stack from top
+                // Reihenfolge (bottom → top)
                 groupBox.Controls.Add(volList);
                 groupBox.Controls.Add(spacer);
-                groupBox.Controls.Add(addVolCombo);
-                groupBox.Controls.Add(reverseCheckbox);
+                groupBox.Controls.Add(comboPanel);
 
                 tableLayoutPanel1.Controls.Add(groupBox, i, 0);
 
                 volumeGroupBoxes.Add(groupBox);
                 volumeListBoxes.Add(volList);
                 addVolumeComboBoxes.Add(addVolCombo);
-                reverseCheckboxes.Add(reverseCheckbox);
+
             }
 
             tableLayoutPanel1.ResumeLayout(true);
@@ -1003,6 +1022,17 @@ namespace mavc_target_ui_win
             // Load UI settings (always apply, independent of volume loading)
             try
             {
+
+                // init pin mapping list
+                if (mavcSave.pinMappings.Count == 0)
+                {
+                    mavcSave.pinMappings.Clear();
+                    for (int i = 0; i < mavcSave.numberOfKnobs; i++)
+                    {
+                        mavcSave.pinMappings.Add(0);
+                    }
+                }
+
                 // update knob-reversed checkboxes
                 for (int i = 0; i < knobCount && i < reverseCheckboxes.Count; i++)
                 {
