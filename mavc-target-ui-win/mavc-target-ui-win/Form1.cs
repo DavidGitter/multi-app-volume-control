@@ -94,17 +94,14 @@ namespace mavc_target_ui_win
             base.OnLoad(e);
             if (mavcSave != null && mavcSave.startMinimized)
             {
-                // Move off-screen, show, force layout, then hide
-                var originalLocation = this.Location;
-                this.Location = new System.Drawing.Point(-2000, -2000);
-                this.Show();
-                this.WindowState = FormWindowState.Normal;
-                this.Refresh();
-                System.Windows.Forms.Application.DoEvents();
-                this.Hide();
-                this.Location = originalLocation;
                 this.WindowState = FormWindowState.Minimized;
                 this.ShowInTaskbar = false;
+
+                // Immediately hide the form
+                this.BeginInvoke(new System.Action(() =>
+                {
+                    this.Hide();
+                }));
             }
         }
 
@@ -118,9 +115,6 @@ namespace mavc_target_ui_win
             {
                 //load list of apps and devices
                 InitializeComponent();
-
-                // Add handler to force repaint of dropdowns when form becomes visible
-                this.VisibleChanged += Form1_VisibleChanged;
 
                 // Initialize system tray icon
                 InitializeTrayIcon();
@@ -1316,18 +1310,6 @@ namespace mavc_target_ui_win
             throw new NotImplementedException();
         }
         #endregion
-        // Forces repaint of dropdowns when form is shown from tray/minimized state
-        private void Form1_VisibleChanged(object sender, EventArgs e)
-        {
-            if (this.Visible)
-            {
-                foreach (var combo in addVolumeComboBoxes)
-                {
-                    combo.Invalidate();
-                    combo.Update();
-                }
-            }
-        }
     }
 }
 
