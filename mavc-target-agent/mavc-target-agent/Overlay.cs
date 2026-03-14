@@ -170,8 +170,12 @@ public class Overlay : Form
 
         // Push initial "Ready" bitmap.
         RenderAndApplyLayer();
-    }
 
+        // Auto-hide "Ready" after 3 seconds
+        _hideCts?.Cancel();
+        _hideCts = new CancellationTokenSource();
+        AutoHideAsync(3, _hideCts.Token);
+    }
 
     #endregion
 
@@ -206,7 +210,7 @@ public class Overlay : Form
 
     private void DrawText(Graphics g)
     {
-        // "Ready" until knob data, then "Knob X: N".
+        // "Ready" dialogue when overlay starts
         string text = _hasData ? $"{_label}: {_value}" : "Ready";
 
         // Use a Windows UI font; bold improves legibility over games/video.
