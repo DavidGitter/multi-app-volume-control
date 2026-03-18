@@ -259,7 +259,7 @@ namespace mavc_target_ui_win
                         {
                             save(configSavePath, configFileName);
                             loadFromMavcSave();
-                            refreshAvailableOutputs();
+                            //refreshAvailableOutputs();
                         }
                     }
                 };

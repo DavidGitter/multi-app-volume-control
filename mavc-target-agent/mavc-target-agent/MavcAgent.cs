@@ -1,8 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 /**
@@ -72,6 +70,8 @@ class MavcAgent
     // Semaphore is released exactly once per idle→pending transition per knob.
     private static readonly SemaphoreSlim workAvailable = new SemaphoreSlim(0, int.MaxValue);
 
+    private static bool initializedPins = false;
+
     #endregion
 
     #region Static Constructor
@@ -108,6 +108,11 @@ class MavcAgent
         char action = word.action;
         string arg = word.args;
         int knobCount = mavcSave.numberOfKnobs;
+
+        if(action == 'Q') { //Debug Answer from mixer: print and return
+            logger.Info("Mixer - Message: " + arg);
+            return;
+        }
 
         if (mavcSave.reverseKnobOrder && knobCount > 0)
         {
@@ -383,6 +388,21 @@ class MavcAgent
 
     #endregion
 
+    // initializes all pins of the microcontroller at agent startup
+    private static void handlePinInitialization(COM comServer)
+    {
+        if (!initializedPins) {
+            String dotSeperatedPins = "";
+            foreach(int i in mavcSave.pinMappings)
+            {
+                dotSeperatedPins += i + ".";
+            }
+            COM.Word w = new COM.Word('V', dotSeperatedPins);
+            comServer.sendCommand(w); // starting with ("A", pin[0]) the agent sends the pins to the mixer
+            logger.Info("Send pin mappings: " + w.args);
+        }
+    }
+
     #region Main Method
 
     /**
@@ -498,18 +518,22 @@ class MavcAgent
         }
 
         logger.Info("------------------------------------------------------------");
+
         while (true)
         {
             try
             {
                 if (comServer == null || !comServer.IsOpen())
                 {
-                    logger.Info("Waiting for hardware (COM3, 9600 baud)...");
-                    comServer = new COM("COM3", 9600);
+                    logger.Info("Waiting for hardware (COM3, 115200 baud)...");
+                    comServer = new COM("COM3", 115200);
+
                     comServer.SetErrorLogger(msg => logger.Error($"COM error: {msg}"));
                     logger.Info("Hardware connected");
 
                     comServer.OnWordStreamReceive(MavcAgent.interpretWord);
+
+                    handlePinInitialization(comServer);
                 }
             }
             catch (Exception e)

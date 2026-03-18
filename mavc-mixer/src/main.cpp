@@ -3,87 +3,120 @@
 #include "ADC.h"
 #include "TemporalTresholdLock.h"
 
-COMClient cc("COM3", 9600);
+COMClient cc("COM3", 115200);
 
-/**
- * @brief List of possible pins for potentiometers
- * @note Recommended ADC pins for ESP32 potentiometers:
- *   ADC1 (safe with Wi-Fi): 32, 33, 34, 35, 36 (VP), 39 (VN)
- *   ADC2 (not safe with Wi-Fi): 0, 2, 4, 12, 13, 14, 15, 25, 26, 27
- */
-int potiPins[] = {36, 39, 34, 35, 32}; // Hardcoded for now
-const int POTI_COUNT = sizeof(potiPins) / sizeof(potiPins[0]);
+#define PIN_MAX_COUNT 16
 
-TemporalTresholdLock tta[POTI_COUNT];
-int lastVol[POTI_COUNT];
-ADC* potis[POTI_COUNT];
 
-/**
- * @brief Arduino setup function
- * Initializes analog read resolution, potentiometer locks, last values, and ADC objects.
- */
 void setup() {
+  delay(2000);
   analogReadResolution(12);
+}
 
-  for (int i = 0; i < POTI_COUNT; i++) {
+String removeChar(String &s, char c) {
+  String result = "";             // neues Ergebnis
+  for (int i = 0; i < s.length(); i++) {
+    if (s[i] != c) {
+      result += s[i];             // nur hinzufügen, wenn nicht der zu entfernende Char
+    }
+  }
+  return result;                     // String überschreiben
+}
+
+// Arduino String split Function (removed delimiter)
+int splitString(String str, char delimiter, String* arr, int maxParts=PIN_MAX_COUNT) {
+  int partCount = 0;
+  int start = 0;
+  int end = str.indexOf(delimiter);
+
+  while (end != -1 && partCount < maxParts) {
+    arr[partCount++] = str.substring(start, end); // delimiter nicht mitnehmen
+    start = end + 1; // direkt nach dem delimiter weitermachen
+    end = str.indexOf(delimiter, start);
+  }
+
+  // letzten Teil nur hinzufügen, wenn er nicht leer ist
+  if (start < str.length() && partCount < maxParts) {
+    arr[partCount++] = str.substring(start);
+  }
+
+  return partCount; // Anzahl der Teile
+}
+
+
+int configuratePinMappings(COMClient::Command c, ADC* potis) { // returns the number of knobs the mixer has
+  String parts[PIN_MAX_COUNT]; // max 5 Teile
+  String input = c.args;
+  input.trim();
+  int foundCount = splitString(input, '.', parts);
+
+  for(int i=0; i<foundCount; i++){
+    parts[i] = removeChar(parts[i], '.');
+    potis[i].setPortPin(parts[i].toInt());
+    cc.sendCommand('Q', "Mapped Pin " + parts[i] + " to Poti " + String(i+1));
+  }
+
+  return foundCount;
+}
+
+void sendVolume(int potiNum, char action, int volume, TemporalTresholdLock* tta, int* lastVol);
+void sendVolumes(ADC* potis);
+
+void loop() {
+  // initial states once
+
+  while(!Serial){delay(500);} // waiting for agent to connect
+
+  while(!Serial.available()){ // wait for initial mixer configurations
+      cc.sendCommand('Q', "Waiting for initial agent configuration...");
+      delay(2000);
+  }
+
+  
+  // init potis and filters
+  TemporalTresholdLock tta[PIN_MAX_COUNT];
+  int lastVol[PIN_MAX_COUNT];
+  ADC potis[PIN_MAX_COUNT] = {};
+
+  // read configurations
+  delay(200);
+  COMClient::Command pimaps = cc.readCommand();
+  cc.sendCommand('Q', "Configurating pin mappings...");
+  int potiCount = configuratePinMappings(pimaps, potis);
+  cc.sendCommand('Q', "Found " + String(potiCount) + " potis.");
+
+
+  for (int i = 0; i < PIN_MAX_COUNT; i++) {
     tta[i].setMsUnlocked(2000);
     tta[i].setUnlockDiff(2);
-    lastVol[i] = -1;
-    potis[i] = new ADC(potiPins[i], 100);
+  }
+
+  sendVolumes(potis);
+
+  while (true) {
+    for (int e = 0; e < potiCount; e++) {
+      int potValue = potis[e].getValue();   // filtered + hysteresis
+      sendVolume(e + 1, (char)(65 + e), potValue, tta, lastVol);
+    }
+
+    if(!cc.isConnected())
+      throw "Agent disconnected"; // restart mixer
+
+    delay(20);
   }
 }
 
-/**
- * @brief Sends volume value for a specific potentiometer if unlocked and changed
- * @param potiNum Index of potentiometer (0-based)
- * @param action Character representing the potentiometer (e.g., 'A', 'B', ...)
- * @param volume Current volume value to send
- */
-void sendVolume(int potiNum, char action, int volume) {
-  if (tta[potiNum].isUnlocked(volume) && lastVol[potiNum] != volume) {
-    lastVol[potiNum] = volume;
+
+void sendVolume(int potiNum, char action, int volume, TemporalTresholdLock* tta, int* lastVol) {
+  if (tta[potiNum - 1].isUnlocked(volume) && lastVol[potiNum - 1] != volume) {
+    lastVol[potiNum - 1] = volume;
     cc.sendCommand(action, String(volume));
   }
 }
 
-/**
- * @brief Sends initial volume values for all potentiometers
- */
-void sendVolumes() {
-  for (int i = 0; i < POTI_COUNT; i++) {
-    int potInitValue = potis[i]->getValue();   // filtered
+void sendVolumes(ADC* potis) {
+  for (int i = 0; i < PIN_MAX_COUNT; i++) {
+    int potInitValue = potis[i].getValue();   // filtered
     cc.sendCommand((char)(65 + i), String(potInitValue));
-  }
-}
-
-/* void onReceive(COMClient::Command c){
-  char action = c.action;
-  switch (action) {
-  case 'A':
-    sendVolumes();
-    break;
-  }
-} */
-
-/**
- * @brief Arduino main loop
- * Continuously reads potentiometer values and sends updates if changed
- */
-void loop() {
-  // initial states once
-  sendVolumes();
-
-  while (true) {
-    for (int e = 0; e < POTI_COUNT; e++) {
-      int potValue = potis[e]->getValue();   // filtered + hysteresis
-      sendVolume(e, (char)(65 + e), potValue);
-    }
-
-    /* if (cc.receivedCommand()) {
-      COMClient::Command c = cc.readCommand();
-      onReceive(c);
-    } */
-
-    delay(20);
   }
 }
