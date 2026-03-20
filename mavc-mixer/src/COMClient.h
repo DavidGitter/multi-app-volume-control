@@ -40,7 +40,6 @@ public:
         Command c;
         c.args="";
         char read = Serial.read();
-        Serial.print(read);
         if(read == '#')
             read = Serial.read();
         c.action = read;

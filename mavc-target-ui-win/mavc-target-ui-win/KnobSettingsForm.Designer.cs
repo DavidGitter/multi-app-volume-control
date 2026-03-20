@@ -58,9 +58,9 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(76, 43);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(111, 13);
+            this.label1.Size = new System.Drawing.Size(208, 13);
             this.label1.TabIndex = 2;
-            this.label1.Text = "Pin on micro-controller";
+            this.label1.Text = "Pin on micro-controller (needs mixer replug)";
             // 
             // KnobSettingsForm
             // 

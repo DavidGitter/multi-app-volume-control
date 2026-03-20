@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
+using System.Linq;
 
 /**
  * Background agent that bridges the hardware mixer (serial/COM) with the
@@ -176,6 +177,13 @@ class MavcAgent
                 loaded.numberOfKnobs == mavcSave.numberOfKnobs &&
                 loaded.reverseKnobOrder == mavcSave.reverseKnobOrder &&
                 loaded.enableScreenOverlay == mavcSave.enableScreenOverlay;
+
+            // check if pin mappings has changed
+            //if (comServer.IsOpen() && !loaded.pinMappings.SequenceEqual(mavcSave.pinMappings))
+            //{
+            //    // restart mixer to apply new pin mappings
+            //    restartMixer();
+            //}
 
             mavcSave = loaded;
             EnsureAoListCapacity();
@@ -384,6 +392,13 @@ class MavcAgent
         Console.SetError(writer);
         Console.OutputEncoding = Encoding.UTF8;
         Console.Title = "MAVC Agent";
+    }
+
+    private static void restartMixer()
+    {
+        logger.Info("Sending restarting command to mixer...");
+        comServer.sendCommand('Z', "Restart");
+        Thread.Sleep(6000);
     }
 
     #endregion

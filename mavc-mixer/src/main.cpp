@@ -76,7 +76,7 @@ void loop() {
   // init potis and filters
   TemporalTresholdLock tta[PIN_MAX_COUNT];
   int lastVol[PIN_MAX_COUNT];
-  ADC potis[PIN_MAX_COUNT] = {};
+  ADC potis[PIN_MAX_COUNT];
 
   // read configurations
   delay(200);
@@ -85,13 +85,12 @@ void loop() {
   int potiCount = configuratePinMappings(pimaps, potis);
   cc.sendCommand('Q', "Found " + String(potiCount) + " potis.");
 
-
   for (int i = 0; i < PIN_MAX_COUNT; i++) {
     tta[i].setMsUnlocked(2000);
     tta[i].setUnlockDiff(2);
   }
 
-  sendVolumes(potis);
+  // sendVolumes(potis);
 
   while (true) {
     for (int e = 0; e < potiCount; e++) {
@@ -103,6 +102,22 @@ void loop() {
       throw "Agent disconnected"; // restart mixer
 
     delay(20);
+
+    // if(cc.availableCommand()){ // mixer got restart command from agent
+    //   COMClient::Command agentCommand = cc.readCommand();
+    //   if(agentCommand.action == 'Z'){
+    //     cc.sendCommand('Q', "Mixer: Got restart command form agent. Restarting mixer...");
+    //     delay(50);
+    //     return;
+    //   } else if(agentCommand.action == 'V') {
+    //     cc.sendCommand('Q', "Mixer: Received new pin mappings...");
+    //     potiCount = configuratePinMappings(agentCommand, potis);
+    //     cc.sendCommand('Q', "Found " + String(potiCount) + " potis.");
+    //   }
+    //   else {
+    //     cc.sendCommand('Q', "Mixer: Received unknown command from agent.");
+    //   }
+    // }
   }
 }
 
