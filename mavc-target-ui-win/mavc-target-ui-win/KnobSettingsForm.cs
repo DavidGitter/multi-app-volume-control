@@ -19,7 +19,7 @@ namespace mavc_target_ui_win
         public KnobSettingsForm(int knobIndex, MAVCSave mavcSave, bool darkMode)
         {
             InitializeComponent();
-            this.Text = "Settings Knob " + knobIndex;
+            this.Text = "Settings Knob " + knobIndex+1;
             this.KeyPreview = true;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;     
