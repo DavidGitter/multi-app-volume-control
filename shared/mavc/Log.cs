@@ -31,7 +31,7 @@ class Log
 
     private void Write(string level, string content)
     {
-        string line = string.Format("{0:HH:mm:ss.fff} | {1,-7} | {2}", DateTime.Now, level, content);
+        string line = string.Format("{0:yyyy-MM-dd HH:mm:ss.fff} | {1,-7} | {2}", DateTime.Now, level, content);
         Console.WriteLine(line);
 
         lock (fileLock)
