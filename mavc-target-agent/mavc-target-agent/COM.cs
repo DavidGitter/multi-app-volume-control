@@ -81,7 +81,8 @@ class COM
         serialPort.Write(action + "," + args + "#");
     }
 
-    /** Updates the currecnt values of all volumes 
+    /**
+     * Updates the currecnt values of all volumes
     */
     public void updateVolumes()
     {
@@ -98,7 +99,6 @@ class COM
     {
         serialPort.Write(w.ToString());
     }
-
 
     /**
     * A callback funtion that gets triggered on data input

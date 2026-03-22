@@ -27,7 +27,7 @@ class MavcAgent
     public static string configFilePath = Path.Combine(configSavePath, configFileName);
 
     // Watches config file changes and reloads mappings when the config is saved.
-    public static FileSystemWatcher watcher;
+    public static FileSystemWatcher? watcher;
 
     // Current configuration + lock (config is read/updated from multiple threads).
     private static MAVCSave mavcSave = new MAVCSave();
@@ -38,21 +38,21 @@ class MavcAgent
     private static List<object> aoListLocks = new List<object>();
 
     // Serial/COM connection to the hardware mixer (reconnected if needed).
-    private static COM comServer = null;
+    private static COM? comServer = null;
 
     // Redirect console output if AllocConsole() is used.
-    private static Stream stdOut = null;
-    private static StreamWriter writer = null;
+    private static Stream? stdOut = null;
+    private static StreamWriter? writer = null;
 
     // Optional on-screen overlay (WinForms) that shows the last knob/value.
     private static bool screenOverlayEnabled = false;
-    private static Overlay overlay = null;
+    private static Overlay? overlay = null;
 
     // Maps action characters to knob indices (A=0, B=1, C=2, D=3, ...).
     private static readonly char[] knobActions = "ABCDEFGHIJKLMNOP".ToCharArray();
 
     // Unified logger; writes to console + file with timestamps.
-    private static Log logger;
+    private static Log? logger;
 
     // Tracks which named outputs were already reported as offline to avoid log spam.
     // true = last known state was offline; removed from dict = online or never seen.
@@ -61,16 +61,17 @@ class MavcAgent
 
     // Debounce for the audio-session-added callback (fires once per device, coalesce them).
     private static readonly object sessionDebounceLock = new object();
-    private static System.Threading.Timer sessionDebounceTimer;
+    private static System.Threading.Timer? sessionDebounceTimer;
 
     // prevents COM-thread queue buildup
     // Each element holds the most-recent raw knob value (0..100), or -1 = idle.
     // Updated with Interlocked so the COM-receive thread never blocks.
     private static readonly int[] latestKnobRaw = new int[16];   // -1 = nothing pending
-    private static readonly int[] knobHasPending = new int[16];   // 0 = idle, 1 = pending
-    // Semaphore is released exactly once per idle→pending transition per knob.
+    private static readonly int[] knobHasPending = new int[16];  // 0 = idle, 1 = pending
+    // Semaphore is released exactly once per idle -> pending transition per knob.
     private static readonly SemaphoreSlim workAvailable = new SemaphoreSlim(0, int.MaxValue);
 
+    // clear whenever COM object is torn down, so reconnect always resends pin mappings
     private static bool initializedPins = false;
 
     #endregion
@@ -110,8 +111,9 @@ class MavcAgent
         string arg = word.args;
         int knobCount = mavcSave.numberOfKnobs;
 
-        if(action == 'Q') { //Debug Answer from mixer: print and return
-            logger.Info("Mixer - Message: " + arg);
+        if (action == 'Q')
+        { // Debug Answer from mixer: print and return
+            logger?.Info("Mixer - Message: " + arg);
             return;
         }
 
@@ -136,7 +138,7 @@ class MavcAgent
     }
 
     private static readonly object confDebounceLock = new object();
-    private static System.Threading.Timer confDebounceTimer;
+    private static System.Threading.Timer? confDebounceTimer;
 
     public static void SetupConfUpdater()
     {
@@ -182,7 +184,7 @@ class MavcAgent
             //if (comServer.IsOpen() && !loaded.pinMappings.SequenceEqual(mavcSave.pinMappings))
             //{
             //    // restart mixer to apply new pin mappings
-            //    restartMixer();
+            //    RestartMixer();
             //}
 
             mavcSave = loaded;
@@ -311,7 +313,7 @@ class MavcAgent
 
     /**
      * Rebuilds one mapping list from the config.
-     * Disposes old outputs before clearing to release COM references immediately
+     * Disposes old outputs before clearing to release COM references immediately.
      *
      * @param target      the list of AudioOutput targets to rebuild
      * @param targetLock  lock object protecting the target list
@@ -394,10 +396,10 @@ class MavcAgent
         Console.Title = "MAVC Agent";
     }
 
-    private static void restartMixer()
+    private static void RestartMixer()
     {
-        logger.Info("Sending restarting command to mixer...");
-        comServer.sendCommand('Z', "Restart");
+        logger?.Info("Sending restarting command to mixer...");
+        comServer?.sendCommand('Z', "Restart");
         Thread.Sleep(6000);
     }
 
@@ -431,7 +433,7 @@ class MavcAgent
     {
         try { Directory.CreateDirectory(configSavePath); } catch { }
 
-        // initialize logger first; capture subsequent messages
+        if (mavcSave.enableDebugMode) enableDebugWindow();
         logger = new Log(Path.Combine(configSavePath, "agent-log.txt"));
 
         bool foundFile = false;
@@ -445,9 +447,6 @@ class MavcAgent
                     UpdateMAVCSave();
                     SetupConfUpdater();
                     foundFile = true;
-
-                    if (mavcSave.enableDebugMode)
-                        enableDebugWindow();
                 }
             }
             catch (Exception ex)
@@ -481,7 +480,7 @@ class MavcAgent
                 string capturedName = sessionName; // capture value into closure, not the variable reference
                 sessionDebounceTimer = new System.Threading.Timer(_ =>
                 {
-                    logger.Info($"New audio session detected: '{capturedName}'");
+                    logger?.Info($"New audio session detected: '{capturedName}'");
                     audioContr.InvalidateCache();
                     lock (mavcSaveLock) { UpdateAllAOs(); }
                     MappingSummary("Session refresh");
