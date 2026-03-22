@@ -102,10 +102,10 @@ class MavcAgent
      * Called from the COM-receive thread on every incoming word.
      * ONLY stores the latest value per knob; actual processing happens on the
      * dedicated KnobProcessor thread, so this method returns in nanoseconds.
-     * 
+     *
      * @param word  the word to be interpreted (see COM class)
      */
-    public static void interpretWord(COM.Word word)
+    public static void InterpretWord(COM.Word word)
     {
         char action = word.action;
         string arg = word.args;
@@ -383,7 +383,7 @@ class MavcAgent
     }
 
     /** Opens a console and redirects stdout/stderr so Console.WriteLine() is visible. */
-    private static void enableDebugWindow()
+    private static void EnableDebugWindow()
     {
         if (!AllocConsole())
             return;
@@ -399,24 +399,41 @@ class MavcAgent
     private static void RestartMixer()
     {
         logger?.Info("Sending restarting command to mixer...");
-        comServer?.sendCommand('Z', "Restart");
+        comServer?.SendCommand('Z', "Restart");
         Thread.Sleep(6000);
+    }
+
+    /**
+     * Tears down the current COM object and resets pin initialisation state.
+     * Must be called before nulling comServer so the next reconnect loop
+     * iteration sends fresh pin mappings to the mixer.
+     */
+    // [fix/#134] extracted so both the OnDisconnected handler and the reconnect loop use the same teardown path
+    private static void TeardownCom()
+    {
+        initializedPins = false;
+        logger?.Info("COM teardown: initializedPins reset, comServer cleared");
+        try { comServer?.OnWordStreamReceive(_ => { }); } catch { }
+        comServer = null;
     }
 
     #endregion
 
     // initializes all pins of the microcontroller at agent startup
-    private static void handlePinInitialization(COM comServer)
+    private static void HandlePinInitialization(COM com)
     {
-        if (!initializedPins) {
-            String dotSeperatedPins = "";
-            foreach(int i in mavcSave.pinMappings)
+        if (!initializedPins)
+        {
+            string dotSeperatedPins = "";
+            foreach (int i in mavcSave.pinMappings)
             {
                 dotSeperatedPins += i + ".";
             }
             COM.Word w = new COM.Word('V', dotSeperatedPins);
-            comServer.sendCommand(w); // starting with ("A", pin[0]) the agent sends the pins to the mixer
-            logger.Info("Send pin mappings: " + w.args);
+            com.SendCommand(w);
+            logger?.Info("Send pin mappings: " + w.args);
+            // [fix/#134] set true only after the send so a failed send leaves it false and retries on next connect
+            initializedPins = true;
         }
     }
 
@@ -433,7 +450,7 @@ class MavcAgent
     {
         try { Directory.CreateDirectory(configSavePath); } catch { }
 
-        if (mavcSave.enableDebugMode) enableDebugWindow();
+        if (mavcSave.enableDebugMode) EnableDebugWindow();
         logger = new Log(Path.Combine(configSavePath, "agent-log.txt"));
 
         bool foundFile = false;
@@ -484,7 +501,7 @@ class MavcAgent
                     audioContr.InvalidateCache();
                     lock (mavcSaveLock) { UpdateAllAOs(); }
                     MappingSummary("Session refresh");
-                    comServer?.updateVolumes();
+                    comServer?.UpdateVolumes();
                 }, null, 500, Timeout.Infinite);
             }
         });
@@ -540,19 +557,30 @@ class MavcAgent
                 if (comServer == null || !comServer.IsOpen())
                 {
                     logger.Info("Waiting for hardware (COM3, 115200 baud)...");
-                    comServer = new COM("COM3", 115200);
+                    var com = new COM("COM3", 115200);
 
-                    comServer.SetErrorLogger(msg => logger.Error($"COM error: {msg}"));
+                    com.SetErrorLogger(msg => logger.Error($"COM error: {msg}"));
+
+                    // [fix/#134] if a send fails mid-session the COM class signals us here so we tear down immediately
+                    // rather than waiting for the next IsOpen() check (which would stay true on physical disconnect)
+                    com.OnDisconnected += () =>
+                    {
+                        logger?.Info("Disconnect signalled by COM layer, tearing down...");
+                        TeardownCom();
+                    };
+
+                    com.OnWordStreamReceive(MavcAgent.InterpretWord);
+                    comServer = com;
+
                     logger.Info("Hardware connected");
-
-                    comServer.OnWordStreamReceive(MavcAgent.interpretWord);
-
-                    handlePinInitialization(comServer);
+                    HandlePinInitialization(comServer);
                 }
             }
             catch (Exception e)
             {
                 logger.Error($"Connection error: {e.Message}");
+                // [fix/#134] ensure state is clean before the next reconnect attempt
+                TeardownCom();
                 Thread.Sleep(1000);
             }
 
