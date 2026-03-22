@@ -84,6 +84,6 @@ void loop() {
       onReceive(c);
     } */
 
-    delay(20);
+    delay(40);
   }
 }

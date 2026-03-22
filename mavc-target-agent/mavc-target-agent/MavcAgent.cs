@@ -64,12 +64,11 @@ class MavcAgent
     private static readonly object sessionDebounceLock = new object();
     private static System.Threading.Timer sessionDebounceTimer;
 
-    // prevents COM-thread queue buildup
     // Each element holds the most-recent raw knob value (0..100), or -1 = idle.
     // Updated with Interlocked so the COM-receive thread never blocks.
     private static readonly int[] latestKnobRaw = new int[16];   // -1 = nothing pending
-    private static readonly int[] knobHasPending = new int[16];   // 0 = idle, 1 = pending
-    // Semaphore is released exactly once per idle→pending transition per knob.
+    private static readonly int[] knobHasPending = new int[16];  // 0 = idle, 1 = pending
+    // Semaphore is released exactly once per idle -> pending transition per knob.
     private static readonly SemaphoreSlim workAvailable = new SemaphoreSlim(0, int.MaxValue);
 
     #endregion
@@ -100,7 +99,7 @@ class MavcAgent
      * Called from the COM-receive thread on every incoming word.
      * ONLY stores the latest value per knob; actual processing happens on the
      * dedicated KnobProcessor thread, so this method returns in nanoseconds.
-     * 
+     *
      * @param word  the word to be interpreted (see COM class)
      */
     public static void interpretWord(COM.Word word)
@@ -298,7 +297,7 @@ class MavcAgent
 
     /**
      * Rebuilds one mapping list from the config.
-     * Disposes old outputs before clearing to release COM references immediately
+     * Disposes old outputs before clearing to release COM references immediately.
      *
      * @param target      the list of AudioOutput targets to rebuild
      * @param targetLock  lock object protecting the target list
@@ -368,7 +367,7 @@ class MavcAgent
     }
 
     /** Opens a console and redirects stdout/stderr so Console.WriteLine() is visible. */
-    private static void enableDebugWindow()
+    private static void EnableDebugWindow()
     {
         if (!AllocConsole())
             return;
@@ -379,6 +378,18 @@ class MavcAgent
         Console.SetError(writer);
         Console.OutputEncoding = Encoding.UTF8;
         Console.Title = "MAVC Agent";
+    }
+
+    /**
+     * Tears down the current COM object so the reconnect loop creates a fresh one.
+     * Detaches the word callback before nulling so no further words are dispatched
+     * from a dead port while the loop is waiting to reconnect.
+     */
+    private static void TeardownCom()
+    {
+        logger?.Info("COM teardown: comServer cleared");
+        try { comServer?.OnWordStreamReceive(_ => { }); } catch { }
+        comServer = null;
     }
 
     #endregion
@@ -412,7 +423,7 @@ class MavcAgent
                     foundFile = true;
 
                     if (mavcSave.enableDebugMode)
-                        enableDebugWindow();
+                        EnableDebugWindow();
                 }
             }
             catch (Exception ex)
@@ -498,6 +509,7 @@ class MavcAgent
         }
 
         logger.Info("------------------------------------------------------------");
+
         while (true)
         {
             try
@@ -506,15 +518,26 @@ class MavcAgent
                 {
                     logger.Info("Waiting for hardware (COM3, 9600 baud)...");
                     comServer = new COM("COM3", 9600);
+
                     comServer.SetErrorLogger(msg => logger.Error($"COM error: {msg}"));
-                    logger.Info("Hardware connected");
+
+                    // Wire up before assigning to comServer so no events are missed
+                    // between construction and the first data arriving.
+                    comServer.OnDisconnected += () =>
+                    {
+                        logger.Info("Disconnect signalled by COM layer, tearing down...");
+                        TeardownCom();
+                    };
 
                     comServer.OnWordStreamReceive(MavcAgent.interpretWord);
+
+                    logger.Info("Hardware connected");
                 }
             }
             catch (Exception e)
             {
                 logger.Error($"Connection error: {e.Message}");
+                TeardownCom();
                 Thread.Sleep(1000);
             }
 
