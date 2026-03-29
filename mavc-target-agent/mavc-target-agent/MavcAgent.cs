@@ -541,7 +541,7 @@ class MavcAgent
                 if (comServer == null || !comServer.IsOpen())
                 {
                     logger.Info("Waiting for hardware (COM3, 115200 baud)...");
-                    comServer = new COM("COM3", 115200);
+                    comServer = new COM("COM3", 9600);
 
                     comServer.SetErrorLogger(msg => logger.Error($"COM error: {msg}"));
                     logger.Info("Hardware connected");
