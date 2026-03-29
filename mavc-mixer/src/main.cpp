@@ -3,7 +3,7 @@
 #include "ADC.h"
 #include "TemporalTresholdLock.h"
 
-COMClient cc("COM3", 115200);
+COMClient cc("COM3", 9600);
 
 #define PIN_MAX_COUNT 16
 
