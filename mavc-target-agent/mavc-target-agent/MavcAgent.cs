@@ -403,20 +403,20 @@ class MavcAgent
 
     #endregion
 
-    // initializes all pins of the microcontroller at agent startup
-    private static void handlePinInitialization(COM comServer)
-    {
-        if (!initializedPins) {
-            String dotSeperatedPins = "";
-            foreach(int i in mavcSave.pinMappings)
-            {
-                dotSeperatedPins += i + ".";
-            }
-            COM.Word w = new COM.Word('V', dotSeperatedPins);
-            comServer.sendCommand(w); // starting with ("A", pin[0]) the agent sends the pins to the mixer
-            logger.Info("Send pin mappings: " + w.args);
-        }
-    }
+    // initializes all pins of the microcontroller at agent startup (CURRENTLY NOT SUPPORTED)
+    //private static void handlePinInitialization(COM comServer)
+    //{
+    //    if (!initializedPins) {
+    //        String dotSeperatedPins = "";
+    //        foreach(int i in mavcSave.pinMappings)
+    //        {
+    //            dotSeperatedPins += i + ".";
+    //        }
+    //        COM.Word w = new COM.Word('V', dotSeperatedPins);
+    //        comServer.sendCommand(w); // starting with ("A", pin[0]) the agent sends the pins to the mixer
+    //        logger.Info("Send pin mappings: " + w.args);
+    //    }
+    //}
 
     #region Main Method
 
@@ -548,7 +548,7 @@ class MavcAgent
 
                     comServer.OnWordStreamReceive(MavcAgent.interpretWord);
 
-                    handlePinInitialization(comServer);
+                    //handlePinInitialization(comServer);
                 }
             }
             catch (Exception e)

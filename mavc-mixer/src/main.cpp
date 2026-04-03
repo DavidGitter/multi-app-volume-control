@@ -7,6 +7,7 @@ COMClient cc("COM3", 9600);
 
 #define PIN_MAX_COUNT 16
 
+int potiCount = 4; // default
 
 void setup() {
   delay(2000);
@@ -80,10 +81,11 @@ void loop() {
 
   // read configurations
   delay(200);
-  COMClient::Command pimaps = cc.readCommand();
-  cc.sendCommand('Q', "Configurating pin mappings...");
-  int potiCount = configuratePinMappings(pimaps, potis);
-  cc.sendCommand('Q', "Found " + String(potiCount) + " potis.");
+  // CURRENTLY UNSUPPORTED PIN INITIALIZATION
+  // COMClient::Command pimaps = cc.readCommand();
+  // cc.sendCommand('Q', "Configurating pin mappings...");
+  // potiCount = configuratePinMappings(pimaps, potis);
+  // cc.sendCommand('Q', "Found " + String(potiCount) + " potis.");
 
   for (int i = 0; i < PIN_MAX_COUNT; i++) {
     tta[i].setMsUnlocked(2000);
@@ -103,7 +105,7 @@ void loop() {
 
     delay(20);
 
-    // if(cc.availableCommand()){ // mixer got restart command from agent
+    // if(cc.availableCommand()){ // mixer got restart command from agent (CURRENTLY UNSUPPORTED)
     //   COMClient::Command agentCommand = cc.readCommand();
     //   if(agentCommand.action == 'Z'){
     //     cc.sendCommand('Q', "Mixer: Got restart command form agent. Restarting mixer...");
