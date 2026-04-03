@@ -31,6 +31,7 @@
     <Compile Include="..\..\shared\mavc\MAVCSave.cs">
       <Link>MAVCSave.cs</Link>
     </Compile>
+    <Compile Include="AODiscovery.cs" />
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>

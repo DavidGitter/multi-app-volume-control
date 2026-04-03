@@ -28,6 +28,9 @@ namespace mavc_target_ui_win
         private string CURRENT_VERSION = "1.4.0";
 
         private AudioController audioController;
+
+        private AODiscovery aodiscovery;
+
         public static string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
         public static string configFileName = "config.json";
         public static string configFilePath = Path.Combine(configSavePath, configFileName);
@@ -140,6 +143,7 @@ namespace mavc_target_ui_win
                 mavcSave = new MAVCSave();
                 mavcSave.EnsureCapacity();
                 audioController = new AudioController();
+                aodiscovery = new AODiscovery(audioController);
 
                 loadConfig(configSavePath, configFileName);
 
@@ -819,7 +823,7 @@ namespace mavc_target_ui_win
         {
             availableOutputs.Clear();
             removeAvailableOutputs();
-            availableOutputs = audioController.GetAllAudioOutputs();
+            availableOutputs = aodiscovery.GetAllAudioOutputs();
 
             logger.Info($"Refresh complete: found {availableOutputs.Count} available audio outputs");
 
@@ -1120,7 +1124,7 @@ namespace mavc_target_ui_win
             }
 
             loadFromMavcSave();
-            availableOutputs = audioController.GetAllAudioOutputs();
+            availableOutputs = aodiscovery.GetAllAudioOutputs();
             initAvailableOutputs(availableOutputs.ToArray());
         }
 
