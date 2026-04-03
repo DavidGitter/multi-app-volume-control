@@ -1,20 +1,16 @@
 ﻿using Octokit;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace mavc_target_ui_win
 {
@@ -231,9 +227,13 @@ namespace mavc_target_ui_win
 
                 // Add Volume combo box
                 var addVolCombo = new ComboBox();
+                addVolCombo.DropDownStyle = ComboBoxStyle.DropDown;
+                addVolCombo.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                addVolCombo.AutoCompleteSource = AutoCompleteSource.ListItems;
+                addVolCombo.Sorted = true; // we sort for ourselfs
                 addVolCombo.Dock = DockStyle.Top;
-                addVolCombo.DropDownStyle = ComboBoxStyle.DropDownList;
                 addVolCombo.FormattingEnabled = true;
+                addVolCombo.DropDownHeight = 200;
                 addVolCombo.SelectedIndexChanged += (sender, e) =>
                 {
                     AudioOutput selectedAO = (AudioOutput)addVolCombo.SelectedItem;
@@ -252,6 +252,7 @@ namespace mavc_target_ui_win
 
                 // Volume list box
                 var volList = new VolumeListBox();
+                volList.Sorted = true; // we sort for ourselfs
                 volList.Dock = DockStyle.Fill;
                 volList.FormattingEnabled = true;
                 volList.IntegralHeight = false;
