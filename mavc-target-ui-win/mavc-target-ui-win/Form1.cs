@@ -1213,9 +1213,7 @@ namespace mavc_target_ui_win
          */
         private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            logger.Info("User triggered refresh of available audio outputs");
-            // Only refresh available outputs — don't rebuild panels
-            refreshAvailableOutputs();
+
         }
 
         /**
@@ -1315,6 +1313,13 @@ namespace mavc_target_ui_win
             throw new NotImplementedException();
         }
         #endregion
+
+        private void refreshVolumesBtn_Click(object sender, EventArgs e)
+        {
+            logger.Info("User triggered refresh of available audio outputs");
+            // Only refresh available outputs — don't rebuild panels
+            refreshAvailableOutputs();
+        }
     }
 }
 
