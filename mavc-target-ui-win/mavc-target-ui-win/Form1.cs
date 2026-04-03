@@ -1,20 +1,16 @@
 ﻿using Octokit;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace mavc_target_ui_win
 {
@@ -28,6 +24,9 @@ namespace mavc_target_ui_win
         private string CURRENT_VERSION = "1.4.0";
 
         private AudioController audioController;
+
+        private AODiscovery aodiscovery;
+
         public static string configSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MAVC");
         public static string configFileName = "config.json";
         public static string configFilePath = Path.Combine(configSavePath, configFileName);
@@ -141,6 +140,7 @@ namespace mavc_target_ui_win
                 mavcSave = new MAVCSave();
                 mavcSave.EnsureCapacity();
                 audioController = new AudioController();
+                aodiscovery = new AODiscovery(audioController);
 
                 loadConfig(configSavePath, configFileName);
 
@@ -215,9 +215,13 @@ namespace mavc_target_ui_win
 
                 // Add Volume combo box
                 var addVolCombo = new ComboBox();
-                addVolCombo.Dock = DockStyle.Fill;
-                addVolCombo.DropDownStyle = ComboBoxStyle.DropDownList;
+                addVolCombo.DropDownStyle = ComboBoxStyle.DropDown;
+                addVolCombo.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                addVolCombo.AutoCompleteSource = AutoCompleteSource.ListItems;
+                addVolCombo.Sorted = true; // we sort for ourselfs
+                addVolCombo.Dock = DockStyle.Top;
                 addVolCombo.FormattingEnabled = true;
+                addVolCombo.DropDownHeight = 200;
                 addVolCombo.SelectedIndexChanged += (sender, e) =>
                 {
                     AudioOutput selectedAO = (AudioOutput)addVolCombo.SelectedItem;
@@ -269,6 +273,7 @@ namespace mavc_target_ui_win
 
                 // Volume list box
                 var volList = new VolumeListBox();
+                volList.Sorted = true; // we sort for ourselfs
                 volList.Dock = DockStyle.Fill;
                 volList.FormattingEnabled = true;
                 volList.IntegralHeight = false;
@@ -838,7 +843,7 @@ namespace mavc_target_ui_win
         {
             availableOutputs.Clear();
             removeAvailableOutputs();
-            availableOutputs = audioController.GetAllAudioOutputs();
+            availableOutputs = aodiscovery.GetAllAudioOutputs();
 
             logger.Info($"Refresh complete: found {availableOutputs.Count} available audio outputs");
 
@@ -1150,7 +1155,7 @@ namespace mavc_target_ui_win
             }
 
             loadFromMavcSave();
-            availableOutputs = audioController.GetAllAudioOutputs();
+            availableOutputs = aodiscovery.GetAllAudioOutputs();
             initAvailableOutputs(availableOutputs.ToArray());
         }
 
@@ -1238,9 +1243,7 @@ namespace mavc_target_ui_win
          */
         private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            logger.Info("User triggered refresh of available audio outputs");
-            // Only refresh available outputs — don't rebuild panels
-            refreshAvailableOutputs();
+
         }
 
         /**
@@ -1340,6 +1343,13 @@ namespace mavc_target_ui_win
             throw new NotImplementedException();
         }
         #endregion
+
+        private void refreshVolumesBtn_Click(object sender, EventArgs e)
+        {
+            logger.Info("User triggered refresh of available audio outputs");
+            // Only refresh available outputs — don't rebuild panels
+            refreshAvailableOutputs();
+        }
     }
 }
 

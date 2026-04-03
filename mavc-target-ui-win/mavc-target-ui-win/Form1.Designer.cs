@@ -50,7 +50,7 @@ namespace mavc_target_ui_win
             this.numberOfKnobsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.overlaySettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
-            this.refreshVolumesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.refreshVolumesBtn = new System.Windows.Forms.ToolStripMenuItem();
             this.versionLabel = new System.Windows.Forms.Label();
             this.buttonPanel.SuspendLayout();
             this.menuStrip1.SuspendLayout();
@@ -119,7 +119,8 @@ namespace mavc_target_ui_win
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.settingsToolStripMenuItem});
+            this.settingsToolStripMenuItem,
+            this.refreshVolumesBtn});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(900, 24);
@@ -169,8 +170,7 @@ namespace mavc_target_ui_win
             this.toolStripSeparator3,
             this.numberOfKnobsToolStripMenuItem,
             this.overlaySettingsToolStripMenuItem,
-            this.toolStripSeparator4,
-            this.refreshVolumesToolStripMenuItem});
+            this.toolStripSeparator4});
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
             this.settingsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.settingsToolStripMenuItem.Text = "Settings";
@@ -178,73 +178,73 @@ namespace mavc_target_ui_win
             // darkModeToolStripMenuItem
             // 
             this.darkModeToolStripMenuItem.Name = "darkModeToolStripMenuItem";
-            this.darkModeToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.darkModeToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
             this.darkModeToolStripMenuItem.Text = "Dark Mode";
             this.darkModeToolStripMenuItem.Click += new System.EventHandler(this.darkModeToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(179, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(178, 6);
             // 
             // reverseKnobOrderToolStripMenuItem
             // 
             this.reverseKnobOrderToolStripMenuItem.Name = "reverseKnobOrderToolStripMenuItem";
-            this.reverseKnobOrderToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.reverseKnobOrderToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
             this.reverseKnobOrderToolStripMenuItem.Text = "Reverse Knob Order";
             this.reverseKnobOrderToolStripMenuItem.Click += new System.EventHandler(this.reverseKnobOrderToolStripMenuItem_Click);
             // 
             // enableDebugModeToolStripMenuItem
             // 
             this.enableDebugModeToolStripMenuItem.Name = "enableDebugModeToolStripMenuItem";
-            this.enableDebugModeToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.enableDebugModeToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
             this.enableDebugModeToolStripMenuItem.Text = "Enable Debug Mode";
             this.enableDebugModeToolStripMenuItem.Click += new System.EventHandler(this.enableDebugModeToolStripMenuItem_Click);
             // 
             // minimizeOnCloseToolStripMenuItem
             // 
             this.minimizeOnCloseToolStripMenuItem.Name = "minimizeOnCloseToolStripMenuItem";
-            this.minimizeOnCloseToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.minimizeOnCloseToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
             this.minimizeOnCloseToolStripMenuItem.Text = "Minimize on Close";
             this.minimizeOnCloseToolStripMenuItem.Click += new System.EventHandler(this.minimizeOnCloseToolStripMenuItem_Click);
             // 
             // startMinimizedToolStripMenuItem
             // 
             this.startMinimizedToolStripMenuItem.Name = "startMinimizedToolStripMenuItem";
-            this.startMinimizedToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.startMinimizedToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
             this.startMinimizedToolStripMenuItem.Text = "Start Minimized";
             this.startMinimizedToolStripMenuItem.Click += new System.EventHandler(this.startMinimizedToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
             this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(179, 6);
+            this.toolStripSeparator3.Size = new System.Drawing.Size(178, 6);
             // 
             // numberOfKnobsToolStripMenuItem
             // 
             this.numberOfKnobsToolStripMenuItem.Name = "numberOfKnobsToolStripMenuItem";
-            this.numberOfKnobsToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.numberOfKnobsToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
             this.numberOfKnobsToolStripMenuItem.Text = "Number of Knobs...";
             this.numberOfKnobsToolStripMenuItem.Click += new System.EventHandler(this.numberOfKnobsToolStripMenuItem_Click);
             // 
             // overlaySettingsToolStripMenuItem
             // 
             this.overlaySettingsToolStripMenuItem.Name = "overlaySettingsToolStripMenuItem";
-            this.overlaySettingsToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.overlaySettingsToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
             this.overlaySettingsToolStripMenuItem.Text = "Overlay Settings...";
             this.overlaySettingsToolStripMenuItem.Click += new System.EventHandler(this.overlaySettingsToolStripMenuItem_Click);
             // 
             // toolStripSeparator4
             // 
             this.toolStripSeparator4.Name = "toolStripSeparator4";
-            this.toolStripSeparator4.Size = new System.Drawing.Size(179, 6);
+            this.toolStripSeparator4.Size = new System.Drawing.Size(178, 6);
             // 
-            // refreshVolumesToolStripMenuItem
+            // refreshVolumesBtn
             // 
-            this.refreshVolumesToolStripMenuItem.Name = "refreshVolumesToolStripMenuItem";
-            this.refreshVolumesToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
-            this.refreshVolumesToolStripMenuItem.Text = "Refresh Volume Lists";
-            this.refreshVolumesToolStripMenuItem.Click += new System.EventHandler(this.refreshToolStripMenuItem_Click);
+            this.refreshVolumesBtn.Name = "refreshVolumesBtn";
+            this.refreshVolumesBtn.Size = new System.Drawing.Size(58, 20);
+            this.refreshVolumesBtn.Text = "Refresh";
+            this.refreshVolumesBtn.Click += new System.EventHandler(this.refreshVolumesBtn_Click);
             // 
             // versionLabel
             // 
@@ -301,7 +301,7 @@ namespace mavc_target_ui_win
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
-        private System.Windows.Forms.ToolStripMenuItem refreshVolumesToolStripMenuItem;
         private System.Windows.Forms.Label versionLabel;
+        private System.Windows.Forms.ToolStripMenuItem refreshVolumesBtn;
     }
 }

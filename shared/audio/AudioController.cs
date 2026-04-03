@@ -133,6 +133,19 @@ class AudioController
         return outs.Where(o => o.GetName().Equals(name)).ToList();
     }
 
+    /**
+     * Returns all AudioOutput objects by a list of string names if found
+     * 
+     * @returns     the audio output object if found, else throws exception
+     */
+    public List<AudioOutput> GetOutputsByName(List<string> names)
+    {
+        List<AudioOutput> outs = GetAllAudioOutputs();
+        return outs
+            .Where(o => names.Contains(o.GetName()))
+            .ToList();
+    }
+
     public void InvalidateCache()
     {
         lock (cacheLock)
