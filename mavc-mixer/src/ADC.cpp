@@ -124,6 +124,10 @@ void ADC::setOutputMapping(int map_min, int map_max) {
     this->map_max = map_max;
 }
 
+void ADC::setPortPin(int portPin) {
+    this->portPin = portPin;
+}
+
 int ADC::getMappingMax() {
     return map_max;
 }

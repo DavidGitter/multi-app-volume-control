@@ -30,6 +30,8 @@ public class MAVCSave
     // reverse knob flags per knob (index-based)
     public List<bool> reverseKnobs;
 
+    // list of pin mappings
+    public List<int> pinMappings;
     
     #endregion
 
@@ -96,6 +98,7 @@ public class MAVCSave
         numberOfKnobs = 4;
         volumeMappings = new List<List<AudioOutput>>();
         reverseKnobs = new List<bool>();
+        pinMappings = new List<int>();
         reverseKnobOrder = false;
         enableDebugMode = false;
         darkMode = false;

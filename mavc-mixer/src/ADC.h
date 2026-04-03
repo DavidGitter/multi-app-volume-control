@@ -95,6 +95,12 @@ public:
     void setOutputMapping(int map_min, int map_max);
 
     /**
+     * @brief Set pin of ADC
+     * @param portPin Pin of the ADC
+     */
+    void setPortPin(int portPin);
+
+    /**
      * @brief Get mapping maximum
      * @return Maximum mapped value
      */
