@@ -1,6 +1,11 @@
 #include <Arduino.h>
+#include "SerialMock.h"
+
+// const char* data2 = "A,36#B,39#C,34#D,35#";
+// SerialMock serialMock2(data2);
 
 class COMClient{
+
 public:
     enum Action {
         VOL1 = (int)'A', 
@@ -10,8 +15,8 @@ public:
     };
 
     struct Command{
-        char action;
-        String args;
+        char action = ' ';
+        String args = "";
     };
 
     inline char getChar(Action section)
@@ -33,24 +38,32 @@ public:
 
     Command readCommand() {
         Command c;
+        c.args="";
         char read = Serial.read();
         if(read == '#')
             read = Serial.read();
-
         c.action = read;
-        if(Serial.read() != ',') {
-            while(Serial.read() != '#'){}
+        if(((char)Serial.read()) != ',') {
+            while(Serial.available() && Serial.read() != '#'){} // self correcting
             throw std::invalid_argument("received invalid command");
         } else {
-            while((read = Serial.read()) != '#') {
+            while(Serial.available() && (read = Serial.read()) != '#') {
                 c.args += read;
             }
             return c;
         }
     }
 
-    bool receivedCommand() {
+    char read() {
+        return ((char)Serial.read());
+    }
+
+    bool availableCommand() {
         return Serial.available();
+    }
+
+    bool isConnected() {
+        return Serial;
     }
 
 };

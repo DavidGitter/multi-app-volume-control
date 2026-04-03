@@ -169,6 +169,7 @@ class COM
      */
     private Word extractWord(String word)
     {
+        word = KeepCharBeforeCommaAndRest(word);
         char action = word.ElementAt(0);
         char sep = word.ElementAt(1);
         String arg = word.Substring(2);
@@ -179,6 +180,22 @@ class COM
             throw new InvalidDataException();
 
         return new Word(action, arg);
+    }
+
+    string KeepCharBeforeCommaAndRest(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return "";
+
+        int commaIndex = input.IndexOf(',');
+
+        if (commaIndex <= 0) // kein Komma oder kein Zeichen davor
+            return input;
+
+        // start = Zeichen direkt vor dem Komma
+        int startIndex = commaIndex - 1;
+
+        return input.Substring(startIndex);
     }
 
     public bool IsOpen()
