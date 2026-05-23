@@ -84,7 +84,7 @@ This is a small overview of what you need in order to build your own volume cont
 
 <p align="left">
   <img src="./docs/readme-pics/Enclosue_5_Pot.png" alt="5 Pot Enclosure" style="height:auto;max-width:45%;"/>
-  <img src="./docs/readme-pics/mavc5potpic.png" alt="MAVC 5 Pot" style="height:auto;max-width:45%;"/>
+  <img src="./docs/readme-pics/MAVC5PotPic.png" alt="MAVC 5 Pot" style="height:auto;max-width:45%;"/>
 </p>
 
 ### Other Prerequisites
