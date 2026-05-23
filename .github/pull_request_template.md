@@ -1,64 +1,28 @@
-## 📌 Description
+## 📝 Title
+<!-- Clear, descriptive title -->
 
-Please provide a clear and concise description of the changes in this pull request.
+## 🚀 What changed?
+<!-- Short explanation of the changes -->
+- 
+- 
+- 
 
-- What was changed?
-- Why was it changed?
-- What problem does it solve?
+## 🔗 Related Issue
+<!-- Link issue(s) that should be closed automatically -->
+Closes #
 
-Fixes #(issue number)
+## 📸 Screenshots (UI changes only)
+<!-- Add screenshots or screen recordings if UI was changed -->
 
----
+### Before
+<!-- Drag & drop image here -->
 
-## 🔄 Type of Change
+### After
+<!-- Drag & drop image here -->
 
-Please check the relevant option:
-
-- [ ] 🐛 Bug fix
-- [ ] ✨ New feature
-- [ ] 💥 Breaking change
-- [ ] 📝 Documentation update
-- [ ] ♻️ Refactoring
-- [ ] ⚡ Performance improvement
-- [ ] ✅ Tests
-- [ ] 🔧 Other (please describe):
-
----
-
-## 🧪 How Has This Been Tested?
-
-Describe the tests that you ran to verify your changes:
-
-- [ ] Local testing
-- [ ] Unit tests
-- [ ] Integration tests
-- [ ] Manual testing
-- [ ] Other:
-
-Test configuration / screenshots (if applicable):
-
----
-
-## 📷 Screenshots (if applicable)
-
-Before:
-<!-- Add screenshot here -->
-
-After:
-<!-- Add screenshot here -->
-
----
-
-## 📋 Checklist
-
-- [ ] My code follows the project guidelines
-- [ ] I have performed a self-review of my code
-- [ ] I have updated the documentation where required
-- [ ] There are no unnecessary debug statements
-- [ ] The build passes successfully
-
----
-
-## 📎 Additional Notes
-
-Add any additional context or information here.
+## ✅ Checklist
+- [ ] Title is clear and descriptive
+- [ ] Changes are explained briefly
+- [ ] Screenshots added (if UI changes)
+- [ ] Related issue linked with `Closes #<number>`
+- [ ] Tested locally
